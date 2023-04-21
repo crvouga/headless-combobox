@@ -4,7 +4,7 @@
 - 🔍 Framework agnostic
 - 💪 Written in TypeScript
 - 🧠 Headless
-- 🔌 Simple API
+- 🔌 Simple pure functional API
 
 ## Links
 

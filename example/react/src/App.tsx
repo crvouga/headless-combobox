@@ -1,5 +1,5 @@
+import * as Autocomplete from "headless-autocomplete";
 import { useRef, useState } from "react";
-import * as Autocomplete from "./headless-autocomplete";
 
 type Movie = {
   year: number;

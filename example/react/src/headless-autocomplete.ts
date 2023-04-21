@@ -717,6 +717,60 @@ export const toSelectedItem = <TItem>(model: Model<TItem>): TItem | null => {
   }
 };
 
+export const toAriaAttributes = <TItem>(
+  { toId }: Config<TItem>,
+  model: Model<TItem>
+) => {
+  switch (model.type) {
+    case "unselected__blurred":
+    case "unselected__focused__closed":
+    case "unselected__focused__opened":
+    case "unselected__focused__opened__highlighted": {
+      return {
+        "aria-activedescendant": "",
+        "aria-autocomplete": "list",
+        "aria-controls": "",
+        "aria-expanded": false,
+        "aria-haspopup": "listbox",
+        "aria-owns": "",
+      };
+    }
+
+    case "selected__blurred":
+    case "selected__focused__closed": {
+      return {
+        "aria-activedescendant": toId(model.selected),
+        "aria-autocomplete": "list",
+        "aria-controls": "",
+        "aria-expanded": false,
+        "aria-haspopup": "listbox",
+        "aria-owns": "",
+      };
+    }
+    case "selected__focused__opened": {
+      return {
+        "aria-activedescendant": toId(model.selected),
+        "aria-autocomplete": "list",
+        "aria-controls": "",
+        "aria-expanded": false,
+        "aria-haspopup": "listbox",
+        "aria-owns": "",
+      };
+    }
+
+    case "selected__focused__opened__highlighted": {
+      return {
+        "aria-activedescendant": toId(model.selected),
+        "aria-autocomplete": "list",
+        "aria-controls": "",
+        "aria-expanded": false,
+        "aria-haspopup": "listbox",
+        "aria-owns": "",
+      };
+    }
+  }
+};
+
 //
 //
 //

@@ -1,5 +1,4 @@
 import { useRef, useState } from "react";
-import "./App.css";
 import * as Autocomplete from "./headless-autocomplete";
 
 type Movie = {
@@ -7,16 +6,10 @@ type Movie = {
   label: string;
 };
 
-function App() {
-  const refs = useRef(new Map<string, HTMLDivElement>());
-
-  const [state, setState] = useState(
-    Autocomplete.init<Movie>({
-      allItems: top100Films,
-    })
-  );
-
-  const toFiltered = (model: Autocomplete.Model<Movie>) => {
+const config: Autocomplete.Config<Movie> = {
+  toKey: (item) => item.label,
+  toQuery: (item) => item.label,
+  toFiltered: (model) => {
     return model.allItems.filter((item) =>
       item.label
         .toLowerCase()
@@ -24,32 +17,30 @@ function App() {
           Autocomplete.toQuery((item) => item.label, model).toLowerCase()
         )
     );
-  };
+  },
+};
 
-  const toKey = (item: Movie) => item.label;
-  const toQuery = (item: Movie) => item.label;
+function App() {
+  const [model, setModel] = useState(
+    Autocomplete.init<Movie>({
+      allItems: top100Films,
+    })
+  );
 
   const dispatch = (msg: Autocomplete.Msg<Movie>) => {
-    const updated = Autocomplete.update({
-      toFiltered,
-      toKey,
-      toQuery,
-      msg,
-      model: state,
+    const input = { msg, model };
+    const output = Autocomplete.update(config, input);
+
+    setModel(output.model);
+
+    Autocomplete.consoleLog({
+      input,
+      output,
     });
 
-    console.log("\n");
-    console.log(state.type);
-    console.log(msg.type);
-    console.log(updated.model.type);
-    console.log(updated.effects?.map((eff) => eff.type).join(", "));
-    console.log("\n");
-
-    setState(updated.model);
-
-    for (const effect of updated.effects ?? []) {
+    for (const effect of output.effects ?? []) {
       if (effect.type === "scroll-highlighted-item-into-view") {
-        const ref = refs.current.get(toKey(effect.highlightedItem));
+        const ref = refs.current.get(config.toKey(effect.highlightedItem));
         ref?.scrollIntoView({
           block: "nearest",
           inline: "center",
@@ -58,9 +49,11 @@ function App() {
     }
   };
 
+  const refs = useRef(new Map<string, HTMLDivElement>());
+
   return (
     <div>
-      <div style={{ width: "100%", textAlign: "left" }}>{state.type}</div>
+      <div style={{ width: "100%", textAlign: "left" }}>{model.type}</div>
 
       <input
         onInput={(event) =>
@@ -68,7 +61,7 @@ function App() {
         }
         onBlur={() => dispatch({ type: "blurred-input" })}
         onFocus={() => dispatch({ type: "focused-input" })}
-        value={Autocomplete.toQuery((item) => item.label, state)}
+        value={Autocomplete.toQuery((item) => item.label, model)}
         style={{
           width: "100%",
           boxSizing: "border-box",
@@ -94,7 +87,7 @@ function App() {
         }}
       />
 
-      {Autocomplete.isOpened(state) && (
+      {Autocomplete.isOpened(model) && (
         <div
           style={{
             width: "100%",
@@ -104,17 +97,17 @@ function App() {
             maxHeight: "400px",
             background: "rgba(0.6, 0.6, 0.6)",
           }}>
-          {toFiltered(state).map((item, index) => (
+          {config.toFiltered(model).map((item, index) => (
             <div
               key={item.label}
               ref={(ref) => {
                 if (ref) {
-                  refs.current.set(toKey(item), ref);
+                  refs.current.set(config.toKey(item), ref);
                 }
               }}
               style={{
                 padding: "0.5rem",
-                ...(Autocomplete.isHighlighted(state, index)
+                ...(Autocomplete.isHighlighted(model, index)
                   ? {
                       background: "white",
                       color: "black",

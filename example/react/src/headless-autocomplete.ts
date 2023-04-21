@@ -98,10 +98,13 @@ export type Effect<TItem> = {
   highlightedItem: TItem;
 };
 
-export type UpdateInput<TItem> = {
+export type Config<TItem> = {
   toKey: (item: TItem) => string;
   toQuery: (item: TItem) => string;
   toFiltered: (model: Model<TItem>) => TItem[];
+};
+
+export type UpdateInput<TItem> = {
   model: Model<TItem>;
   msg: Msg<TItem>;
 };
@@ -112,10 +115,11 @@ export type UpdateOutput<TItem> = {
 };
 
 export const update = <TItem>(
+  config: Config<TItem>,
   input: UpdateInput<TItem>
 ): UpdateOutput<TItem> => {
-  const updated = updateModel(input);
-  const effects = toScrollEffects({
+  const updated = updateModel(config, input);
+  const effects = toScrollEffects(config, {
     ...input,
     model: updated,
   });
@@ -126,12 +130,15 @@ export const update = <TItem>(
   };
 };
 
-const toScrollEffects = <TItem>(input: UpdateInput<TItem>): Effect<TItem>[] => {
+const toScrollEffects = <TItem>(
+  config: Config<TItem>,
+  input: UpdateInput<TItem>
+): Effect<TItem>[] => {
   switch (input.model.type) {
     case "selected__focused__opened__highlighted":
     case "unselected__focused__opened__highlighted": {
       if (input.msg.type === "pressed-arrow-key") {
-        const filtered = input.toFiltered(input.model);
+        const filtered = config.toFiltered(input.model);
 
         const highlightedItem = filtered[input.model.highlightIndex];
 
@@ -154,13 +161,10 @@ const toScrollEffects = <TItem>(input: UpdateInput<TItem>): Effect<TItem>[] => {
   }
 };
 
-const updateModel = <TItem>({
-  toQuery,
-  toKey,
-  toFiltered,
-  model,
-  msg,
-}: UpdateInput<TItem>): Model<TItem> => {
+const updateModel = <TItem>(
+  { toQuery, toKey, toFiltered }: Config<TItem>,
+  { model, msg }: UpdateInput<TItem>
+): Model<TItem> => {
   switch (model.type) {
     case "selected__blurred": {
       switch (msg.type) {
@@ -516,7 +520,7 @@ const circularIndex = (index: number, length: number) => {
 
 export const isItemSelected = <TItem>(
   model: Model<TItem>,
-  toId: (key: TItem) => string,
+  toKey: (key: TItem) => string,
   item: TItem
 ) => {
   switch (model.type) {
@@ -524,7 +528,7 @@ export const isItemSelected = <TItem>(
     case "selected__focused__opened":
     case "selected__focused__closed":
     case "selected__focused__opened__highlighted": {
-      return toId(model.selected) === toId(item);
+      return toKey(model.selected) === toKey(item);
     }
 
     case "unselected__blurred":
@@ -611,4 +615,26 @@ export const toHighlightedItem = <TItem>(
       return item ?? null;
     }
   }
+};
+
+//
+//
+//
+//
+//
+//
+
+export const consoleLog = <TItem>({
+  input,
+  output,
+}: {
+  input: UpdateInput<TItem>;
+  output: UpdateOutput<TItem>;
+}) => {
+  console.log("\n");
+  console.log(input.model.type);
+  console.log(input.msg.type);
+  console.log(output.model.type);
+  console.log(output.effects?.map((eff) => eff.type).join(", "));
+  console.log("\n");
 };

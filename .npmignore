@@ -2,7 +2,6 @@ node_modules
 src
 package.json
 package-lock.json
-readme.md
 tsconfig.json
 .gitignore
 example

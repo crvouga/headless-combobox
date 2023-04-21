@@ -1,31 +1,47 @@
 //
 //
 //
+// Config
+//
+//
+//
+
+export type Config<TItem> = {
+  toId: (item: TItem) => string;
+  toInputValue: (item: TItem) => string;
+  toFiltered: (model: Model<TItem>) => TItem[];
+};
+
+//
+//
+//
+//
 // Model
 //
 //
 //
+//
 
-export type Model<TItem> = State<TItem> & {
+export type Model<TItem> = ModelState<TItem> & {
   allItems: TItem[];
 };
 
-type State<TItem> =
+type ModelState<TItem> =
   | {
       type: "unselected__blurred";
     }
   | {
       type: "unselected__focused__opened";
-      query: string;
+      inputValue: string;
     }
   | {
       type: "unselected__focused__opened__highlighted";
-      query: string;
+      inputValue: string;
       highlightIndex: number;
     }
   | {
       type: "unselected__focused__closed";
-      query: string;
+      inputValue: string;
     }
   | {
       type: "selected__blurred";
@@ -33,18 +49,18 @@ type State<TItem> =
     }
   | {
       type: "selected__focused__closed";
-      query: string;
+      inputValue: string;
       selected: TItem;
     }
   | {
       type: "selected__focused__opened";
       selected: TItem;
-      query: string;
+      inputValue: string;
     }
   | {
       type: "selected__focused__opened__highlighted";
       selected: TItem;
-      query: string;
+      inputValue: string;
       highlightIndex: number;
     };
 
@@ -62,7 +78,9 @@ export const init = <TItem>({
 //
 //
 //
+//
 // Update
+//
 //
 //
 //
@@ -89,8 +107,8 @@ export type Msg<TItem> =
       type: "blurred-input";
     }
   | {
-      type: "inputted-query";
-      query: string;
+      type: "inputted-value";
+      inputValue: string;
     }
   | {
       type: "mouse-hovered-over-item";
@@ -101,33 +119,24 @@ export type Msg<TItem> =
     };
 
 export type Effect<TItem> = {
-  type: "scroll-highlighted-item-into-view";
-  highlightedItem: TItem;
-};
-
-export type Config<TItem> = {
-  toKey: (item: TItem) => string;
-  toQuery: (item: TItem) => string;
-  toFiltered: (model: Model<TItem>) => TItem[];
-};
-
-export type UpdateInput<TItem> = {
-  model: Model<TItem>;
-  msg: Msg<TItem>;
-};
-
-export type UpdateOutput<TItem> = {
-  model: Model<TItem>;
-  effects?: Effect<TItem>[];
+  type: "scroll-item-into-view";
+  item: TItem;
 };
 
 export const update = <TItem>(
   config: Config<TItem>,
-  input: UpdateInput<TItem>
-): UpdateOutput<TItem> => {
+  input: {
+    model: Model<TItem>;
+    msg: Msg<TItem>;
+  }
+): {
+  model: Model<TItem>;
+  effects?: Effect<TItem>[];
+} => {
   const updated = updateModel(config, input);
   const effects = toScrollEffects(config, {
     ...input,
+    prev: input.model,
     model: updated,
   });
 
@@ -139,38 +148,57 @@ export const update = <TItem>(
 
 const toScrollEffects = <TItem>(
   config: Config<TItem>,
-  input: UpdateInput<TItem>
+  {
+    prev,
+    model,
+    msg,
+  }: {
+    prev: Model<TItem>;
+    model: Model<TItem>;
+    msg: Msg<TItem>;
+  }
 ): Effect<TItem>[] => {
-  switch (input.model.type) {
-    case "selected__focused__opened__highlighted":
-    case "unselected__focused__opened__highlighted": {
-      if (input.msg.type === "pressed-arrow-key") {
-        const filtered = config.toFiltered(input.model);
+  const effects: Effect<TItem>[] = [];
 
-        const highlightedItem = filtered[input.model.highlightIndex];
+  if (
+    prev.type === "selected__focused__closed" &&
+    model.type === "selected__focused__opened"
+  ) {
+    effects.push({
+      type: "scroll-item-into-view",
+      item: model.selected,
+    });
+  }
 
-        if (highlightedItem) {
-          return [
-            {
-              type: "scroll-highlighted-item-into-view",
-              highlightedItem,
-            },
-          ];
-        }
-      }
+  if (
+    (model.type === "selected__focused__opened__highlighted" ||
+      model.type === "unselected__focused__opened__highlighted") &&
+    msg.type === "pressed-arrow-key"
+  ) {
+    const filtered = config.toFiltered(model);
 
-      return [];
-    }
+    const highlightedItem = filtered[model.highlightIndex];
 
-    default: {
-      return [];
+    if (highlightedItem) {
+      effects.push({
+        type: "scroll-item-into-view",
+        item: highlightedItem,
+      });
     }
   }
+
+  return effects;
 };
 
 const updateModel = <TItem>(
-  { toQuery, toKey, toFiltered }: Config<TItem>,
-  { model, msg }: UpdateInput<TItem>
+  { toInputValue, toId, toFiltered }: Config<TItem>,
+  {
+    model,
+    msg,
+  }: {
+    model: Model<TItem>;
+    msg: Msg<TItem>;
+  }
 ): Model<TItem> => {
   switch (model.type) {
     case "selected__blurred": {
@@ -179,7 +207,7 @@ const updateModel = <TItem>(
           return {
             ...model,
             type: "selected__focused__opened",
-            query: toQuery(model.selected),
+            inputValue: toInputValue(model.selected),
             selected: model.selected,
           };
         }
@@ -199,17 +227,17 @@ const updateModel = <TItem>(
           return { ...model, type: "selected__blurred" };
         }
 
-        case "inputted-query": {
-          if (msg.query === "") {
+        case "inputted-value": {
+          if (msg.inputValue === "") {
             return {
               ...model,
-              query: msg.query,
+              inputValue: msg.inputValue,
               type: "unselected__focused__opened",
             };
           }
           return {
             ...model,
-            query: msg.query,
+            inputValue: msg.inputValue,
             type: "selected__focused__opened",
           };
         }
@@ -217,7 +245,7 @@ const updateModel = <TItem>(
         case "pressed-arrow-key": {
           return {
             ...model,
-            query: model.query,
+            inputValue: model.inputValue,
             type: "selected__focused__opened",
           };
         }
@@ -249,26 +277,26 @@ const updateModel = <TItem>(
           return {
             ...model,
             type: "selected__focused__closed",
-            query: toQuery(model.selected),
+            inputValue: toInputValue(model.selected),
             selected: msg.item,
           };
         }
 
-        case "inputted-query": {
-          if (msg.query === "") {
+        case "inputted-value": {
+          if (msg.inputValue === "") {
             return {
               ...model,
-              query: "",
+              inputValue: "",
               type: "unselected__focused__opened",
             };
           }
-          return { ...model, query: msg.query };
+          return { ...model, inputValue: msg.inputValue };
         }
 
         case "pressed-enter-key": {
           return {
             ...model,
-            query: toQuery(model.selected),
+            inputValue: toInputValue(model.selected),
             type: "selected__focused__closed",
           };
         }
@@ -277,7 +305,7 @@ const updateModel = <TItem>(
           const filtered = toFiltered(model);
 
           const selectedIndex = filtered.findIndex(
-            (item) => toKey(item) === toKey(item)
+            (item) => toId(item) === toId(model.selected)
           );
 
           if (selectedIndex === -1) {
@@ -329,20 +357,20 @@ const updateModel = <TItem>(
           return {
             ...model,
             type: "selected__focused__closed",
-            query: toQuery(msg.item),
+            inputValue: toInputValue(msg.item),
             selected: msg.item,
           };
         }
 
-        case "inputted-query": {
-          if (msg.query === "") {
+        case "inputted-value": {
+          if (msg.inputValue === "") {
             return {
               ...model,
-              query: "",
+              inputValue: "",
               type: "unselected__focused__opened",
             };
           }
-          return { ...model, query: msg.query };
+          return { ...model, inputValue: msg.inputValue };
         }
 
         case "pressed-arrow-key": {
@@ -366,7 +394,7 @@ const updateModel = <TItem>(
 
           return {
             ...model,
-            query: toQuery(selectedNew),
+            inputValue: toInputValue(selectedNew),
             selected: selectedNew,
             type: "selected__focused__closed",
           };
@@ -385,7 +413,11 @@ const updateModel = <TItem>(
     case "unselected__blurred": {
       switch (msg.type) {
         case "focused-input": {
-          return { ...model, type: "unselected__focused__opened", query: "" };
+          return {
+            ...model,
+            type: "unselected__focused__opened",
+            inputValue: "",
+          };
         }
         default: {
           return model;
@@ -402,11 +434,11 @@ const updateModel = <TItem>(
         case "blurred-input": {
           return { ...model, type: "unselected__blurred" };
         }
-        case "inputted-query": {
+        case "inputted-value": {
           return {
             ...model,
             type: "unselected__focused__opened",
-            query: msg.query,
+            inputValue: msg.inputValue,
           };
         }
 
@@ -439,12 +471,12 @@ const updateModel = <TItem>(
             ...model,
             type: "selected__focused__closed",
             selected: msg.item,
-            query: toQuery(msg.item),
+            inputValue: toInputValue(msg.item),
           };
         }
 
-        case "inputted-query": {
-          return { ...model, query: msg.query };
+        case "inputted-value": {
+          return { ...model, inputValue: msg.inputValue };
         }
 
         case "pressed-arrow-key": {
@@ -484,15 +516,15 @@ const updateModel = <TItem>(
             ...model,
             type: "selected__focused__closed",
             selected: msg.item,
-            query: toQuery(msg.item),
+            inputValue: toInputValue(msg.item),
           };
         }
 
-        case "inputted-query": {
+        case "inputted-value": {
           return {
             ...model,
             type: "unselected__focused__opened",
-            query: msg.query,
+            inputValue: msg.inputValue,
           };
         }
 
@@ -520,7 +552,7 @@ const updateModel = <TItem>(
 
           return {
             ...model,
-            query: toQuery(selectedNew),
+            inputValue: toInputValue(selectedNew),
             selected: selectedNew,
             type: "selected__focused__closed",
           };
@@ -555,14 +587,16 @@ const circularIndex = (index: number, length: number) => {
 //
 //
 //
+//
 // Selectors
+//
 //
 //
 //
 
 export const isItemSelected = <TItem>(
+  { toId }: Pick<Config<TItem>, "toId">,
   model: Model<TItem>,
-  toKey: (key: TItem) => string,
   item: TItem
 ) => {
   switch (model.type) {
@@ -570,7 +604,7 @@ export const isItemSelected = <TItem>(
     case "selected__focused__opened":
     case "selected__focused__closed":
     case "selected__focused__opened__highlighted": {
-      return toKey(model.selected) === toKey(item);
+      return toId(model.selected) === toId(item);
     }
 
     case "unselected__blurred":
@@ -582,7 +616,7 @@ export const isItemSelected = <TItem>(
   }
 };
 
-export const isHighlighted = <TItem>(
+export const isIndexHighlighted = <TItem>(
   model: Model<TItem>,
   index: number
 ): boolean => {
@@ -612,8 +646,8 @@ export const isOpened = <TItem>(model: Model<TItem>): boolean => {
   );
 };
 
-export const toQuery = <TItem>(
-  toQuery: (item: TItem) => string,
+export const toInputValue = <TItem>(
+  { toInputValue }: Pick<Config<TItem>, "toInputValue">,
   model: Model<TItem>
 ) => {
   switch (model.type) {
@@ -622,7 +656,7 @@ export const toQuery = <TItem>(
     }
 
     case "selected__blurred": {
-      return toQuery(model.selected);
+      return toInputValue(model.selected);
     }
 
     case "selected__focused__closed":
@@ -631,13 +665,13 @@ export const toQuery = <TItem>(
     case "unselected__focused__closed":
     case "unselected__focused__opened":
     case "unselected__focused__opened__highlighted": {
-      return model.query;
+      return model.inputValue;
     }
   }
 };
 
 export const toHighlightedItem = <TItem>(
-  toFiltered: (model: Model<TItem>) => TItem[],
+  { toFiltered }: Config<TItem>,
   model: Model<TItem>
 ): TItem | null => {
   switch (model.type) {
@@ -663,6 +697,9 @@ export const toHighlightedItem = <TItem>(
 //
 //
 //
+// Debug
+//
+//
 //
 //
 
@@ -670,8 +707,14 @@ export const consoleLog = <TItem>({
   input,
   output,
 }: {
-  input: UpdateInput<TItem>;
-  output: UpdateOutput<TItem>;
+  input: {
+    model: Model<TItem>;
+    msg: Msg<TItem>;
+  };
+  output: {
+    model: Model<TItem>;
+    effects?: Effect<TItem>[];
+  };
 }) => {
   console.log("\n");
   console.log(input.model.type);

@@ -693,6 +693,22 @@ export const toHighlightedItem = <TItem>(
   }
 };
 
+export const toSelectedItem = <TItem>(model: Model<TItem>): TItem | null => {
+  switch (model.type) {
+    case "selected__blurred":
+    case "selected__focused__opened":
+    case "selected__focused__closed":
+    case "selected__focused__opened__highlighted":
+      return model.selected;
+
+    case "unselected__blurred":
+    case "unselected__focused__closed":
+    case "unselected__focused__opened":
+    case "unselected__focused__opened__highlighted":
+      return null;
+  }
+};
+
 //
 //
 //

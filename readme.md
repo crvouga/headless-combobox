@@ -26,6 +26,8 @@ pnpm install crvouga/headless-autocomplete
 
 # Usage
 
+## React.js
+
 ```ts
 type MyItem = {
   id: string;
@@ -44,5 +46,30 @@ const Autocomplete = () => {
   useEffect(() => {}, []);
 
   return <input />;
+};
+```
+
+## Vue
+
+```html
+<script lang="ts" setup>
+  import Autocomplete from "crvouga/headless-autocomplete";
+
+  const state = ref<Autocomplete.State<MyItem>>({
+    type: "",
+  });
+</script>
+<template>
+  <input :value="toQuery(state)" @focus="dispatch({type: "focused"})"
+  @blur="dispatch({type: "focused"})" />
+</template>
+```
+
+## Redux
+
+```ts
+type MyState = {
+  //you state
+  autocomplete: Autocomplete.State;
 };
 ```

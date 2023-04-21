@@ -33,8 +33,8 @@ Or copy & paste it into your source code. It's just one file with zero dependenc
 ## React
 
 ```ts
-import * as Autocomplete from "headless-autocomplete";
 import { useRef, useState } from "react";
+import * as Autocomplete from "headless-autocomplete";
 
 type Movie = {
   year: number;
@@ -42,15 +42,13 @@ type Movie = {
 };
 
 const config: Autocomplete.Config<Movie> = {
-  toKey: (item) => item.label,
-  toQuery: (item) => item.label,
+  toId: (item) => item.label,
+  toInputValue: (item) => item.label,
   toFiltered: (model) => {
     return model.allItems.filter((item) =>
       item.label
         .toLowerCase()
-        .includes(
-          Autocomplete.toQuery((item) => item.label, model).toLowerCase()
-        )
+        .includes(Autocomplete.toInputValue(config, model).toLowerCase())
     );
   },
 };
@@ -79,32 +77,53 @@ function App() {
       inputRef.current?.focus();
     }
 
-    for (const effect of output.effects ?? []) {
-      if (effect.type === "scroll-highlighted-item-into-view") {
-        const ref = refs.current.get(config.toKey(effect.highlightedItem));
-        ref?.scrollIntoView({
-          block: "nearest",
-          inline: "center",
-        });
+    // wait for dropdown to open
+    requestAnimationFrame(() => {
+      for (const effect of output.effects ?? []) {
+        if (effect.type === "scroll-item-into-view") {
+          const ref = refs.current.get(config.toId(effect.item));
+          ref?.scrollIntoView({
+            block: "nearest",
+            inline: "center",
+          });
+        }
       }
-    }
+    });
   };
 
   const inputRef = useRef<HTMLInputElement | null>(null);
   const refs = useRef(new Map<string, HTMLDivElement>());
 
   return (
-    <div>
-      <div style={{ width: "100%", textAlign: "left" }}>{model.type}</div>
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        maxWidth: "400px",
+        margin: "auto",
+        color: "#fff",
+        padding: "1rem",
+      }}>
+      <div
+        style={{
+          width: "100%",
+          textAlign: "left",
+          padding: "1rem",
+        }}>
+        {model.type}
+      </div>
 
       <input
         ref={inputRef}
         onInput={(event) =>
-          dispatch({ type: "inputted-query", query: event.currentTarget.value })
+          dispatch({
+            type: "inputted-value",
+            inputValue: event.currentTarget.value,
+          })
         }
         onBlur={() => dispatch({ type: "blurred-input" })}
         onFocus={() => dispatch({ type: "focused-input" })}
-        value={Autocomplete.toQuery((item) => item.label, model)}
+        value={Autocomplete.toInputValue(config, model)}
         style={{
           width: "100%",
           boxSizing: "border-box",
@@ -142,13 +161,14 @@ function App() {
             overflowY: "scroll",
             maxHeight: "400px",
             background: "rgba(0.6, 0.6, 0.6)",
+            fontFamily: "monospace",
           }}>
           {config.toFiltered(model).map((item, index) => (
             <div
               key={item.label}
               ref={(ref) => {
                 if (ref) {
-                  refs.current.set(config.toKey(item), ref);
+                  refs.current.set(config.toId(item), ref);
                 }
               }}
               onMouseDown={(event) => {
@@ -160,7 +180,13 @@ function App() {
               }
               style={{
                 padding: "0.5rem",
-                ...(Autocomplete.isHighlighted(model, index)
+                ...(Autocomplete.isItemSelected(config, model, item)
+                  ? {
+                      background: "rgba(255, 255, 255, 0.8)",
+                      color: "black",
+                    }
+                  : {}),
+                ...(Autocomplete.isIndexHighlighted(model, index)
                   ? {
                       background: "white",
                       color: "black",

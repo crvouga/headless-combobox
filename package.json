@@ -10,7 +10,8 @@
     "prepublish": "tsc",
     "prepublishOnly": "tsc",
     "update-example-deps": "cd example/react && npm install headless-autocomplete@latest",
-    "publish": "npm publish & npm run update-example-deps"
+    "publish": "npm publish & npm run update-example-deps",
+    "gen-docs": "typedoc src/index.ts"
   },
   "repository": {
     "type": "git",
@@ -23,6 +24,7 @@
   },
   "homepage": "https://github.com/crvouga/headless-autocomplete#readme",
   "devDependencies": {
+    "typedoc": "^0.24.4",
     "typescript": "^5.0.4"
   }
 }

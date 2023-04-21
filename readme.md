@@ -5,6 +5,7 @@
 - 💪 Written in TypeScript
 - 🧠 Headless
 - 🔌 Simple pure functional API
+- 💼 Runs any where javascript runs. Anywhere from React Native to Vue to Node.js
 
 ## Links
 
@@ -36,26 +37,38 @@ pnpm install headless-autocomplete
 
 Or copy & paste it into your source code. It's just one file with zero dependencies.
 
-# TODO
+## TODO
 
 - Multi select
 
 - Accessibility Helpers (you can do this yourself since its headless)
 
-- Add adapters for frameworks
+- Maybe add adapters for frameworks (like React, React Native, Vue, Svelte)
 
-# Usage
+## Usage
 
-## React
+### React
 
 ```ts
 import { useRef, useState } from "react";
 import * as Autocomplete from "headless-autocomplete";
 
+//
+//
+// Step 0. Define Your data
+//
+//
+
 type Movie = {
   year: number;
   label: string;
 };
+
+//
+//
+// Step 1: Define the config
+//
+//
 
 const config: Autocomplete.Config<Movie> = {
   toId: (item) => item.label,
@@ -70,45 +83,59 @@ const config: Autocomplete.Config<Movie> = {
 };
 
 function App() {
-  const [model, setModel] = useState(
+  //
+  //
+  // Step 2. Initialize the state
+  //
+  //
+
+  const [state, setState] = useState(
     Autocomplete.init<Movie>({
       allItems: top100Films,
     })
   );
 
-  const dispatch = (msg: Autocomplete.Msg<Movie>) => {
-    const input = { msg, model };
+  //
+  //
+  // Step 3. Update the state
+  //
+  //
+
+  const dispatch = async (msg: Autocomplete.Msg<Movie>) => {
+    const input = { msg, model: state };
     const output = Autocomplete.update(config, input);
 
-    setModel(output.model);
+    setState(output.model);
 
-    Autocomplete.consoleLog({
-      input,
-      output,
-    });
+    // wait for dropdown to render
+    await new Promise((resolve) => requestAnimationFrame(resolve));
 
-    if (msg.type === "clicked-item") {
-      console.log("clicked-item", msg.item);
-      console.log(inputRef.current);
-      inputRef.current?.focus();
+    // Run Effects
+    for (const effect of output.effects ?? []) {
+      if (effect.type === "scroll-item-into-view") {
+        const ref = refs.current.get(config.toId(effect.item));
+        ref?.scrollIntoView({
+          block: "nearest",
+        });
+      }
     }
 
-    // wait for dropdown to open
-    requestAnimationFrame(() => {
-      for (const effect of output.effects ?? []) {
-        if (effect.type === "scroll-item-into-view") {
-          const ref = refs.current.get(config.toId(effect.item));
-          ref?.scrollIntoView({
-            block: "nearest",
-            inline: "center",
-          });
-        }
-      }
+    // Debug Logger
+    Autocomplete.debug({
+      log: console.log,
+      input,
+      output,
     });
   };
 
   const inputRef = useRef<HTMLInputElement | null>(null);
   const refs = useRef(new Map<string, HTMLDivElement>());
+
+  //
+  //
+  // Step 4. Wire up to the view
+  //
+  //
 
   return (
     <div
@@ -126,7 +153,7 @@ function App() {
           textAlign: "left",
           padding: "1rem",
         }}>
-        {model.type}
+        {state.type}
       </div>
 
       <input
@@ -139,7 +166,7 @@ function App() {
         }
         onBlur={() => dispatch({ type: "blurred-input" })}
         onFocus={() => dispatch({ type: "focused-input" })}
-        value={Autocomplete.toInputValue(config, model)}
+        value={Autocomplete.toInputValue(config, state)}
         style={{
           width: "100%",
           boxSizing: "border-box",
@@ -147,7 +174,7 @@ function App() {
           fontSize: "1.5rem",
         }}
         onClick={() => {
-          dispatch({ type: "clicked-input" });
+          dispatch({ type: "pressed-input" });
         }}
         onKeyDown={(event) => {
           if (event.key === "ArrowDown") {
@@ -168,7 +195,7 @@ function App() {
         }}
       />
 
-      {Autocomplete.isOpened(model) && (
+      {Autocomplete.isOpened(state) && (
         <div
           style={{
             width: "100%",
@@ -179,7 +206,7 @@ function App() {
             background: "rgba(0.6, 0.6, 0.6)",
             fontFamily: "monospace",
           }}>
-          {config.toFiltered(model).map((item, index) => (
+          {config.toFiltered(state).map((item, index) => (
             <div
               key={item.label}
               ref={(ref) => {
@@ -189,20 +216,20 @@ function App() {
               }}
               onMouseDown={(event) => {
                 event.preventDefault();
-                dispatch({ type: "clicked-item", item });
+                dispatch({ type: "pressed-item", item });
               }}
               onMouseEnter={() =>
-                dispatch({ type: "mouse-hovered-over-item", index })
+                dispatch({ type: "hovered-over-item", index })
               }
               style={{
                 padding: "0.5rem",
-                ...(Autocomplete.isItemSelected(config, model, item)
+                ...(Autocomplete.isItemSelected(config, state, item)
                   ? {
                       background: "rgba(255, 255, 255, 0.8)",
                       color: "black",
                     }
                   : {}),
-                ...(Autocomplete.isIndexHighlighted(model, index)
+                ...(Autocomplete.isIndexHighlighted(state, index)
                   ? {
                       background: "white",
                       color: "black",

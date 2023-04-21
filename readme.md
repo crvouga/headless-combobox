@@ -7,19 +7,19 @@
 ### NPM
 
 ```shell
-npm install crvouga/headless-autocomplete
+npm install headless-autocomplete
 ```
 
 ### Yarn
 
 ```shell
-yarn add crvouga/headless-autocomplete
+yarn add headless-autocomplete
 ```
 
 ### PNPM
 
 ```shell
-pnpm install crvouga/headless-autocomplete
+pnpm install headless-autocomplete
 ```
 
 ## Or just copy and paste into your code. 🤷‍♂️

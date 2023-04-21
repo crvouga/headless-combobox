@@ -1,6 +1,6 @@
 # headless-autocomplete
 
-## What is this?
+⚡️zero dependency, 🔍 framework agnostic, 💪typescript,🧠 headless autocomplete.
 
 ## Installation
 

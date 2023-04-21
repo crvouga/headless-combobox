@@ -26,7 +26,7 @@ export type Model<TItem> = ModelState<TItem> & {
   allItems: TItem[];
 };
 
-type ModelState<TItem> =
+export type ModelState<TItem> =
   | {
       type: "unselected__blurred";
     }
@@ -97,7 +97,7 @@ export type Msg<TItem> =
       type: "pressed-enter-key";
     }
   | {
-      type: "clicked-item";
+      type: "pressed-item";
       item: TItem;
     }
   | {
@@ -111,11 +111,11 @@ export type Msg<TItem> =
       inputValue: string;
     }
   | {
-      type: "mouse-hovered-over-item";
+      type: "hovered-over-item";
       index: number;
     }
   | {
-      type: "clicked-input";
+      type: "pressed-input";
     };
 
 export type Effect<TItem> = {
@@ -134,7 +134,7 @@ export const update = <TItem>(
   effects?: Effect<TItem>[];
 } => {
   const updated = updateModel(config, input);
-  const effects = toScrollEffects(config, {
+  const effects = toEffects(config, {
     ...input,
     prev: input.model,
     model: updated,
@@ -146,7 +146,7 @@ export const update = <TItem>(
   };
 };
 
-const toScrollEffects = <TItem>(
+const toEffects = <TItem>(
   config: Config<TItem>,
   {
     prev,
@@ -160,6 +160,10 @@ const toScrollEffects = <TItem>(
 ): Effect<TItem>[] => {
   const effects: Effect<TItem>[] = [];
 
+  //
+  //
+  //
+
   if (
     prev.type === "selected__focused__closed" &&
     model.type === "selected__focused__opened"
@@ -169,6 +173,10 @@ const toScrollEffects = <TItem>(
       item: model.selected,
     });
   }
+
+  //
+  //
+  //
 
   if (
     (model.type === "selected__focused__opened__highlighted" ||
@@ -219,7 +227,7 @@ const updateModel = <TItem>(
 
     case "selected__focused__closed": {
       switch (msg.type) {
-        case "clicked-input": {
+        case "pressed-input": {
           return { ...model, type: "selected__focused__opened" };
         }
 
@@ -258,7 +266,7 @@ const updateModel = <TItem>(
 
     case "selected__focused__opened": {
       switch (msg.type) {
-        case "mouse-hovered-over-item": {
+        case "hovered-over-item": {
           return {
             ...model,
             type: "selected__focused__opened__highlighted",
@@ -273,7 +281,7 @@ const updateModel = <TItem>(
           };
         }
 
-        case "clicked-item": {
+        case "pressed-item": {
           return {
             ...model,
             type: "selected__focused__closed",
@@ -345,7 +353,7 @@ const updateModel = <TItem>(
 
     case "selected__focused__opened__highlighted": {
       switch (msg.type) {
-        case "mouse-hovered-over-item": {
+        case "hovered-over-item": {
           return { ...model, highlightIndex: msg.index };
         }
 
@@ -353,7 +361,7 @@ const updateModel = <TItem>(
           return { ...model, type: "selected__blurred" };
         }
 
-        case "clicked-item": {
+        case "pressed-item": {
           return {
             ...model,
             type: "selected__focused__closed",
@@ -427,7 +435,7 @@ const updateModel = <TItem>(
 
     case "unselected__focused__closed": {
       switch (msg.type) {
-        case "clicked-input": {
+        case "pressed-input": {
           return { ...model, type: "unselected__focused__opened" };
         }
 
@@ -454,7 +462,7 @@ const updateModel = <TItem>(
 
     case "unselected__focused__opened": {
       switch (msg.type) {
-        case "mouse-hovered-over-item": {
+        case "hovered-over-item": {
           return {
             ...model,
             type: "unselected__focused__opened__highlighted",
@@ -466,7 +474,7 @@ const updateModel = <TItem>(
           return { ...model, type: "unselected__blurred" };
         }
 
-        case "clicked-item": {
+        case "pressed-item": {
           return {
             ...model,
             type: "selected__focused__closed",
@@ -503,7 +511,7 @@ const updateModel = <TItem>(
 
     case "unselected__focused__opened__highlighted": {
       switch (msg.type) {
-        case "mouse-hovered-over-item": {
+        case "hovered-over-item": {
           return { ...model, highlightIndex: msg.index };
         }
 
@@ -511,7 +519,7 @@ const updateModel = <TItem>(
           return { ...model, type: "unselected__blurred" };
         }
 
-        case "clicked-item": {
+        case "pressed-item": {
           return {
             ...model,
             type: "selected__focused__closed",
@@ -693,6 +701,22 @@ export const toHighlightedItem = <TItem>(
   }
 };
 
+export const toSelectedItem = <TItem>(model: Model<TItem>): TItem | null => {
+  switch (model.type) {
+    case "selected__blurred":
+    case "selected__focused__opened":
+    case "selected__focused__closed":
+    case "selected__focused__opened__highlighted":
+      return model.selected;
+
+    case "unselected__blurred":
+    case "unselected__focused__closed":
+    case "unselected__focused__opened":
+    case "unselected__focused__opened__highlighted":
+      return null;
+  }
+};
+
 //
 //
 //
@@ -703,10 +727,12 @@ export const toHighlightedItem = <TItem>(
 //
 //
 
-export const consoleLog = <TItem>({
+export const debug = <TItem>({
+  log,
   input,
   output,
 }: {
+  log: (...args: any[]) => void;
   input: {
     model: Model<TItem>;
     msg: Msg<TItem>;
@@ -716,10 +742,10 @@ export const consoleLog = <TItem>({
     effects?: Effect<TItem>[];
   };
 }) => {
-  console.log("\n");
-  console.log("PREV ", input.model.type);
-  console.log("msg: ", input.msg.type);
-  console.log("NEXT ", output.model.type);
-  console.log("effects: ", output.effects?.map((eff) => eff.type).join(", "));
-  console.log("\n");
+  log("\n");
+  log("PREV ", input.model.type);
+  log("msg: ", input.msg.type);
+  log("NEXT ", output.model.type);
+  log("effects: ", output.effects?.map((eff) => eff.type).join(", "));
+  log("\n");
 };

@@ -59,8 +59,23 @@ function App() {
   const refs = useRef(new Map<string, HTMLDivElement>());
 
   return (
-    <div>
-      <div style={{ width: "100%", textAlign: "left" }}>{model.type}</div>
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        maxWidth: "400px",
+        margin: "auto",
+        color: "#fff",
+        padding: "1rem",
+      }}>
+      <div
+        style={{
+          width: "100%",
+          textAlign: "left",
+          padding: "1rem",
+        }}>
+        {model.type}
+      </div>
 
       <input
         ref={inputRef}

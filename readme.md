@@ -38,6 +38,8 @@ Or copy & paste it into your source code. It's just one file with zero dependenc
 
 - Accessibility Helpers (you can do this yourself since its headless)
 
+- Add adapters for frameworks
+
 # Usage
 
 ## React

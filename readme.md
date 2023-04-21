@@ -26,7 +26,7 @@ yarn add headless-autocomplete
 pnpm install headless-autocomplete
 ```
 
-## Or just copy and paste it into your code. 🤷‍♂️ It's one file & zero dependencies.
+## Or copy & paste it into your source code. It's just one file with zero dependencies.
 
 # Usage
 

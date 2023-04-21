@@ -38,6 +38,12 @@ function App() {
       output,
     });
 
+    if (msg.type === "clicked-item") {
+      console.log("clicked-item", msg.item);
+      console.log(inputRef.current);
+      inputRef.current?.focus();
+    }
+
     for (const effect of output.effects ?? []) {
       if (effect.type === "scroll-highlighted-item-into-view") {
         const ref = refs.current.get(config.toKey(effect.highlightedItem));
@@ -49,6 +55,7 @@ function App() {
     }
   };
 
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const refs = useRef(new Map<string, HTMLDivElement>());
 
   return (
@@ -56,6 +63,7 @@ function App() {
       <div style={{ width: "100%", textAlign: "left" }}>{model.type}</div>
 
       <input
+        ref={inputRef}
         onInput={(event) =>
           dispatch({ type: "inputted-query", query: event.currentTarget.value })
         }
@@ -67,6 +75,9 @@ function App() {
           boxSizing: "border-box",
           padding: "0.5rem",
           fontSize: "1.5rem",
+        }}
+        onClick={() => {
+          dispatch({ type: "clicked-input" });
         }}
         onKeyDown={(event) => {
           if (event.key === "ArrowDown") {
@@ -105,6 +116,13 @@ function App() {
                   refs.current.set(config.toKey(item), ref);
                 }
               }}
+              onMouseDown={(event) => {
+                event.preventDefault();
+                dispatch({ type: "clicked-item", item });
+              }}
+              onMouseEnter={() =>
+                dispatch({ type: "mouse-hovered-over-item", index })
+              }
               style={{
                 padding: "0.5rem",
                 ...(Autocomplete.isHighlighted(model, index)

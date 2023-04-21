@@ -91,6 +91,13 @@ export type Msg<TItem> =
   | {
       type: "inputted-query";
       query: string;
+    }
+  | {
+      type: "mouse-hovered-over-item";
+      index: number;
+    }
+  | {
+      type: "clicked-input";
     };
 
 export type Effect<TItem> = {
@@ -184,6 +191,10 @@ const updateModel = <TItem>(
 
     case "selected__focused__closed": {
       switch (msg.type) {
+        case "clicked-input": {
+          return { ...model, type: "selected__focused__opened" };
+        }
+
         case "blurred-input": {
           return { ...model, type: "selected__blurred" };
         }
@@ -219,6 +230,13 @@ const updateModel = <TItem>(
 
     case "selected__focused__opened": {
       switch (msg.type) {
+        case "mouse-hovered-over-item": {
+          return {
+            ...model,
+            type: "selected__focused__opened__highlighted",
+            highlightIndex: msg.index,
+          };
+        }
         case "blurred-input": {
           return {
             ...model,
@@ -299,6 +317,10 @@ const updateModel = <TItem>(
 
     case "selected__focused__opened__highlighted": {
       switch (msg.type) {
+        case "mouse-hovered-over-item": {
+          return { ...model, highlightIndex: msg.index };
+        }
+
         case "blurred-input": {
           return { ...model, type: "selected__blurred" };
         }
@@ -373,6 +395,10 @@ const updateModel = <TItem>(
 
     case "unselected__focused__closed": {
       switch (msg.type) {
+        case "clicked-input": {
+          return { ...model, type: "unselected__focused__opened" };
+        }
+
         case "blurred-input": {
           return { ...model, type: "unselected__blurred" };
         }
@@ -396,6 +422,14 @@ const updateModel = <TItem>(
 
     case "unselected__focused__opened": {
       switch (msg.type) {
+        case "mouse-hovered-over-item": {
+          return {
+            ...model,
+            type: "unselected__focused__opened__highlighted",
+            highlightIndex: msg.index,
+          };
+        }
+
         case "blurred-input": {
           return { ...model, type: "unselected__blurred" };
         }
@@ -405,6 +439,7 @@ const updateModel = <TItem>(
             ...model,
             type: "selected__focused__closed",
             selected: msg.item,
+            query: toQuery(msg.item),
           };
         }
 
@@ -436,6 +471,10 @@ const updateModel = <TItem>(
 
     case "unselected__focused__opened__highlighted": {
       switch (msg.type) {
+        case "mouse-hovered-over-item": {
+          return { ...model, highlightIndex: msg.index };
+        }
+
         case "blurred-input": {
           return { ...model, type: "unselected__blurred" };
         }
@@ -445,6 +484,7 @@ const updateModel = <TItem>(
             ...model,
             type: "selected__focused__closed",
             selected: msg.item,
+            query: toQuery(msg.item),
           };
         }
 
@@ -492,8 +532,10 @@ const updateModel = <TItem>(
             type: "unselected__focused__closed",
           };
         }
+        default: {
+          return model;
+        }
       }
-      return model;
     }
 
     default: {

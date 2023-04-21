@@ -35,11 +35,11 @@ type MyItem = {
 };
 
 const Autocomplete = () => {
-  const [state, setState] = useState<AutocompleteState<MyItem>>();
+  const [state, setState] = useState<Autocomplete.Model<MyItem>>();
 
-  const dispatch = (event: AutocompleteEvent<MyItem>) => {
+  const dispatch = (event: Autocomplete.Msg<MyItem>) => {
     setState((state) => {
-      return Autocomplete.reducer({});
+      return Autocomplete.update({});
     });
   };
 
@@ -53,7 +53,7 @@ const Autocomplete = () => {
 
 ```html
 <script lang="ts" setup>
-  import Autocomplete from "crvouga/headless-autocomplete";
+  import Autocomplete from "headless-autocomplete";
 
   const state = ref<Autocomplete.State<MyItem>>({
     type: "",

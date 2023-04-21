@@ -24,6 +24,7 @@ export type Config<TItem> = {
 
 export type Model<TItem> = ModelState<TItem> & {
   allItems: TItem[];
+  previousEffects: Effect<TItem>[];
 };
 
 export type ModelState<TItem> =
@@ -72,6 +73,7 @@ export const init = <TItem>({
   return {
     type: "unselected__blurred",
     allItems,
+    previousEffects: [],
   };
 };
 
@@ -125,7 +127,10 @@ export type Effect<TItem> = {
 
 export const update = <TItem>(
   config: Config<TItem>,
-  input: {
+  {
+    msg,
+    model,
+  }: {
     model: Model<TItem>;
     msg: Msg<TItem>;
   }
@@ -133,15 +138,44 @@ export const update = <TItem>(
   model: Model<TItem>;
   effects?: Effect<TItem>[];
 } => {
-  const updated = updateModel(config, input);
+  //
+  // Edge case:
+  //
+  // Happens when:
+  // Hovering over an item with the mouse and then scrolling to the next item with the keyboard.
+  //
+  // Expected Behavior:
+  // The item the keyboard navigated to is scrolled into view.
+  //
+  // Actual Behavior:
+  // The item that was hovered over is scrolled into view.
+  //
+  if (
+    model.previousEffects.some(
+      (effect) => effect.type === "scroll-item-into-view"
+    ) &&
+    msg.type === "hovered-over-item"
+  ) {
+    // skip the update
+    return {
+      model: { ...model, previousEffects: [] },
+      effects: [],
+    };
+  }
+
+  const modelNew = updateModel(config, { msg, model });
+
   const effects = toEffects(config, {
-    ...input,
-    prev: input.model,
-    model: updated,
+    msg,
+    prev: model,
+    model: modelNew,
   });
 
   return {
-    model: updated,
+    model: {
+      ...modelNew,
+      previousEffects: effects,
+    },
     effects: effects,
   };
 };
@@ -714,6 +748,60 @@ export const toSelectedItem = <TItem>(model: Model<TItem>): TItem | null => {
     case "unselected__focused__opened":
     case "unselected__focused__opened__highlighted":
       return null;
+  }
+};
+
+export const toAriaAttributes = <TItem>(
+  { toId }: Config<TItem>,
+  model: Model<TItem>
+) => {
+  switch (model.type) {
+    case "unselected__blurred":
+    case "unselected__focused__closed":
+    case "unselected__focused__opened":
+    case "unselected__focused__opened__highlighted": {
+      return {
+        "aria-activedescendant": "",
+        "aria-autocomplete": "list",
+        "aria-controls": "",
+        "aria-expanded": false,
+        "aria-haspopup": "listbox",
+        "aria-owns": "",
+      };
+    }
+
+    case "selected__blurred":
+    case "selected__focused__closed": {
+      return {
+        "aria-activedescendant": toId(model.selected),
+        "aria-autocomplete": "list",
+        "aria-controls": "",
+        "aria-expanded": false,
+        "aria-haspopup": "listbox",
+        "aria-owns": "",
+      };
+    }
+    case "selected__focused__opened": {
+      return {
+        "aria-activedescendant": toId(model.selected),
+        "aria-autocomplete": "list",
+        "aria-controls": "",
+        "aria-expanded": false,
+        "aria-haspopup": "listbox",
+        "aria-owns": "",
+      };
+    }
+
+    case "selected__focused__opened__highlighted": {
+      return {
+        "aria-activedescendant": toId(model.selected),
+        "aria-autocomplete": "list",
+        "aria-controls": "",
+        "aria-expanded": false,
+        "aria-haspopup": "listbox",
+        "aria-owns": "",
+      };
+    }
   }
 };
 

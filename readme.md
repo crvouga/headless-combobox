@@ -1,6 +1,10 @@
 # headless-autocomplete
 
-⚡️zero dependency, 🔍 framework agnostic, 💪typescript,🧠 headless autocomplete.
+- ⚡️ Zero dependencies
+- 🔍 Framework agnostic
+- 💪 Written in TypeScript
+- 🧠 Headless
+- 🔌 Simple API
 
 ## Installation
 

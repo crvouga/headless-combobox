@@ -717,9 +717,9 @@ export const consoleLog = <TItem>({
   };
 }) => {
   console.log("\n");
-  console.log(input.model.type);
-  console.log(input.msg.type);
-  console.log(output.model.type);
-  console.log(output.effects?.map((eff) => eff.type).join(", "));
+  console.log("PREV ", input.model.type);
+  console.log("msg: ", input.msg.type);
+  console.log("NEXT ", output.model.type);
+  console.log("effects: ", output.effects?.map((eff) => eff.type).join(", "));
   console.log("\n");
 };

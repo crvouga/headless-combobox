@@ -22,6 +22,8 @@ yarn add crvouga/headless-autocomplete
 pnpm install crvouga/headless-autocomplete
 ```
 
+## Or just copy and paste into your code. 🤷‍♂️
+
 # Usage
 
 ```ts

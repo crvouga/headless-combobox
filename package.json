@@ -1,0 +1,22 @@
+{
+  "name": "headless-autocomplete",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/crvouga/headless-autocomplete.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/crvouga/headless-autocomplete/issues"
+  },
+  "homepage": "https://github.com/crvouga/headless-autocomplete#readme",
+  "devDependencies": {
+    "typescript": "^5.0.4"
+  }
+}

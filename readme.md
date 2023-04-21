@@ -6,9 +6,13 @@
 - 🧠 Headless
 - 🔌 Simple API
 
-# Docs
+## Links
 
-## [headless-autocomplete.vercel.app](https://headless-autocomplete.vercel.app/)
+- [Documentation](https://headless-autocomplete.vercel.app/)
+
+- [Github](https://github.com/crvouga/headless-autocomplete)
+
+- [NPM](https://www.npmjs.com/package/headless-autocomplete)
 
 ## Installation
 

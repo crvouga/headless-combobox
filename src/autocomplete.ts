@@ -1,15 +1,4 @@
-type Unsubscribe = () => void;
-type Subscriber<TOption> = (state: AutocompleteState<TOption>) => void;
-
-export type AutocompleteState<TOption> = {
-  query: string;
-  selected: TOption | null;
-  highlighted: TOption | null;
-  options: TOption[];
-  opened: boolean;
-};
-
-type Model<TItem> = State<TItem> & {
+export type Model<TItem> = State<TItem> & {
   allItems: TItem[];
 };
 
@@ -51,7 +40,7 @@ type State<TItem> =
       highlightIndex: number;
     };
 
-type Event<TItem> =
+export type Event<TItem> =
   | {
       type: "pressed-arrow-key";
       key: "arrow-up" | "arrow-down";
@@ -80,11 +69,13 @@ type Event<TItem> =
 export const reducer = <TItem>({
   toQuery,
   toKey,
+  toFiltered,
   model,
   event,
 }: {
   toKey: (item: TItem) => string;
   toQuery: (item: TItem) => string;
+  toFiltered: (model: Model<TItem> & { query: string }) => TItem[];
   model: Model<TItem>;
   event: Event<TItem>;
 }): Model<TItem> => {
@@ -106,7 +97,23 @@ export const reducer = <TItem>({
     }
 
     case "selected & focused & closed": {
-      return model;
+      switch (event.type) {
+        case "blurred-input": {
+          return { ...model, type: "selected & blurred" };
+        }
+
+        case "inputted-query": {
+          return { ...model, type: "selected & focused & opened" };
+        }
+
+        case "pressed-arrow-key": {
+          return { ...model, type: "selected & focused & opened" };
+        }
+
+        default: {
+          return model;
+        }
+      }
     }
 
     case "selected & focused & opened": {
@@ -129,10 +136,7 @@ export const reducer = <TItem>({
         }
 
         case "pressed-arrow-key": {
-          const filtered = toFilteredItems({
-            model,
-            toQuery,
-          });
+          const filtered = toFiltered(model);
 
           const selectedIndex = filtered.findIndex(
             (item) => toKey(item) === toKey(item)
@@ -189,10 +193,7 @@ export const reducer = <TItem>({
         }
 
         case "pressed-arrow-key": {
-          const filtered = toFilteredItems({
-            model,
-            toQuery,
-          });
+          const filtered = toFiltered(model);
           const delta = event.key === "arrow-down" ? 1 : -1;
           const highlightIndex = circularIndex(
             model.highlightIndex + delta,
@@ -202,10 +203,7 @@ export const reducer = <TItem>({
         }
 
         case "pressed-enter-key": {
-          const filtered = toFilteredItems({
-            model,
-            toQuery,
-          });
+          const filtered = toFiltered(model);
 
           const selectedNew = filtered[model.highlightIndex];
 
@@ -283,10 +281,7 @@ export const reducer = <TItem>({
         }
 
         case "pressed-arrow-key": {
-          const filtered = toFilteredItems({
-            model,
-            toQuery,
-          });
+          const filtered = toFiltered(model);
           const highlightIndex =
             event.key === "arrow-up" ? filtered.length - 1 : 0;
 
@@ -330,7 +325,7 @@ export const reducer = <TItem>({
         }
 
         case "pressed-arrow-key": {
-          const filtered = toFilteredItems({ model, toQuery });
+          const filtered = toFiltered(model);
           const delta = event.key === "arrow-down" ? 1 : -1;
           const highlightIndex = circularIndex(
             model.highlightIndex + delta,
@@ -343,10 +338,7 @@ export const reducer = <TItem>({
         }
 
         case "pressed-enter-key": {
-          const filtered = toFilteredItems({
-            model,
-            toQuery,
-          });
+          const filtered = toFiltered(model);
 
           const selectedNew = filtered[model.highlightIndex];
 
@@ -385,122 +377,62 @@ const circularIndex = (index: number, length: number) => {
   return ((index % length) + length) % length;
 };
 
-const toFilteredItems = <TItem>({
-  model,
-  toQuery,
-}: {
-  toQuery: (item: TItem) => string;
-  model: Model<TItem> & { query: string };
-}): TItem[] => {
-  return model.allItems.filter((item) => {
-    const itemQuery = toQuery(item);
-    return itemQuery.includes(model.query);
-  });
+export const isHighlighted = <TItem>(
+  model: Model<TItem>,
+  index: number
+): boolean => {
+  return (
+    (model.type === "selected & focused & opened & highlighted" &&
+      model.highlightIndex === index) ||
+    (model.type === "unselected & focused & opened & highlighted" &&
+      model.highlightIndex === index)
+  );
 };
 
-export const createAutocomplete = <TItem>({
-  inputElement,
-  debug = false,
-  toQuery,
-  toKey,
-}: {
-  toQuery: (option: TItem) => string;
-  toKey: (option: TItem) => string;
-  inputElement: HTMLInputElement;
-  debug?: boolean;
-}) => {
-  const log = (...args: any[]) => {
-    if (debug) {
-      console.log(...args);
-    }
-  };
-
-  //
-  //
-  // State
-  //
-  //
-
-  let state: AutocompleteState<TItem> = {
-    highlighted: null,
-    options: [],
-    query: "",
-    selected: null,
-    opened: false,
-  };
-  const subscribers = new Map<string, Subscriber<TItem>>();
-
-  const getState = () => {
-    return state;
-  };
-
-  const setState = (
-    updater: (stateNew: AutocompleteState<TItem>) => AutocompleteState<TItem>
-  ) => {
-    state = updater(state);
-
-    for (const subscriber of subscribers.values()) {
-      subscriber(state);
-    }
-  };
-
-  // const dispatch = (event: Event<TItem>) => {};
-
-  const subscribe = (subscriber: Subscriber<TItem>): Unsubscribe => {
-    const subscriberId = randomId();
-    subscribers.set(subscriberId, subscriber);
-    return () => {
-      subscribers.delete(subscriberId);
-    };
-  };
-
-  //
-  //
-  //
-  //
-  //
-
-  inputElement.onfocus = () => {
-    log("focus");
-
-    setState((state) => ({
-      ...state,
-      opened: true,
-    }));
-    return;
-  };
-
-  inputElement.onblur = () => {
-    log("blur");
-    setState((state) => ({
-      ...state,
-      opened: false,
-      highlighted: null,
-      query: state.selected ? toQuery(state.selected) : "",
-    }));
-    return;
-  };
-
-  inputElement.onkeydown = (event) => {
-    log("keydown", event.key);
-    setState((state) => ({
-      ...state,
-    }));
-  };
-
-  return {
-    subscribe,
-    setState,
-    getState,
-  };
+export const isOpened = <TItem>(model: Model<TItem>): boolean => {
+  return (
+    model.type === "selected & focused & opened" ||
+    model.type === "selected & focused & opened & highlighted" ||
+    model.type === "unselected & focused & opened" ||
+    model.type === "unselected & focused & opened & highlighted"
+  );
 };
 
-//
-//
-//
-//
-//
+export const toQuery = <TItem>(
+  toQuery: (item: TItem) => string,
+  model: Model<TItem>
+) => {
+  switch (model.type) {
+    case "selected & blurred": {
+      return toQuery(model.selected);
+    }
 
-const randomId = (): string => {
-  return String(Math.floor(Math.random() * 1_000_000_000));
+    case "selected & focused & closed": {
+      return toQuery(model.selected);
+    }
+
+    case "selected & focused & opened": {
+      return model.query;
+    }
+
+    case "selected & focused & opened & highlighted": {
+      return model.query;
+    }
+
+    case "unselected & blurred": {
+      return "";
+    }
+
+    case "unselected & focused & closed": {
+      return model.query;
+    }
+
+    case "unselected & focused & opened": {
+      return model.query;
+    }
+
+    case "unselected & focused & opened & highlighted": {
+      return model.query;
+    }
+  }
 };

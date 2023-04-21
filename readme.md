@@ -3,9 +3,9 @@
 - ⚡️ Zero dependencies
 - 🔍 Framework agnostic
 - 💪 Written in TypeScript
-- 🧠 Headless
+- 🧠 Headless. Bring your own styles.
 - 🔌 Simple pure functional API
-- 💼 Runs any where javascript runs. Anywhere from React Native to Vue to Node.js
+- 💼 Runs anywhere JavaScript runs. Like React, React Native, Vue, Svelte, Node.js, etc.
 
 ## Links
 

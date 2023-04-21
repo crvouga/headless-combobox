@@ -28,6 +28,12 @@ pnpm install headless-autocomplete
 
 Or copy & paste it into your source code. It's just one file with zero dependencies.
 
+# TODO
+
+- Multi select
+
+- Accessibility Helpers (you can do this yourself since its headless)
+
 # Usage
 
 ## React

@@ -5,3 +5,4 @@ package-lock.json
 readme.md
 tsconfig.json
 .gitignore
+example

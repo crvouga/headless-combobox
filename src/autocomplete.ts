@@ -40,7 +40,7 @@ type State<TItem> =
       highlightIndex: number;
     };
 
-export type Event<TItem> =
+export type Msg<TItem> =
   | {
       type: "pressed-arrow-key";
       key: "arrow-up" | "arrow-down";
@@ -66,22 +66,22 @@ export type Event<TItem> =
       query: string;
     };
 
-export const reducer = <TItem>({
+export const update = <TItem>({
   toQuery,
   toKey,
   toFiltered,
   model,
-  event,
+  msg,
 }: {
   toKey: (item: TItem) => string;
   toQuery: (item: TItem) => string;
-  toFiltered: (model: Model<TItem> & { query: string }) => TItem[];
+  toFiltered: (model: Model<TItem>) => TItem[];
   model: Model<TItem>;
-  event: Event<TItem>;
+  msg: Msg<TItem>;
 }): Model<TItem> => {
   switch (model.type) {
     case "selected & blurred": {
-      switch (event.type) {
+      switch (msg.type) {
         case "focused-input": {
           return {
             ...model,
@@ -97,13 +97,17 @@ export const reducer = <TItem>({
     }
 
     case "selected & focused & closed": {
-      switch (event.type) {
+      switch (msg.type) {
         case "blurred-input": {
           return { ...model, type: "selected & blurred" };
         }
 
         case "inputted-query": {
-          return { ...model, type: "selected & focused & opened" };
+          return {
+            ...model,
+            query: msg.query,
+            type: "selected & focused & opened",
+          };
         }
 
         case "pressed-arrow-key": {
@@ -117,7 +121,7 @@ export const reducer = <TItem>({
     }
 
     case "selected & focused & opened": {
-      switch (event.type) {
+      switch (msg.type) {
         case "blurred-input": {
           return {
             ...model,
@@ -131,7 +135,7 @@ export const reducer = <TItem>({
             ...model,
             type: "selected & focused & closed",
             query: model.query,
-            selected: event.item,
+            selected: msg.item,
           };
         }
 
@@ -150,7 +154,7 @@ export const reducer = <TItem>({
             };
           }
 
-          const delta = event.key === "arrow-down" ? 1 : -1;
+          const delta = msg.key === "arrow-down" ? 1 : -1;
 
           const highlightIndex = circularIndex(
             selectedIndex + delta,
@@ -165,7 +169,11 @@ export const reducer = <TItem>({
         }
 
         case "pressed-escape-key": {
-          return { ...model, type: "selected & focused & closed" };
+          return {
+            ...model,
+            query: toQuery(model.selected),
+            type: "selected & focused & closed",
+          };
         }
 
         default: {
@@ -175,7 +183,7 @@ export const reducer = <TItem>({
     }
 
     case "selected & focused & opened & highlighted": {
-      switch (event.type) {
+      switch (msg.type) {
         case "blurred-input": {
           return { ...model, type: "selected & blurred" };
         }
@@ -184,17 +192,17 @@ export const reducer = <TItem>({
           return {
             ...model,
             type: "selected & focused & closed",
-            selected: event.item,
+            selected: msg.item,
           };
         }
 
         case "inputted-query": {
-          return { ...model, query: event.query };
+          return { ...model, query: msg.query };
         }
 
         case "pressed-arrow-key": {
           const filtered = toFiltered(model);
-          const delta = event.key === "arrow-down" ? 1 : -1;
+          const delta = msg.key === "arrow-down" ? 1 : -1;
           const highlightIndex = circularIndex(
             model.highlightIndex + delta,
             filtered.length
@@ -229,7 +237,7 @@ export const reducer = <TItem>({
     }
 
     case "unselected & blurred": {
-      switch (event.type) {
+      switch (msg.type) {
         case "focused-input": {
           return { ...model, type: "unselected & focused & opened", query: "" };
         }
@@ -240,7 +248,7 @@ export const reducer = <TItem>({
     }
 
     case "unselected & focused & closed": {
-      switch (event.type) {
+      switch (msg.type) {
         case "blurred-input": {
           return { ...model, type: "unselected & blurred" };
         }
@@ -248,7 +256,7 @@ export const reducer = <TItem>({
           return {
             ...model,
             type: "unselected & focused & opened",
-            query: event.query,
+            query: msg.query,
           };
         }
 
@@ -263,7 +271,7 @@ export const reducer = <TItem>({
     }
 
     case "unselected & focused & opened": {
-      switch (event.type) {
+      switch (msg.type) {
         case "blurred-input": {
           return { ...model, type: "unselected & blurred" };
         }
@@ -272,18 +280,18 @@ export const reducer = <TItem>({
           return {
             ...model,
             type: "selected & focused & closed",
-            selected: event.item,
+            selected: msg.item,
           };
         }
 
         case "inputted-query": {
-          return { ...model, query: event.query };
+          return { ...model, query: msg.query };
         }
 
         case "pressed-arrow-key": {
           const filtered = toFiltered(model);
           const highlightIndex =
-            event.key === "arrow-up" ? filtered.length - 1 : 0;
+            msg.key === "arrow-up" ? filtered.length - 1 : 0;
 
           return {
             ...model,
@@ -303,7 +311,7 @@ export const reducer = <TItem>({
     }
 
     case "unselected & focused & opened & highlighted": {
-      switch (event.type) {
+      switch (msg.type) {
         case "blurred-input": {
           return { ...model, type: "unselected & blurred" };
         }
@@ -312,7 +320,7 @@ export const reducer = <TItem>({
           return {
             ...model,
             type: "selected & focused & closed",
-            selected: event.item,
+            selected: msg.item,
           };
         }
 
@@ -320,13 +328,13 @@ export const reducer = <TItem>({
           return {
             ...model,
             type: "unselected & focused & opened",
-            query: event.query,
+            query: msg.query,
           };
         }
 
         case "pressed-arrow-key": {
           const filtered = toFiltered(model);
-          const delta = event.key === "arrow-down" ? 1 : -1;
+          const delta = msg.key === "arrow-down" ? 1 : -1;
           const highlightIndex = circularIndex(
             model.highlightIndex + delta,
             filtered.length
@@ -408,7 +416,7 @@ export const toQuery = <TItem>(
     }
 
     case "selected & focused & closed": {
-      return toQuery(model.selected);
+      return model.query;
     }
 
     case "selected & focused & opened": {
@@ -435,4 +443,15 @@ export const toQuery = <TItem>(
       return model.query;
     }
   }
+};
+
+export const init = <TItem>({
+  allItems,
+}: {
+  allItems: TItem[];
+}): Model<TItem> => {
+  return {
+    type: "unselected & blurred",
+    allItems,
+  };
 };

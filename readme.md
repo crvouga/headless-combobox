@@ -1,11 +1,18 @@
 # headless-autocomplete
 
-- ⚡️ Zero dependencies
-- 🔍 Framework agnostic
-- 💪 Written in TypeScript
+## Pros
+
 - 🧠 Headless. Bring your own styles.
-- 🔌 Simple pure functional API
-- 💼 Runs anywhere JavaScript runs. Like React, React Native, Vue, Svelte, Node.js, etc.
+- 🔌 Framework agnostic. Bring your own framework.
+- ⚡️ Zero dependencies
+- 💪 Written in TypeScript
+- 🌳 Simple pure functional API
+- 💼 Works anywhere JavaScript works. React Native, Vue, Node.js, Redux, Any Legacy JS frameworks etc.
+
+## Cons
+
+- 🧠 Headless. You do have to write your own styles.
+- 🔌 Framework agnostic. You do have to write glue code.
 
 ## Links
 
@@ -35,15 +42,13 @@ yarn add headless-autocomplete
 pnpm install headless-autocomplete
 ```
 
-Or copy & paste it into your source code. It's just one file with zero dependencies.
+Or you could just copy & paste it into your source code. It's just one file with zero dependencies.
 
 ## TODO
 
 - Multi select
 
 - Accessibility Helpers (you can do this yourself since its headless)
-
-- Maybe add adapters for frameworks (like React, React Native, Vue, Svelte)
 
 ## Usage
 

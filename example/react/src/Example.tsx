@@ -36,17 +36,19 @@ function Example() {
   // Step 2. Initialize the state
   //
   //
-
   const [state, setState] = useState(
     Autocomplete.init({ allItems: top100Films })
   );
+
+  // Needed for scrolling and focusing
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const refs = useRef(new Map<string, HTMLElement>());
 
   //
   //
   // Step 3. Update the state
   //
   //
-
   const dispatch = async (msg: Autocomplete.Msg<Movie>) => {
     const input = { msg, model: state };
     const output = Autocomplete.update(config, input);
@@ -78,15 +80,11 @@ function Example() {
     });
   };
 
-  const inputRef = useRef<HTMLInputElement | null>(null);
-  const refs = useRef(new Map<string, HTMLElement>());
-
   //
   //
   // Step 4. Wire up to the view
   //
   //
-
   return (
     <div
       style={{

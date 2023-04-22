@@ -51,7 +51,7 @@ Or copy & paste it into your source code. It's just one file with zero dependenc
 
 ```ts
 import { useRef, useState } from "react";
-import * as Autocomplete from "headless-autocomplete";
+import * as Autocomplete from "./headless-autocomplete";
 
 //
 //
@@ -71,18 +71,18 @@ type Movie = {
 //
 
 const config: Autocomplete.Config<Movie> = {
-  toId: (item) => item.label,
-  toInputValue: (item) => item.label,
-  toFiltered: (model) => {
+  toItemId: (item) => item.label,
+  toItemInputValue: (item) => item.label,
+  toFilteredItems: (model) => {
     return model.allItems.filter((item) =>
       item.label
         .toLowerCase()
-        .includes(Autocomplete.toInputValue(config, model).toLowerCase())
+        .includes(Autocomplete.toCurrentInputValue(config, model).toLowerCase())
     );
   },
 };
 
-function App() {
+function Example() {
   //
   //
   // Step 2. Initialize the state
@@ -90,9 +90,7 @@ function App() {
   //
 
   const [state, setState] = useState(
-    Autocomplete.init<Movie>({
-      allItems: top100Films,
-    })
+    Autocomplete.init({ allItems: top100Films })
   );
 
   //
@@ -107,16 +105,20 @@ function App() {
 
     setState(output.model);
 
-    // wait for dropdown to render
-    await new Promise((resolve) => requestAnimationFrame(resolve));
-
     // Run Effects
-    for (const effect of output.effects ?? []) {
+    for (const effect of output.effects) {
       if (effect.type === "scroll-item-into-view") {
-        const ref = refs.current.get(config.toId(effect.item));
+        await new Promise((resolve) => requestAnimationFrame(resolve)); // wait for dropdown to render
+
+        const ref = refs.current.get(config.toItemId(effect.item));
+
         ref?.scrollIntoView({
           block: "nearest",
         });
+      }
+
+      if (effect.type === "focus-input") {
+        inputRef.current?.focus();
       }
     }
 
@@ -129,7 +131,7 @@ function App() {
   };
 
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const refs = useRef(new Map<string, HTMLDivElement>());
+  const refs = useRef(new Map<string, HTMLElement>());
 
   //
   //
@@ -140,24 +142,25 @@ function App() {
   return (
     <div
       style={{
-        width: "100%",
-        height: "100%",
-        maxWidth: "400px",
+        fontSize: "1.5rem",
+        outlineColor: "skyblue",
+        fontFamily: "monospace",
+        maxWidth: "720px",
         margin: "auto",
-        color: "#fff",
-        padding: "1rem",
+        width: "100%",
       }}>
-      <div
-        style={{
-          width: "100%",
-          textAlign: "left",
-          padding: "1rem",
-        }}>
-        {state.type}
-      </div>
+      <p>{state.type}</p>
 
       <input
+        style={{
+          width: "100%",
+          padding: "1rem",
+          fontSize: "inherit",
+          fontFamily: "inherit",
+          maxWidth: "100%",
+        }}
         ref={inputRef}
+        value={Autocomplete.toCurrentInputValue(config, state)}
         onInput={(event) =>
           dispatch({
             type: "inputted-value",
@@ -166,80 +169,70 @@ function App() {
         }
         onBlur={() => dispatch({ type: "blurred-input" })}
         onFocus={() => dispatch({ type: "focused-input" })}
-        value={Autocomplete.toInputValue(config, state)}
-        style={{
-          width: "100%",
-          boxSizing: "border-box",
-          padding: "0.5rem",
-          fontSize: "1.5rem",
-        }}
-        onClick={() => {
-          dispatch({ type: "pressed-input" });
-        }}
+        onClick={() => dispatch({ type: "pressed-input" })}
         onKeyDown={(event) => {
-          if (event.key === "ArrowDown") {
-            dispatch({ type: "pressed-arrow-key", key: "arrow-down" });
-          }
-
-          if (event.key === "ArrowUp") {
-            dispatch({ type: "pressed-arrow-key", key: "arrow-up" });
-          }
-
-          if (event.key === "Escape") {
-            dispatch({ type: "pressed-escape-key" });
-          }
-
-          if (event.key === "Enter") {
-            dispatch({ type: "pressed-enter-key" });
+          const msg = Autocomplete.browserKeyboardEventKeyToMsg(event.key);
+          if (msg) {
+            dispatch(msg);
           }
         }}
       />
 
       {Autocomplete.isOpened(state) && (
-        <div
+        <ul
           style={{
+            padding: 0,
+            margin: 0,
+            border: "1px solid black",
+            maxHeight: "360px",
+            overflow: "scroll",
             width: "100%",
-            textAlign: "left",
-            paddingTop: "1rem",
-            overflowY: "scroll",
-            maxHeight: "400px",
-            background: "rgba(0.6, 0.6, 0.6)",
-            fontFamily: "monospace",
           }}>
-          {config.toFiltered(state).map((item, index) => (
-            <div
-              key={item.label}
-              ref={(ref) => {
-                if (ref) {
-                  refs.current.set(config.toId(item), ref);
+          {config.toFilteredItems(state).map((item, index) => {
+            const itemStatus = Autocomplete.toItemStatus(config, state, item);
+            return (
+              <li
+                key={item.label}
+                ref={(ref) => {
+                  if (ref) {
+                    refs.current.set(config.toItemId(item), ref);
+                  }
+                }}
+                onMouseDown={(event) => {
+                  event.preventDefault(); // prevent input blur
+                  dispatch({ type: "pressed-item", item });
+                }}
+                onMouseMove={() =>
+                  dispatch({ type: "hovered-over-item", index })
                 }
-              }}
-              onMouseDown={(event) => {
-                event.preventDefault();
-                dispatch({ type: "pressed-item", item });
-              }}
-              onMouseEnter={() =>
-                dispatch({ type: "hovered-over-item", index })
-              }
-              style={{
-                padding: "0.5rem",
-                ...(Autocomplete.isItemSelected(config, state, item)
-                  ? {
-                      background: "rgba(255, 255, 255, 0.8)",
-                      color: "black",
-                    }
-                  : {}),
-                ...(Autocomplete.isIndexHighlighted(state, index)
-                  ? {
-                      background: "white",
-                      color: "black",
-                    }
-                  : {}),
-              }}>
-              {item.label} ({item.year})
-            </div>
-          ))}
-        </div>
+                style={{
+                  listStyle: "none",
+                  padding: "0.5rem",
+                  cursor: "pointer",
+                  ...(itemStatus === "selected"
+                    ? {
+                        background: "lightblue",
+                        color: "white",
+                      }
+                    : itemStatus === "highlighted"
+                    ? {
+                        background: "black",
+                        color: "white",
+                      }
+                    : itemStatus === "selected-and-highlighted"
+                    ? {
+                        background: "blue",
+                        color: "white",
+                      }
+                    : itemStatus === "unselected"
+                    ? {}
+                    : {}),
+                }}>
+                {item.label} ({item.year})
+              </li>
+            );
+          })}
+        </ul>
       )}
     </div>
   );
@@ -374,5 +367,5 @@ const top100Films: Movie[] = [
   { label: "Monty Python and the Holy Grail", year: 1975 },
 ];
 
-export default App;
+export default Example;
 ```

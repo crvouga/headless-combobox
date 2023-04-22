@@ -1,70 +1,90 @@
-//
-//
-//
-// Config
-//
-//
-//
-
+/**
+ *
+ * @name Config
+ * @description
+ * The Config<TItem> represents the configuration needed for the autocomplete to work with generic items.
+ * ⚠️ All these functions should be deterministic!
+ *
+ */
 export type Config<TItem> = {
-  toId: (item: TItem) => string;
-  toInputValue: (item: TItem) => string;
-  toFiltered: (model: Model<TItem>) => TItem[];
+  toItemId: (item: TItem) => string;
+  toItemInputValue: (item: TItem) => string;
+  toFilteredItems: (model: Model<TItem>) => TItem[];
 };
 
-//
-//
-//
-//
-// Model
-//
-//
-//
-//
-
+/**
+ *
+ * @name Model
+ * @description
+ * The Model<TItem> represents the state of the autocomplete.
+ *
+ */
 export type Model<TItem> = ModelState<TItem> & {
   allItems: TItem[];
-  previousEffects: Effect<TItem>[];
+  skipOnce: Msg<TItem>["type"][];
+};
+
+export type UnselectedBlurred = {
+  type: "unselected__blurred";
+};
+
+export type UnselectedFocusedOpened = {
+  type: "unselected__focused__opened";
+  inputValue: string;
+};
+
+export type UnselectedFocusedOpenedHighlighted = {
+  type: "unselected__focused__opened__highlighted";
+  inputValue: string;
+  highlightIndex: number;
+};
+
+export type UnselectedFocusedClosed = {
+  type: "unselected__focused__closed";
+  inputValue: string;
+};
+
+export type SelectedBlurred<TItem> = {
+  type: "selected__blurred";
+  selected: TItem;
+};
+
+export type SelectedFocusedClosed<TItem> = {
+  type: "selected__focused__closed";
+  inputValue: string;
+  selected: TItem;
+};
+
+export type SelectedFocusedOpened<TItem> = {
+  type: "selected__focused__opened";
+  selected: TItem;
+  inputValue: string;
+};
+
+export type SelectedFocusedOpenedHighlighted<TItem> = {
+  type: "selected__focused__opened__highlighted";
+  selected: TItem;
+  inputValue: string;
+  highlightIndex: number;
 };
 
 export type ModelState<TItem> =
-  | {
-      type: "unselected__blurred";
-    }
-  | {
-      type: "unselected__focused__opened";
-      inputValue: string;
-    }
-  | {
-      type: "unselected__focused__opened__highlighted";
-      inputValue: string;
-      highlightIndex: number;
-    }
-  | {
-      type: "unselected__focused__closed";
-      inputValue: string;
-    }
-  | {
-      type: "selected__blurred";
-      selected: TItem;
-    }
-  | {
-      type: "selected__focused__closed";
-      inputValue: string;
-      selected: TItem;
-    }
-  | {
-      type: "selected__focused__opened";
-      selected: TItem;
-      inputValue: string;
-    }
-  | {
-      type: "selected__focused__opened__highlighted";
-      selected: TItem;
-      inputValue: string;
-      highlightIndex: number;
-    };
+  | UnselectedBlurred
+  | UnselectedFocusedOpened
+  | UnselectedFocusedOpenedHighlighted
+  | UnselectedFocusedClosed
+  | SelectedBlurred<TItem>
+  | SelectedFocusedClosed<TItem>
+  | SelectedFocusedOpened<TItem>
+  | SelectedFocusedOpenedHighlighted<TItem>;
 
+/**
+ *
+ * @name init
+ * @description
+ * The init function returns the initial state of the autocomplete.
+ *
+ */
 export const init = <TItem>({
   allItems,
 }: {
@@ -73,20 +93,17 @@ export const init = <TItem>({
   return {
     type: "unselected__blurred",
     allItems,
-    previousEffects: [],
+    skipOnce: [],
   };
 };
 
-//
-//
-//
-//
-// Update
-//
-//
-//
-//
-
+/**
+ *
+ * @name Msg
+ * @description
+ * The Msg<TItem> represents all the possible state transitions that can happen to the autocomplete.
+ *
+ */
 export type Msg<TItem> =
   | {
       type: "pressed-arrow-key";
@@ -120,11 +137,35 @@ export type Msg<TItem> =
       type: "pressed-input";
     };
 
-export type Effect<TItem> = {
-  type: "scroll-item-into-view";
-  item: TItem;
-};
+/**
+ *
+ *
+ * @name Effect
+ * @description
+ * The Effect<TItem> represents all the possible effects that can happen to the autocomplete.
+ * You as the user of the library has to implement the side effects
+ *
+ *
+ **/
+export type Effect<TItem> =
+  | {
+      type: "scroll-item-into-view";
+      item: TItem;
+    }
+  | {
+      type: "focus-input";
+    };
 
+/**
+ *
+ *
+ * @name update
+ * @description
+ * The update function takes the current state of the autocomplete and a message and returns the new state of the
+ * autocomplete and effects that need to be run.
+ *
+ *
+ */
 export const update = <TItem>(
   config: Config<TItem>,
   {
@@ -136,90 +177,126 @@ export const update = <TItem>(
   }
 ): {
   model: Model<TItem>;
-  effects?: Effect<TItem>[];
+  effects: Effect<TItem>[];
 } => {
-  //
-  // Edge case:
-  //
-  // Happens when:
-  // Hovering over an item with the mouse and then scrolling to the next item with the keyboard.
-  //
-  // Expected Behavior:
-  // The item the keyboard navigated to is scrolled into view.
-  //
-  // Actual Behavior:
-  // The item that was hovered over is scrolled into view.
-  //
-  if (
-    model.previousEffects.some(
-      (effect) => effect.type === "scroll-item-into-view"
-    ) &&
-    msg.type === "hovered-over-item"
-  ) {
-    // skip the update
+  if (model.skipOnce.includes(msg.type)) {
     return {
-      model: { ...model, previousEffects: [] },
+      model: {
+        ...model,
+        skipOnce: removeFirst((m) => m === msg.type, model.skipOnce),
+      },
       effects: [],
     };
   }
 
-  const modelNew = updateModel(config, { msg, model });
+  const modelUpdated = updateModel(config, { msg, model });
 
   const effects = toEffects(config, {
     msg,
     prev: model,
-    model: modelNew,
+    next: modelUpdated,
   });
 
+  /**
+
+   ⚠️ Edge case
+
+   ⏱ Happens when:
+   Dropdown transitions from closed to open state and the mouse is hovering where the the dropdown renders.
+
+   🤔 Expected Behavior:
+   The state is in an opened but not highlighted state.
+
+   😑 Actual Behavior:
+   The state is opened then an unwanted hover message changes the state to a highlighted state.
+
+   */
+  if (
+    isClosed(model) &&
+    isOpened(modelUpdated) &&
+    effects.some((effect) => effect.type === "scroll-item-into-view")
+  ) {
+    return {
+      model: {
+        ...modelUpdated,
+        skipOnce: ["hovered-over-item", "hovered-over-item"],
+      },
+      effects: effects,
+    };
+  }
+
+  if (isClosed(model) && isOpened(modelUpdated)) {
+    return {
+      model: { ...modelUpdated, skipOnce: ["hovered-over-item"] },
+      effects: effects,
+    };
+  }
+
+  /**
+
+   ⚠️ Edge case
+
+   ⏱ Happens when:
+   Hovering over an item with the mouse and then scrolling to the next item with the keyboard.
+
+   🤔 Expected Behavior:
+   The item the keyboard navigated to is scrolled into view.
+
+   😑 Actual Behavior:
+   The item that was hovered over is scrolled into view.
+
+   */
+  if (effects.some((effect) => effect.type === "scroll-item-into-view")) {
+    return {
+      model: { ...modelUpdated, skipOnce: ["hovered-over-item"] },
+      effects: effects,
+    };
+  }
+
   return {
-    model: {
-      ...modelNew,
-      previousEffects: effects,
-    },
+    model: modelUpdated,
     effects: effects,
   };
+};
+
+const removeFirst = <T>(predicate: (x: T) => boolean, arr: T[]): T[] => {
+  const index = arr.findIndex(predicate);
+  if (index === -1) return arr;
+  return [...arr.slice(0, index), ...arr.slice(index + 1)];
 };
 
 const toEffects = <TItem>(
   config: Config<TItem>,
   {
     prev,
-    model,
+    next,
     msg,
   }: {
     prev: Model<TItem>;
-    model: Model<TItem>;
+    next: Model<TItem>;
     msg: Msg<TItem>;
   }
 ): Effect<TItem>[] => {
   const effects: Effect<TItem>[] = [];
 
-  //
-  //
-  //
+  // focus on input when state changes from blurred to focused
+  if (isBlurred(prev) && isFocused(next)) {
+    effects.push({ type: "focus-input" });
+  }
 
-  if (
-    prev.type === "selected__focused__closed" &&
-    model.type === "selected__focused__opened"
-  ) {
+  // scroll to selected item into view when state changes from closed to opened
+  if (isClosed(prev) && isOpened(next) && isSelected(next)) {
     effects.push({
       type: "scroll-item-into-view",
-      item: model.selected,
+      item: next.selected,
     });
   }
 
-  //
-  //
-  //
+  // scroll highlighted item into view when navigating with keyboard
+  if (isHighlighted(next) && msg.type === "pressed-arrow-key") {
+    const filtered = config.toFilteredItems(next);
 
-  if (
-    (model.type === "selected__focused__opened__highlighted" ||
-      model.type === "unselected__focused__opened__highlighted") &&
-    msg.type === "pressed-arrow-key"
-  ) {
-    const filtered = config.toFiltered(model);
-
-    const highlightedItem = filtered[model.highlightIndex];
+    const highlightedItem = filtered[next.highlightIndex];
 
     if (highlightedItem) {
       effects.push({
@@ -233,7 +310,7 @@ const toEffects = <TItem>(
 };
 
 const updateModel = <TItem>(
-  { toInputValue, toId, toFiltered }: Config<TItem>,
+  { toItemInputValue, toItemId, toFilteredItems }: Config<TItem>,
   {
     model,
     msg,
@@ -249,7 +326,7 @@ const updateModel = <TItem>(
           return {
             ...model,
             type: "selected__focused__opened",
-            inputValue: toInputValue(model.selected),
+            inputValue: toItemInputValue(model.selected),
             selected: model.selected,
           };
         }
@@ -319,7 +396,7 @@ const updateModel = <TItem>(
           return {
             ...model,
             type: "selected__focused__closed",
-            inputValue: toInputValue(model.selected),
+            inputValue: toItemInputValue(model.selected),
             selected: msg.item,
           };
         }
@@ -338,16 +415,16 @@ const updateModel = <TItem>(
         case "pressed-enter-key": {
           return {
             ...model,
-            inputValue: toInputValue(model.selected),
+            inputValue: toItemInputValue(model.selected),
             type: "selected__focused__closed",
           };
         }
 
         case "pressed-arrow-key": {
-          const filtered = toFiltered(model);
+          const filtered = toFilteredItems(model);
 
           const selectedIndex = filtered.findIndex(
-            (item) => toId(item) === toId(model.selected)
+            (item) => toItemId(item) === toItemId(model.selected)
           );
 
           if (selectedIndex === -1) {
@@ -399,7 +476,7 @@ const updateModel = <TItem>(
           return {
             ...model,
             type: "selected__focused__closed",
-            inputValue: toInputValue(msg.item),
+            inputValue: toItemInputValue(msg.item),
             selected: msg.item,
           };
         }
@@ -416,7 +493,7 @@ const updateModel = <TItem>(
         }
 
         case "pressed-arrow-key": {
-          const filtered = toFiltered(model);
+          const filtered = toFilteredItems(model);
           const delta = msg.key === "arrow-down" ? 1 : -1;
           const highlightIndex = circularIndex(
             model.highlightIndex + delta,
@@ -426,7 +503,7 @@ const updateModel = <TItem>(
         }
 
         case "pressed-enter-key": {
-          const filtered = toFiltered(model);
+          const filtered = toFilteredItems(model);
 
           const selectedNew = filtered[model.highlightIndex];
 
@@ -436,7 +513,7 @@ const updateModel = <TItem>(
 
           return {
             ...model,
-            inputValue: toInputValue(selectedNew),
+            inputValue: toItemInputValue(selectedNew),
             selected: selectedNew,
             type: "selected__focused__closed",
           };
@@ -513,7 +590,7 @@ const updateModel = <TItem>(
             ...model,
             type: "selected__focused__closed",
             selected: msg.item,
-            inputValue: toInputValue(msg.item),
+            inputValue: toItemInputValue(msg.item),
           };
         }
 
@@ -522,7 +599,7 @@ const updateModel = <TItem>(
         }
 
         case "pressed-arrow-key": {
-          const filtered = toFiltered(model);
+          const filtered = toFilteredItems(model);
           const highlightIndex =
             msg.key === "arrow-up" ? filtered.length - 1 : 0;
 
@@ -558,7 +635,7 @@ const updateModel = <TItem>(
             ...model,
             type: "selected__focused__closed",
             selected: msg.item,
-            inputValue: toInputValue(msg.item),
+            inputValue: toItemInputValue(msg.item),
           };
         }
 
@@ -571,7 +648,7 @@ const updateModel = <TItem>(
         }
 
         case "pressed-arrow-key": {
-          const filtered = toFiltered(model);
+          const filtered = toFilteredItems(model);
           const delta = msg.key === "arrow-down" ? 1 : -1;
           const highlightIndex = circularIndex(
             model.highlightIndex + delta,
@@ -584,7 +661,7 @@ const updateModel = <TItem>(
         }
 
         case "pressed-enter-key": {
-          const filtered = toFiltered(model);
+          const filtered = toFilteredItems(model);
 
           const selectedNew = filtered[model.highlightIndex];
 
@@ -594,7 +671,7 @@ const updateModel = <TItem>(
 
           return {
             ...model,
-            inputValue: toInputValue(selectedNew),
+            inputValue: toItemInputValue(selectedNew),
             selected: selectedNew,
             type: "selected__focused__closed",
           };
@@ -626,18 +703,255 @@ const circularIndex = (index: number, length: number) => {
   return ((index % length) + length) % length;
 };
 
-//
-//
-//
-//
-// Selectors
-//
-//
-//
-//
+/**
+ *
+ * @name isSelected
+ * @description
+ * Utility function to determine if any item is selected.
+ *
+ */
+export const isSelected = <TItem>(
+  model: ModelState<TItem>
+): model is SelectedState<TItem> => {
+  return (
+    model.type === "selected__focused__opened" ||
+    model.type === "selected__focused__opened__highlighted" ||
+    model.type === "selected__blurred" ||
+    model.type === "selected__focused__closed"
+  );
+};
+export type SelectedState<TItem> =
+  | SelectedBlurred<TItem>
+  | SelectedFocusedClosed<TItem>
+  | SelectedFocusedOpened<TItem>
+  | SelectedFocusedOpenedHighlighted<TItem>;
 
+/**
+ *
+ * @name isSelected
+ * @description
+ * Utility function to determine if in unselected state
+ *
+ */
+export const isUnselected = <TItem>(
+  model: ModelState<TItem>
+): model is UnselectedState<TItem> => {
+  return (
+    model.type === "selected__focused__opened" ||
+    model.type === "selected__focused__opened__highlighted" ||
+    model.type === "selected__blurred" ||
+    model.type === "selected__focused__closed"
+  );
+};
+export type UnselectedState<TItem> = Exclude<
+  ModelState<TItem>,
+  SelectedState<TItem>
+>;
+
+/**
+ *
+ * @name isOpened
+ * @description
+ * Utility function to determine if the dropdown is opened.
+ *
+ */
+export const isOpened = <TItem>(
+  model: ModelState<TItem>
+): model is OpenedState<TItem> => {
+  return (
+    model.type === "selected__focused__opened" ||
+    model.type === "selected__focused__opened__highlighted" ||
+    model.type === "unselected__focused__opened" ||
+    model.type === "unselected__focused__opened__highlighted"
+  );
+};
+export type OpenedState<TItem> =
+  | UnselectedFocusedOpened
+  | UnselectedFocusedOpenedHighlighted
+  | SelectedFocusedOpened<TItem>
+  | SelectedFocusedOpenedHighlighted<TItem>;
+
+/**
+ *
+ * @name isClosed
+ * @description
+ * Utility function to determine if the dropdown is closed.
+ *
+ */
+export const isClosed = <TItem>(
+  model: ModelState<TItem>
+): model is ClosedState<TItem> => {
+  return !isOpened(model);
+};
+export type ClosedState<TItem> = Exclude<ModelState<TItem>, OpenedState<TItem>>;
+
+/**
+ *
+ * @name isHighlighted
+ * @description
+ * Utility function to determine if any item is highlighted.
+ *
+ */
+export const isHighlighted = <TItem>(
+  model: ModelState<TItem>
+): model is HighlightedState<TItem> => {
+  return (
+    model.type === "selected__focused__opened__highlighted" ||
+    model.type === "unselected__focused__opened__highlighted"
+  );
+};
+
+export type HighlightedState<TItem> =
+  | UnselectedFocusedOpenedHighlighted
+  | SelectedFocusedOpenedHighlighted<TItem>;
+
+/**
+ *
+ * @name isBlurred
+ * @description
+ * Utility function to determine if input is blurred.
+ *
+ */
+export const isBlurred = <TItem>(
+  model: ModelState<TItem>
+): model is UnselectedBlurred | SelectedBlurred<TItem> => {
+  return (
+    model.type === "unselected__blurred" || model.type === "selected__blurred"
+  );
+};
+export type BlurredState<TItem> = UnselectedBlurred | SelectedBlurred<TItem>;
+
+/**
+ *
+ * @name isFocused
+ * @description
+ * Utility function to determine if input is focused.
+ *
+ */
+export const isFocused = <TItem>(
+  model: ModelState<TItem>
+): model is FocusedState<TItem> => {
+  return !isBlurred(model);
+};
+export type FocusedState<TItem> = Exclude<
+  ModelState<TItem>,
+  BlurredState<TItem>
+>;
+
+/**
+ *
+ * @name toCurrentInputValue
+ * @description
+ * This function returns the value that the input element should have.
+ *
+ */
+export const toCurrentInputValue = <TItem>(
+  { toItemInputValue }: Pick<Config<TItem>, "toItemInputValue">,
+  model: Model<TItem>
+) => {
+  switch (model.type) {
+    case "unselected__blurred": {
+      return "";
+    }
+
+    case "selected__blurred": {
+      return toItemInputValue(model.selected);
+    }
+
+    case "selected__focused__closed":
+    case "selected__focused__opened":
+    case "selected__focused__opened__highlighted":
+    case "unselected__focused__closed":
+    case "unselected__focused__opened":
+    case "unselected__focused__opened__highlighted": {
+      return model.inputValue;
+    }
+  }
+};
+
+/**
+ *
+ * @name toHighlightedItem
+ * @description
+ * This function returns the highlighted item.
+ *
+ */
+export const toHighlightedItem = <TItem>(
+  { toFilteredItems }: Pick<Config<TItem>, "toFilteredItems">,
+  model: Model<TItem>
+): TItem | null => {
+  switch (model.type) {
+    case "unselected__blurred":
+    case "unselected__focused__closed":
+    case "unselected__focused__opened":
+    case "selected__blurred":
+    case "selected__focused__opened":
+    case "selected__focused__closed": {
+      return null;
+    }
+
+    case "unselected__focused__opened__highlighted":
+    case "selected__focused__opened__highlighted": {
+      const item = toFilteredItems(model)[model.highlightIndex];
+
+      return item ?? null;
+    }
+  }
+};
+
+/**
+ *
+ * @name isItemHighlighted
+ * @description
+ * Utility function to determine if an item is highlighted.
+ *
+ */
+export const isItemHighlighted = <TItem>(
+  config: Pick<Config<TItem>, "toItemId" | "toFilteredItems">,
+  model: Model<TItem>,
+  item: TItem
+): boolean => {
+  const highlightedItem = toHighlightedItem(config, model);
+  return Boolean(
+    highlightedItem &&
+      config.toItemId(highlightedItem) === config.toItemId(item)
+  );
+};
+
+/**
+ *
+ * @name toSelectedItem
+ * @description
+ * This function returns the selected item.
+ *
+ */
+export const toSelectedItem = <TItem>(model: Model<TItem>): TItem | null => {
+  switch (model.type) {
+    case "selected__blurred":
+    case "selected__focused__opened":
+    case "selected__focused__closed":
+    case "selected__focused__opened__highlighted":
+      return model.selected;
+
+    case "unselected__blurred":
+    case "unselected__focused__closed":
+    case "unselected__focused__opened":
+    case "unselected__focused__opened__highlighted":
+      return null;
+  }
+};
+
+/**
+ *
+ *
+ * @name isItemSelected
+ * @description
+ * Utility function to determine if an item is selected.
+ *
+ *
+ */
 export const isItemSelected = <TItem>(
-  { toId }: Pick<Config<TItem>, "toId">,
+  { toItemId }: Pick<Config<TItem>, "toItemId">,
   model: Model<TItem>,
   item: TItem
 ) => {
@@ -646,7 +960,7 @@ export const isItemSelected = <TItem>(
     case "selected__focused__opened":
     case "selected__focused__closed":
     case "selected__focused__opened__highlighted": {
-      return toId(model.selected) === toId(item);
+      return toItemId(model.selected) === toItemId(item);
     }
 
     case "unselected__blurred":
@@ -658,6 +972,15 @@ export const isItemSelected = <TItem>(
   }
 };
 
+/**
+ *
+ *
+ * @name isIndexHighlighted
+ * @description
+ * Utility function to determine if an index is selected.
+ *
+ *
+ */
 export const isIndexHighlighted = <TItem>(
   model: Model<TItem>,
   index: number
@@ -679,80 +1002,107 @@ export const isIndexHighlighted = <TItem>(
   }
 };
 
-export const isOpened = <TItem>(model: Model<TItem>): boolean => {
+/**
+ *
+ * @name isItemSelectedAndHighlighted
+ * @description
+ * Utility function to determine if an item is selected and highlighted.
+ *
+ */
+export const isItemSelectedAndHighlighted = <TItem>(
+  config: Pick<Config<TItem>, "toItemId" | "toFilteredItems">,
+  model: Model<TItem>,
+  item: TItem
+): boolean => {
   return (
-    model.type === "selected__focused__opened" ||
-    model.type === "selected__focused__opened__highlighted" ||
-    model.type === "unselected__focused__opened" ||
-    model.type === "unselected__focused__opened__highlighted"
+    isItemSelected(config, model, item) &&
+    isItemHighlighted(config, model, item)
   );
 };
 
-export const toInputValue = <TItem>(
-  { toInputValue }: Pick<Config<TItem>, "toInputValue">,
-  model: Model<TItem>
-) => {
-  switch (model.type) {
-    case "unselected__blurred": {
-      return "";
-    }
+/**
+ *
+ * @name ItemStatus
+ * @description
+ * This type represents all the possible states of an item
+ *
+ */
+export type ItemStatus =
+  | "selected-and-highlighted"
+  | "selected"
+  | "highlighted"
+  | "unselected";
 
-    case "selected__blurred": {
-      return toInputValue(model.selected);
-    }
-
-    case "selected__focused__closed":
-    case "selected__focused__opened":
-    case "selected__focused__opened__highlighted":
-    case "unselected__focused__closed":
-    case "unselected__focused__opened":
-    case "unselected__focused__opened__highlighted": {
-      return model.inputValue;
-    }
+/**
+ *
+ * @name toItemStatus
+ * @description
+ * This utility function returns the status of an item.
+ *
+ */
+export const toItemStatus = <TItem>(
+  config: Pick<Config<TItem>, "toItemId" | "toFilteredItems">,
+  model: Model<TItem>,
+  item: TItem
+): ItemStatus => {
+  if (isItemSelectedAndHighlighted(config, model, item)) {
+    return "selected-and-highlighted";
   }
+
+  if (isItemSelected(config, model, item)) {
+    return "selected";
+  }
+
+  if (isItemHighlighted(config, model, item)) {
+    return "highlighted";
+  }
+
+  return "unselected";
 };
 
-export const toHighlightedItem = <TItem>(
-  { toFiltered }: Config<TItem>,
-  model: Model<TItem>
-): TItem | null => {
-  switch (model.type) {
-    case "unselected__blurred":
-    case "unselected__focused__closed":
-    case "unselected__focused__opened":
-    case "selected__blurred":
-    case "selected__focused__opened":
-    case "selected__focused__closed": {
-      return null;
-    }
+/**
+ *
+ * @name browserKeyboardEventKeyToMsg
+ * @description
+ * This utility function converts a keyboard event key property to a message.
+ *
+ **/
+export const browserKeyboardEventKeyToMsg = (key: string) => {
+  const eq = (a: string, b: string) =>
+    a.toLowerCase().trim() === b.toLowerCase().trim();
 
-    case "unselected__focused__opened__highlighted":
-    case "selected__focused__opened__highlighted": {
-      const item = toFiltered(model)[model.highlightIndex];
-
-      return item ?? null;
-    }
+  if (eq(key, "ArrowDown")) {
+    return {
+      type: "pressed-arrow-key",
+      key: "arrow-down",
+    } satisfies Msg<unknown>;
   }
+
+  if (eq(key, "ArrowUp")) {
+    return {
+      type: "pressed-arrow-key",
+      key: "arrow-up",
+    } satisfies Msg<unknown>;
+  }
+
+  if (eq(key, "Escape")) {
+    return { type: "pressed-escape-key" } satisfies Msg<unknown>;
+  }
+
+  if (eq(key, "Enter")) {
+    return { type: "pressed-enter-key" } satisfies Msg<unknown>;
+  }
+
+  return null;
 };
 
-export const toSelectedItem = <TItem>(model: Model<TItem>): TItem | null => {
-  switch (model.type) {
-    case "selected__blurred":
-    case "selected__focused__opened":
-    case "selected__focused__closed":
-    case "selected__focused__opened__highlighted":
-      return model.selected;
-
-    case "unselected__blurred":
-    case "unselected__focused__closed":
-    case "unselected__focused__opened":
-    case "unselected__focused__opened__highlighted":
-      return null;
-  }
-};
-
+/**
+ * @name toAriaAttributes
+ * @description
+ * This function returns the aria attributes for the input element.
+ */
 export const toAriaAttributes = <TItem>(
-  { toId }: Config<TItem>,
+  { toItemId }: Config<TItem>,
   model: Model<TItem>
 ) => {
   switch (model.type) {
@@ -773,7 +1123,7 @@ export const toAriaAttributes = <TItem>(
     case "selected__blurred":
     case "selected__focused__closed": {
       return {
-        "aria-activedescendant": toId(model.selected),
+        "aria-activedescendant": toItemId(model.selected),
         "aria-autocomplete": "list",
         "aria-controls": "",
         "aria-expanded": false,
@@ -783,7 +1133,7 @@ export const toAriaAttributes = <TItem>(
     }
     case "selected__focused__opened": {
       return {
-        "aria-activedescendant": toId(model.selected),
+        "aria-activedescendant": toItemId(model.selected),
         "aria-autocomplete": "list",
         "aria-controls": "",
         "aria-expanded": false,
@@ -794,7 +1144,7 @@ export const toAriaAttributes = <TItem>(
 
     case "selected__focused__opened__highlighted": {
       return {
-        "aria-activedescendant": toId(model.selected),
+        "aria-activedescendant": toItemId(model.selected),
         "aria-autocomplete": "list",
         "aria-controls": "",
         "aria-expanded": false,
@@ -805,35 +1155,36 @@ export const toAriaAttributes = <TItem>(
   }
 };
 
-//
-//
-//
-//
-// Debug
-//
-//
-//
-//
-
+/**
+ * @name debug
+ * @description
+ * This function logs the state of the model and the effects.
+ *
+ **/
 export const debug = <TItem>({
   log,
   input,
   output,
 }: {
-  log: (...args: any[]) => void;
+  log: (...args: unknown[]) => void;
   input: {
     model: Model<TItem>;
     msg: Msg<TItem>;
   };
   output: {
     model: Model<TItem>;
-    effects?: Effect<TItem>[];
+    effects: Effect<TItem>[];
   };
 }) => {
   log("\n");
   log("PREV ", input.model.type);
   log("msg: ", input.msg.type);
   log("NEXT ", output.model.type);
-  log("effects: ", output.effects?.map((eff) => eff.type).join(", "));
+  if (output.model.skipOnce.length > 0) {
+    log("skips: ", output.model.skipOnce.join(", "));
+  }
+  if (output.effects.length > 0) {
+    log("effects: ", output.effects.map((eff) => eff.type).join(", "));
+  }
   log("\n");
 };

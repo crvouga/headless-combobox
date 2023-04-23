@@ -3,7 +3,7 @@
 ## Pros
 
 - 🧠 Headless. Bring your own styles.
-- 🔌 Framework & platform agnostic. Bring your own framework & platform.
+- 🔌 Framework agnostic. Bring your own framework.
 - ⚡️ Zero dependencies
 - 💪 Written in TypeScript
 - 🌳 Simple pure functional [Elm](https://elm-lang.org/)-like API
@@ -16,12 +16,12 @@
 
 ## Good use cases are when
 
-- you need a custom looking autocomplete
-- you're working in a legacy framework
-- you're working in a framework with a small ecosystem
-- you're working in a framework that always has breaking changes
-- you like programming in a functional style
-- you hate learning how to override styles in autocomplete libraries
+- You need a custom looking autocomplete
+- You're working in a legacy framework
+- You're working in a framework with a small ecosystem
+- You're working in a framework that always has breaking changes
+- You like programming in a functional style
+- You hate learning how to override styles in autocomplete libraries
 
 ## Links
 

@@ -13,14 +13,13 @@ type Movie = {
 
 //
 //
-// Step 1: Define the config
+// Step 1: Init the config
 //
 //
-const config: Autocomplete.Config<Movie> = {
+const config = Autocomplete.initConfig<Movie>({
   toItemId: (item) => item.label,
   toItemInputValue: (item) => item.label,
-  deterministicFilter: (model) => Autocomplete.simpleFilter(config, model),
-};
+});
 
 function Example() {
   //
@@ -73,6 +72,8 @@ function Example() {
   // Step 4. Wire up to the view
   //
   //
+
+  const aria = Autocomplete.aria(config, state);
   return (
     <div
       style={{
@@ -86,7 +87,9 @@ function Example() {
       <p>{state.type}</p>
 
       <div style={{ position: "relative", width: "100%" }}>
+        <label {...aria.inputLabel}>Movies</label>
         <input
+          {...aria.input}
           style={{
             width: "100%",
             padding: "1rem",
@@ -114,8 +117,10 @@ function Example() {
             }
           }}
         />
+
         {Autocomplete.isOpened(state) && (
           <ul
+            {...aria.itemList}
             style={{
               position: "absolute",
               top: "100%",
@@ -133,6 +138,7 @@ function Example() {
               const itemStatus = Autocomplete.toItemStatus(config, state, item);
               return (
                 <li
+                  {...aria.item(item)}
                   key={item.label}
                   ref={(ref) => {
                     if (ref) {

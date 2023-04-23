@@ -1,23 +1,39 @@
 /**
- *
- * @name Config
+ * @category Config
  * @description
  * The Config<TItem> represents the configuration needed for the autocomplete to work with generic items.
  * ⚠️ All these functions should be deterministic!
- *
  */
 export type Config<TItem> = {
   toItemId: (item: TItem) => string;
   toItemInputValue: (item: TItem) => string;
   deterministicFilter: (model: Model<TItem>) => TItem[];
+  namespace: string;
 };
 
 /**
- *
- * @name simpleFilter
+ * @category Config
+ */
+export const initConfig = <TItem>({
+  namespace,
+  ...config
+}: {
+  toItemId: (item: TItem) => string;
+  toItemInputValue: (item: TItem) => string;
+  deterministicFilter?: (model: Model<TItem>) => TItem[];
+  namespace?: string;
+}): Config<TItem> => {
+  return {
+    ...config,
+    namespace: namespace ?? "autocomplete",
+    deterministicFilter: (model) => simpleFilter(config, model),
+  };
+};
+
+/**
+ * @category Config
  * @description
  * The simpleFilter function is a default implementation of the deterministicFilter function.
- *
  */
 export const simpleFilter = <TItem>(
   config: Pick<Config<TItem>, "toItemInputValue">,
@@ -32,61 +48,62 @@ export const simpleFilter = <TItem>(
 };
 
 /**
- *
- * @name Model
+ * @category Model
  * @description
  * The Model<TItem> represents the state of the autocomplete.
- *
  */
 export type Model<TItem> = ModelState<TItem> & {
   allItems: TItem[];
   skipOnce: Msg<TItem>["type"][];
 };
 
-export type UnselectedBlurred = {
+type UnselectedBlurred = {
   type: "unselected__blurred";
 };
 
-export type UnselectedFocusedOpened = {
+type UnselectedFocusedOpened = {
   type: "unselected__focused__opened";
   inputValue: string;
 };
 
-export type UnselectedFocusedOpenedHighlighted = {
+type UnselectedFocusedOpenedHighlighted = {
   type: "unselected__focused__opened__highlighted";
   inputValue: string;
   highlightIndex: number;
 };
 
-export type UnselectedFocusedClosed = {
+type UnselectedFocusedClosed = {
   type: "unselected__focused__closed";
   inputValue: string;
 };
 
-export type SelectedBlurred<TItem> = {
+type SelectedBlurred<TItem> = {
   type: "selected__blurred";
   selected: TItem;
 };
 
-export type SelectedFocusedClosed<TItem> = {
+type SelectedFocusedClosed<TItem> = {
   type: "selected__focused__closed";
   inputValue: string;
   selected: TItem;
 };
 
-export type SelectedFocusedOpened<TItem> = {
+type SelectedFocusedOpened<TItem> = {
   type: "selected__focused__opened";
   selected: TItem;
   inputValue: string;
 };
 
-export type SelectedFocusedOpenedHighlighted<TItem> = {
+type SelectedFocusedOpenedHighlighted<TItem> = {
   type: "selected__focused__opened__highlighted";
   selected: TItem;
   inputValue: string;
   highlightIndex: number;
 };
 
+/**
+ * @category Model
+ */
 export type ModelState<TItem> =
   | UnselectedBlurred
   | UnselectedFocusedOpened
@@ -98,11 +115,9 @@ export type ModelState<TItem> =
   | SelectedFocusedOpenedHighlighted<TItem>;
 
 /**
- *
- * @name init
+ * @category Model
  * @description
  * The init function returns the initial state of the autocomplete.
- *
  */
 export const init = <TItem>({
   allItems,
@@ -117,11 +132,9 @@ export const init = <TItem>({
 };
 
 /**
- *
- * @name Msg
+ * @category Update
  * @description
  * The Msg<TItem> represents all the possible state transitions that can happen to the autocomplete.
- *
  */
 export type Msg<TItem> =
   | {
@@ -157,14 +170,10 @@ export type Msg<TItem> =
     };
 
 /**
- *
- *
- * @name Effect
+ * @category Update
  * @description
  * The Effect<TItem> represents all the possible effects that can happen to the autocomplete.
  * You as the user of the library has to implement the side effects
- *
- *
  **/
 export type Effect<TItem> = {
   type: "scroll-item-into-view";
@@ -172,14 +181,11 @@ export type Effect<TItem> = {
 };
 
 /**
- *
- *
- * @name update
+ * @category Update
  * @description
+ * The update function is the main function.
  * The update function takes the current state of the autocomplete and a message and returns the new state of the
  * autocomplete and effects that need to be run.
- *
- *
  */
 export const update = <TItem>(
   config: Config<TItem>,
@@ -714,11 +720,9 @@ const circularIndex = (index: number, length: number) => {
 };
 
 /**
- *
- * @name isSelected
+ * @category Selectors
  * @description
  * Utility function to determine if any item is selected.
- *
  */
 export const isSelected = <TItem>(
   model: ModelState<TItem>
@@ -737,11 +741,9 @@ export type SelectedState<TItem> =
   | SelectedFocusedOpenedHighlighted<TItem>;
 
 /**
- *
- * @name isSelected
+ * @category Selectors
  * @description
  * Utility function to determine if in unselected state
- *
  */
 export const isUnselected = <TItem>(
   model: ModelState<TItem>
@@ -759,11 +761,9 @@ export type UnselectedState<TItem> = Exclude<
 >;
 
 /**
- *
- * @name isOpened
+ * @category Selectors
  * @description
  * Utility function to determine if the dropdown is opened.
- *
  */
 export const isOpened = <TItem>(
   model: ModelState<TItem>
@@ -782,11 +782,9 @@ export type OpenedState<TItem> =
   | SelectedFocusedOpenedHighlighted<TItem>;
 
 /**
- *
- * @name isClosed
+ * @category Selectors
  * @description
  * Utility function to determine if the dropdown is closed.
- *
  */
 export const isClosed = <TItem>(
   model: ModelState<TItem>
@@ -796,11 +794,9 @@ export const isClosed = <TItem>(
 export type ClosedState<TItem> = Exclude<ModelState<TItem>, OpenedState<TItem>>;
 
 /**
- *
- * @name isHighlighted
+ * @category Selectors
  * @description
  * Utility function to determine if any item is highlighted.
- *
  */
 export const isHighlighted = <TItem>(
   model: ModelState<TItem>
@@ -816,11 +812,9 @@ export type HighlightedState<TItem> =
   | SelectedFocusedOpenedHighlighted<TItem>;
 
 /**
- *
- * @name isBlurred
+ * @category Selectors
  * @description
  * Utility function to determine if input is blurred.
- *
  */
 export const isBlurred = <TItem>(
   model: ModelState<TItem>
@@ -832,11 +826,9 @@ export const isBlurred = <TItem>(
 export type BlurredState<TItem> = UnselectedBlurred | SelectedBlurred<TItem>;
 
 /**
- *
- * @name isFocused
+ * @category Selectors
  * @description
  * Utility function to determine if input is focused.
- *
  */
 export const isFocused = <TItem>(
   model: ModelState<TItem>
@@ -849,11 +841,9 @@ export type FocusedState<TItem> = Exclude<
 >;
 
 /**
- *
- * @name toCurrentInputValue
+ * @category Selectors
  * @description
  * This function returns the value that the input element should have.
- *
  */
 export const toCurrentInputValue = <TItem>(
   { toItemInputValue }: Pick<Config<TItem>, "toItemInputValue">,
@@ -880,11 +870,9 @@ export const toCurrentInputValue = <TItem>(
 };
 
 /**
- *
- * @name toHighlightedItem
+ * @category Selectors
  * @description
  * This function returns the highlighted item.
- *
  */
 export const toHighlightedItem = <TItem>(
   { deterministicFilter }: Pick<Config<TItem>, "deterministicFilter">,
@@ -910,11 +898,9 @@ export const toHighlightedItem = <TItem>(
 };
 
 /**
- *
- * @name isItemHighlighted
+ * @category Selectors
  * @description
  * Utility function to determine if an item is highlighted.
- *
  */
 export const isItemHighlighted = <TItem>(
   config: Pick<Config<TItem>, "toItemId" | "deterministicFilter">,
@@ -929,11 +915,9 @@ export const isItemHighlighted = <TItem>(
 };
 
 /**
- *
- * @name toSelectedItem
+ * @category Selectors
  * @description
- * This function returns the selected item.
- *
+ * This function returns the selected item
  */
 export const toSelectedItem = <TItem>(model: Model<TItem>): TItem | null => {
   switch (model.type) {
@@ -952,13 +936,9 @@ export const toSelectedItem = <TItem>(model: Model<TItem>): TItem | null => {
 };
 
 /**
- *
- *
- * @name isItemSelected
+ * @category Selectors
  * @description
  * Utility function to determine if an item is selected.
- *
- *
  */
 export const isItemSelected = <TItem>(
   { toItemId }: Pick<Config<TItem>, "toItemId">,
@@ -983,13 +963,9 @@ export const isItemSelected = <TItem>(
 };
 
 /**
- *
- *
- * @name isIndexHighlighted
+ * @category Selectors
  * @description
- * Utility function to determine if an index is selected.
- *
- *
+ * Selector function to determine if an index is selected.
  */
 export const isIndexHighlighted = <TItem>(
   model: Model<TItem>,
@@ -1013,11 +989,9 @@ export const isIndexHighlighted = <TItem>(
 };
 
 /**
- *
- * @name isItemSelectedAndHighlighted
+ * @category Selectors
  * @description
- * Utility function to determine if an item is selected and highlighted.
- *
+ * Selector function to determine if an item is selected and highlighted.
  */
 export const isItemSelectedAndHighlighted = <TItem>(
   config: Pick<Config<TItem>, "toItemId" | "deterministicFilter">,
@@ -1031,11 +1005,9 @@ export const isItemSelectedAndHighlighted = <TItem>(
 };
 
 /**
- *
- * @name ItemStatus
+ * @category Selectors
  * @description
  * This type represents all the possible states of an item
- *
  */
 export type ItemStatus =
   | "selected-and-highlighted"
@@ -1044,11 +1016,9 @@ export type ItemStatus =
   | "unselected";
 
 /**
- *
- * @name toItemStatus
+ * @category Selectors
  * @description
  * This utility function returns the status of an item.
- *
  */
 export const toItemStatus = <TItem>(
   config: Pick<Config<TItem>, "toItemId" | "deterministicFilter">,
@@ -1071,11 +1041,19 @@ export const toItemStatus = <TItem>(
 };
 
 /**
- *
- * @name browserKeyboardEventKeyToMsg
+ * @category Selectors
  * @description
- * This utility function converts a keyboard event key property to a message.
- *
+ * This function returns the all the visible items.
+ * This function really isn't necessary, but it's here for a more consistent API.
+ */
+export const toVisibleItems = <T>(config: Config<T>, model: Model<T>): T[] => {
+  return config.deterministicFilter(model);
+};
+
+/**
+ * @category Helpers
+ * @description
+ * This helper function converts a keyboard event key property to a message.
  **/
 export const browserKeyboardEventKeyToMsg = (key: string) => {
   const eq = (a: string, b: string) =>
@@ -1107,84 +1085,137 @@ export const browserKeyboardEventKeyToMsg = (key: string) => {
 };
 
 /**
- *
- * @name toVisibleItems
+ * @category WAI-ARIA
  * @description
- * This function returns the all the visible items.
- * This function really isn't necessary, but it's here for a more consistent API.
- *
+ * This function returns WAI-ARIA attributes for the all html elements.
  */
-export const toVisibleItems = <TItem>(
-  config: Pick<Config<TItem>, "deterministicFilter">,
-  model: Model<TItem>
-): TItem[] => {
-  return config.deterministicFilter(model);
+export const aria = <T>(config: Config<T>, model: Model<T>) => {
+  return {
+    inputLabel: ariaInputLabel(config),
+    input: ariaInput(config, model),
+    helperText: ariaHelperText(config),
+    itemList: ariaItemList(config),
+    item: (item: T) => ariaItem(config, model, item),
+  };
 };
 
 /**
- * @name toAriaAttributes
+ * @category WAI-ARIA
  * @description
- * This function returns the aria attributes for the input element.
+ * This function returns WAI-ARIA attributes for html that describes the <input />.
  */
-export const toAriaAttributes = <TItem>(
-  { toItemId }: Config<TItem>,
-  model: Model<TItem>
-) => {
-  switch (model.type) {
-    case "unselected__blurred":
-    case "unselected__focused__closed":
-    case "unselected__focused__opened":
-    case "unselected__focused__opened__highlighted": {
-      return {
-        "aria-activedescendant": "",
-        "aria-autocomplete": "list",
-        "aria-controls": "",
-        "aria-expanded": false,
-        "aria-haspopup": "listbox",
-        "aria-owns": "",
-      };
-    }
-
-    case "selected__blurred":
-    case "selected__focused__closed": {
-      return {
-        "aria-activedescendant": toItemId(model.selected),
-        "aria-autocomplete": "list",
-        "aria-controls": "",
-        "aria-expanded": false,
-        "aria-haspopup": "listbox",
-        "aria-owns": "",
-      };
-    }
-    case "selected__focused__opened": {
-      return {
-        "aria-activedescendant": toItemId(model.selected),
-        "aria-autocomplete": "list",
-        "aria-controls": "",
-        "aria-expanded": false,
-        "aria-haspopup": "listbox",
-        "aria-owns": "",
-      };
-    }
-
-    case "selected__focused__opened__highlighted": {
-      return {
-        "aria-activedescendant": toItemId(model.selected),
-        "aria-autocomplete": "list",
-        "aria-controls": "",
-        "aria-expanded": false,
-        "aria-haspopup": "listbox",
-        "aria-owns": "",
-      };
-    }
-  }
+const ariaHelperText = <T>(config: Config<T>) => {
+  return {
+    id: helperTextHtmlId(config),
+  };
 };
 
 /**
- * @name debug
+ * @category WAI-ARIA
+ * @description
+ * This function returns WAI-ARIA attributes for the <label />.
+ */
+export const ariaInputLabel = <T>(config: Config<T>) => {
+  return {
+    id: inputLabelHtmlId(config),
+    htmlFor: inputHtmlId(config),
+  };
+};
+
+/**
+ * @category WAI-ARIA
+ * @description
+ * This function returns WAI-ARIA attributes for the <input />.
+ */
+export const ariaInput = <T>(config: Config<T>, model: Model<T>) => {
+  const highlightedItem = toHighlightedItem(config, model);
+  return {
+    id: inputHtmlId(config),
+    role: "combobox",
+    tabindex: 0,
+    autoComplete: "off",
+    "aria-controls": itemListHtmlId(config),
+    "aria-haspopup": "listbox",
+    "aria-expanded": isOpened(model) ? "true" : "false",
+    "aria-describedby": helperTextHtmlId(config),
+    ...(highlightedItem
+      ? {
+          "aria-activedescendant": itemHtmlId(config, highlightedItem),
+        }
+      : {}),
+  } as const;
+};
+
+/**
+ * @category WAI-ARIA
+ * @description
+ * This function returns WAI-ARIA attributes for the "suggestion list" <ul />.
+ */
+export const ariaItemList = <T>(config: Config<T>) => {
+  return {
+    id: itemListHtmlId(config),
+    role: "listbox",
+    "aria-labelledby": inputLabelHtmlId(config),
+  } as const;
+};
+
+/**
+ * @category WAI-ARIA
+ * @description
+ * This function returns WAI-ARIA attributes for the "option" <li />.
+ */
+export const ariaItem = <T>(config: Config<T>, model: Model<T>, item: T) => {
+  const selected = toSelectedItem(model);
+  return {
+    id: itemHtmlId(config, item),
+    role: "option",
+    ...(selected
+      ? {
+          "aria-selected": config.toItemId(item) === config.toItemId(selected),
+        }
+      : {}),
+  } as const;
+};
+
+/**
+ * @category WAI-ARIA
+ */
+const inputLabelHtmlId = <T>({ namespace }: Config<T>) => {
+  return `${namespace}-input-label`;
+};
+
+/**
+ * @category WAI-ARIA
+ */
+const inputHtmlId = <T>({ namespace }: Config<T>) => {
+  return `${namespace}-input`;
+};
+
+/**
+ * @category WAI-ARIA
+ */
+const itemListHtmlId = <T>({ namespace }: Config<T>) => {
+  return `${namespace}-item-list`;
+};
+
+/**
+ * @category WAI-ARIA
+ */
+const itemHtmlId = <T>({ toItemId, namespace }: Config<T>, item: T) => {
+  return `${namespace}-item-${toItemId(item)}`;
+};
+
+/**
+ * @category WAI-ARIA
+ */
+const helperTextHtmlId = <T>({ namespace }: Config<T>) => {
+  return `${namespace}-helper-text`;
+};
+
+/**
+ * @category debug
  * @description
  * This function logs the state of the model and the effects.
- *
  **/
 export const debug = <TItem>({
   log,

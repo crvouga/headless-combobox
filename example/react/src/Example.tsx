@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { createCombobox } from "./headless-combobox";
+import { createCombobox } from "headless-combobox";
 
 /*
 

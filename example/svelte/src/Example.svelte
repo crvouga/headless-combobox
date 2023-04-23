@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { createCombobox } from "./headless-combobox";
+  import { createCombobox } from "headless-combobox";
 
   /*
 

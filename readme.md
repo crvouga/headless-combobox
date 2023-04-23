@@ -21,12 +21,12 @@
 - You're working in a legacy framework
 - You're working in a framework with a small ecosystem
 - You're working in a framework that always has breaking changes
-- You like programming in a functional style
 - You hate learning how to override styles in combobox libraries
 
 ## Links
 
-- [React Example](https://headless-combobox-example.vercel.app/)
+- [Svelte Example](https://headless-combobox-example-svelte.vercel.app/)
+- [React Example](https://headless-combobox-example-react.vercel.app/)
 - [Documentation](https://headless-combobox.vercel.app/)
 - [Github](https://github.com/crvouga/headless-combobox)
 - [NPM](https://www.npmjs.com/package/headless-combobox)

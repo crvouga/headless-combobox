@@ -9,7 +9,26 @@
 export type Config<TItem> = {
   toItemId: (item: TItem) => string;
   toItemInputValue: (item: TItem) => string;
-  toFilteredItems: (model: Model<TItem>) => TItem[];
+  deterministicFilter: (model: Model<TItem>) => TItem[];
+};
+
+/**
+ *
+ * @name simpleFilter
+ * @description
+ * The simpleFilter function is a default implementation of the deterministicFilter function.
+ *
+ */
+export const simpleFilter = <TItem>(
+  config: Pick<Config<TItem>, "toItemInputValue">,
+  model: Model<TItem>
+) => {
+  return model.allItems.filter((item) =>
+    config
+      .toItemInputValue(item)
+      .toLowerCase()
+      .includes(toCurrentInputValue(config, model).toLowerCase())
+  );
 };
 
 /**
@@ -294,7 +313,7 @@ const toEffects = <TItem>(
 
   // scroll highlighted item into view when navigating with keyboard
   if (isHighlighted(next) && msg.type === "pressed-arrow-key") {
-    const filtered = config.toFilteredItems(next);
+    const filtered = config.deterministicFilter(next);
 
     const highlightedItem = filtered[next.highlightIndex];
 
@@ -310,7 +329,7 @@ const toEffects = <TItem>(
 };
 
 const updateModel = <TItem>(
-  { toItemInputValue, toItemId, toFilteredItems }: Config<TItem>,
+  { toItemInputValue, toItemId, deterministicFilter }: Config<TItem>,
   {
     model,
     msg,
@@ -421,7 +440,7 @@ const updateModel = <TItem>(
         }
 
         case "pressed-arrow-key": {
-          const filtered = toFilteredItems(model);
+          const filtered = deterministicFilter(model);
 
           const selectedIndex = filtered.findIndex(
             (item) => toItemId(item) === toItemId(model.selected)
@@ -493,7 +512,7 @@ const updateModel = <TItem>(
         }
 
         case "pressed-arrow-key": {
-          const filtered = toFilteredItems(model);
+          const filtered = deterministicFilter(model);
           const delta = msg.key === "arrow-down" ? 1 : -1;
           const highlightIndex = circularIndex(
             model.highlightIndex + delta,
@@ -503,7 +522,7 @@ const updateModel = <TItem>(
         }
 
         case "pressed-enter-key": {
-          const filtered = toFilteredItems(model);
+          const filtered = deterministicFilter(model);
 
           const selectedNew = filtered[model.highlightIndex];
 
@@ -599,7 +618,7 @@ const updateModel = <TItem>(
         }
 
         case "pressed-arrow-key": {
-          const filtered = toFilteredItems(model);
+          const filtered = deterministicFilter(model);
           const highlightIndex =
             msg.key === "arrow-up" ? filtered.length - 1 : 0;
 
@@ -648,7 +667,7 @@ const updateModel = <TItem>(
         }
 
         case "pressed-arrow-key": {
-          const filtered = toFilteredItems(model);
+          const filtered = deterministicFilter(model);
           const delta = msg.key === "arrow-down" ? 1 : -1;
           const highlightIndex = circularIndex(
             model.highlightIndex + delta,
@@ -661,7 +680,7 @@ const updateModel = <TItem>(
         }
 
         case "pressed-enter-key": {
-          const filtered = toFilteredItems(model);
+          const filtered = deterministicFilter(model);
 
           const selectedNew = filtered[model.highlightIndex];
 
@@ -877,7 +896,7 @@ export const toCurrentInputValue = <TItem>(
  *
  */
 export const toHighlightedItem = <TItem>(
-  { toFilteredItems }: Pick<Config<TItem>, "toFilteredItems">,
+  { deterministicFilter }: Pick<Config<TItem>, "deterministicFilter">,
   model: Model<TItem>
 ): TItem | null => {
   switch (model.type) {
@@ -892,7 +911,7 @@ export const toHighlightedItem = <TItem>(
 
     case "unselected__focused__opened__highlighted":
     case "selected__focused__opened__highlighted": {
-      const item = toFilteredItems(model)[model.highlightIndex];
+      const item = deterministicFilter(model)[model.highlightIndex];
 
       return item ?? null;
     }
@@ -907,7 +926,7 @@ export const toHighlightedItem = <TItem>(
  *
  */
 export const isItemHighlighted = <TItem>(
-  config: Pick<Config<TItem>, "toItemId" | "toFilteredItems">,
+  config: Pick<Config<TItem>, "toItemId" | "deterministicFilter">,
   model: Model<TItem>,
   item: TItem
 ): boolean => {
@@ -1010,7 +1029,7 @@ export const isIndexHighlighted = <TItem>(
  *
  */
 export const isItemSelectedAndHighlighted = <TItem>(
-  config: Pick<Config<TItem>, "toItemId" | "toFilteredItems">,
+  config: Pick<Config<TItem>, "toItemId" | "deterministicFilter">,
   model: Model<TItem>,
   item: TItem
 ): boolean => {
@@ -1041,7 +1060,7 @@ export type ItemStatus =
  *
  */
 export const toItemStatus = <TItem>(
-  config: Pick<Config<TItem>, "toItemId" | "toFilteredItems">,
+  config: Pick<Config<TItem>, "toItemId" | "deterministicFilter">,
   model: Model<TItem>,
   item: TItem
 ): ItemStatus => {
@@ -1094,6 +1113,21 @@ export const browserKeyboardEventKeyToMsg = (key: string) => {
   }
 
   return null;
+};
+
+/**
+ *
+ * @name toVisibleItems
+ * @description
+ * This function returns the all the visible items.
+ * This function really isn't necessary, but it's here for a more consistent API.
+ *
+ */
+export const toVisibleItems = <TItem>(
+  config: Pick<Config<TItem>, "deterministicFilter">,
+  model: Model<TItem>
+): TItem[] => {
+  return config.deterministicFilter(model);
 };
 
 /**

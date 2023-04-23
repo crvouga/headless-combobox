@@ -3,16 +3,25 @@
 ## Pros
 
 - 🧠 Headless. Bring your own styles.
-- 🔌 Framework agnostic. Bring your own framework.
+- 🔌 Framework & platform agnostic. Bring your own framework & platform.
 - ⚡️ Zero dependencies
 - 💪 Written in TypeScript
-- 🌳 Simple pure functional API
-- 💼 Works anywhere JavaScript works. React Native, Vue, Node.js, Redux, Any Legacy JS frameworks etc.
+- 🌳 Simple pure functional [Elm](https://elm-lang.org/)-like API
+- 💼 Works anywhere JavaScript works. React Native, Vue, Node.js, Redux, Any legacy JS framework etc.
 
 ## Cons
 
 - 🧠 Headless. You do have to write your own styles.
 - 🔌 Framework agnostic. You do have to write glue code.
+
+## Good use cases are when
+
+- you need a custom looking autocomplete
+- you're working in a legacy framework
+- you're working in a framework with a small ecosystem
+- you're working in a framework that always has breaking changes
+- you like programming in a functional style
+- you hate learning how to override styles of libraries
 
 ## Links
 
@@ -50,6 +59,11 @@ Or you could just copy & paste it into your source code. It's just one file with
 
 - Accessibility Helpers (you can do this yourself since its headless)
 
+## Complementary Libraries
+
+- [match-sorter](https://github.com/kentcdodds/match-sorter) for filtering items
+- [floating-ui](https://floating-ui.com/) for rendering the drop down.
+
 ## Usage
 
 ### React
@@ -60,10 +74,9 @@ import * as Autocomplete from "./headless-autocomplete";
 
 //
 //
-// Step 0. Define Your data
+// Step 0. Define your data
 //
 //
-
 type Movie = {
   year: number;
   label: string;
@@ -74,17 +87,10 @@ type Movie = {
 // Step 1: Define the config
 //
 //
-
 const config: Autocomplete.Config<Movie> = {
   toItemId: (item) => item.label,
   toItemInputValue: (item) => item.label,
-  toFilteredItems: (model) => {
-    return model.allItems.filter((item) =>
-      item.label
-        .toLowerCase()
-        .includes(Autocomplete.toCurrentInputValue(config, model).toLowerCase())
-    );
-  },
+  deterministicFilter: (model) => Autocomplete.simpleFilter(config, model),
 };
 
 function Example() {
@@ -93,17 +99,19 @@ function Example() {
   // Step 2. Initialize the state
   //
   //
-
   const [state, setState] = useState(
     Autocomplete.init({ allItems: top100Films })
   );
+
+  // Needed for scrolling and focusing
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const refs = useRef(new Map<string, HTMLElement>());
 
   //
   //
   // Step 3. Update the state
   //
   //
-
   const dispatch = async (msg: Autocomplete.Msg<Movie>) => {
     const input = { msg, model: state };
     const output = Autocomplete.update(config, input);
@@ -113,7 +121,7 @@ function Example() {
     // Run Effects
     for (const effect of output.effects) {
       if (effect.type === "scroll-item-into-view") {
-        await new Promise((resolve) => requestAnimationFrame(resolve)); // wait for dropdown to render
+        await new Promise(requestAnimationFrame); // wait for dropdown to render
 
         const ref = refs.current.get(config.toItemId(effect.item));
 
@@ -135,110 +143,115 @@ function Example() {
     });
   };
 
-  const inputRef = useRef<HTMLInputElement | null>(null);
-  const refs = useRef(new Map<string, HTMLElement>());
-
   //
   //
   // Step 4. Wire up to the view
   //
   //
-
   return (
     <div
       style={{
-        fontSize: "1.5rem",
+        fontSize: "1.25rem",
         outlineColor: "skyblue",
         fontFamily: "monospace",
         maxWidth: "720px",
         margin: "auto",
         width: "100%",
       }}>
+      <a href="https://github.com/crvouga/headless-autocomplete">
+        Source Code Here
+      </a>
+
       <p>{state.type}</p>
 
-      <input
-        style={{
-          width: "100%",
-          padding: "1rem",
-          fontSize: "inherit",
-          fontFamily: "inherit",
-          maxWidth: "100%",
-        }}
-        ref={inputRef}
-        value={Autocomplete.toCurrentInputValue(config, state)}
-        onInput={(event) =>
-          dispatch({
-            type: "inputted-value",
-            inputValue: event.currentTarget.value,
-          })
-        }
-        onBlur={() => dispatch({ type: "blurred-input" })}
-        onFocus={() => dispatch({ type: "focused-input" })}
-        onClick={() => dispatch({ type: "pressed-input" })}
-        onKeyDown={(event) => {
-          const msg = Autocomplete.browserKeyboardEventKeyToMsg(event.key);
-          if (msg) {
-            dispatch(msg);
-          }
-        }}
-      />
-
-      {Autocomplete.isOpened(state) && (
-        <ul
+      <div style={{ position: "relative", width: "100%" }}>
+        <input
           style={{
-            padding: 0,
-            margin: 0,
-            border: "1px solid black",
-            maxHeight: "360px",
-            overflow: "scroll",
             width: "100%",
-          }}>
-          {config.toFilteredItems(state).map((item, index) => {
-            const itemStatus = Autocomplete.toItemStatus(config, state, item);
-            return (
-              <li
-                key={item.label}
-                ref={(ref) => {
-                  if (ref) {
-                    refs.current.set(config.toItemId(item), ref);
+            padding: "1rem",
+            fontSize: "inherit",
+            fontFamily: "inherit",
+            maxWidth: "100%",
+          }}
+          ref={inputRef}
+          value={Autocomplete.toCurrentInputValue(config, state)}
+          onInput={(event) =>
+            dispatch({
+              type: "inputted-value",
+              inputValue: event.currentTarget.value,
+            })
+          }
+          onBlur={() => dispatch({ type: "blurred-input" })}
+          onFocus={() => dispatch({ type: "focused-input" })}
+          onClick={() => dispatch({ type: "pressed-input" })}
+          onKeyDown={(event) => {
+            const msg = Autocomplete.browserKeyboardEventKeyToMsg(event.key);
+            if (msg) {
+              dispatch(msg);
+            }
+          }}
+        />
+        {Autocomplete.isOpened(state) && (
+          <ul
+            style={{
+              position: "absolute",
+              top: "100%",
+              zIndex: 2,
+              left: 0,
+              padding: 0,
+              margin: 0,
+              border: "1px solid black",
+              maxHeight: "360px",
+              overflow: "scroll",
+              width: "100%",
+              listStyle: "none",
+            }}>
+            {Autocomplete.toVisibleItems(config, state).map((item, index) => {
+              const itemStatus = Autocomplete.toItemStatus(config, state, item);
+              return (
+                <li
+                  key={item.label}
+                  ref={(ref) => {
+                    if (ref) {
+                      refs.current.set(config.toItemId(item), ref);
+                    }
+                  }}
+                  onMouseDown={(event) => {
+                    event.preventDefault(); // prevent input blur
+                    dispatch({ type: "pressed-item", item });
+                  }}
+                  onMouseMove={() =>
+                    dispatch({ type: "hovered-over-item", index })
                   }
-                }}
-                onMouseDown={(event) => {
-                  event.preventDefault(); // prevent input blur
-                  dispatch({ type: "pressed-item", item });
-                }}
-                onMouseMove={() =>
-                  dispatch({ type: "hovered-over-item", index })
-                }
-                style={{
-                  listStyle: "none",
-                  padding: "0.5rem",
-                  cursor: "pointer",
-                  ...(itemStatus === "selected"
-                    ? {
-                        background: "lightblue",
-                        color: "white",
-                      }
-                    : itemStatus === "highlighted"
-                    ? {
-                        background: "black",
-                        color: "white",
-                      }
-                    : itemStatus === "selected-and-highlighted"
-                    ? {
-                        background: "blue",
-                        color: "white",
-                      }
-                    : itemStatus === "unselected"
-                    ? {}
-                    : {}),
-                }}>
-                {item.label} ({item.year})
-              </li>
-            );
-          })}
-        </ul>
-      )}
+                  style={{
+                    padding: "0.5rem",
+                    cursor: "pointer",
+                    ...(itemStatus === "selected"
+                      ? {
+                          background: "lightblue",
+                          color: "white",
+                        }
+                      : itemStatus === "highlighted"
+                      ? {
+                          background: "black",
+                          color: "white",
+                        }
+                      : itemStatus === "selected-and-highlighted"
+                      ? {
+                          background: "blue",
+                          color: "white",
+                        }
+                      : itemStatus === "unselected"
+                      ? {}
+                      : {}),
+                  }}>
+                  {item.label} ({item.year})
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }

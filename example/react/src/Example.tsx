@@ -1,79 +1,57 @@
-import * as Autocomplete from "headless-autocomplete";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createAutocomplete } from "./dev-headless-autocomplete";
 
-//
-//
-// Step 0. Define your data
-//
-//
+/*
+
+Step 0. Have some data to display
+
+*/
 type Movie = {
   year: number;
   label: string;
 };
 
-//
-//
-// Step 1: Init the config
-//
-//
-const config = Autocomplete.initConfig<Movie>({
-  toItemId: (item) => item.label,
-  toItemInputValue: (item) => item.label,
-});
-
 function Example() {
-  //
-  //
-  // Step 2. Initialize the state
-  //
-  //
-  const [state, setState] = useState(
-    Autocomplete.init({ allItems: top100Films })
-  );
-
-  // Needed for scrolling and focusing
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const refs = useRef(new Map<string, HTMLElement>());
+  const refs = useRef(new Map<string | number, HTMLElement>());
 
-  //
-  //
-  // Step 3. Update the state
-  //
-  //
-  const dispatch = async (msg: Autocomplete.Msg<Movie>) => {
-    const input = { msg, model: state };
-    const output = Autocomplete.update(config, input);
+  /*
 
-    setState(output.model);
+  Step 1. Create the autocomplete instance
 
-    // Run Effects
-    for (const effect of output.effects) {
-      if (effect.type === "scroll-item-into-view") {
-        await new Promise(requestAnimationFrame); // wait for dropdown to render
-
-        const ref = refs.current.get(config.toItemId(effect.item));
-
+  */
+  const autocompleteRef = useRef(
+    createAutocomplete<Movie>({
+      allItems: top100Films,
+      toItemId: (item) => item.label,
+      toItemInputValue: (item) => item.label,
+      onScroll: (item, config) => {
+        const ref = refs.current.get(config.toItemId(item));
         ref?.scrollIntoView({
           block: "nearest",
         });
-      }
-    }
+      },
+    })
+  );
 
-    // Debug Logger
-    Autocomplete.debug({
-      log: console.log,
-      input,
-      output,
+  /*
+
+  Step 2. Glue the autocomplete instance to your framework
+
+  */
+  const [state, setState] = useState(() => autocompleteRef.current.getState());
+
+  useEffect(() => {
+    return autocompleteRef.current.subscribe((state) => {
+      setState(state);
     });
-  };
+  }, []);
 
-  //
-  //
-  // Step 4. Wire up to the view
-  //
-  //
+  /*
 
-  const aria = Autocomplete.aria(config, state);
+  Step 3. Wire up the autocomplete instance to your UI
+
+  */
   return (
     <div
       style={{
@@ -84,103 +62,98 @@ function Example() {
         margin: "auto",
         width: "100%",
       }}>
-      <p>{state.type}</p>
-
       <div style={{ position: "relative", width: "100%" }}>
-        <label {...aria.inputLabel}>Movies</label>
-        <input
-          {...aria.input}
-          style={{
-            width: "100%",
-            padding: "1rem",
-            fontSize: "inherit",
-            fontFamily: "inherit",
-            maxWidth: "100%",
-            margin: 0,
-            boxSizing: "border-box",
-          }}
-          ref={inputRef}
-          value={Autocomplete.toCurrentInputValue(config, state)}
-          onInput={(event) =>
-            dispatch({
-              type: "inputted-value",
-              inputValue: event.currentTarget.value,
-            })
-          }
-          onBlur={() => dispatch({ type: "blurred-input" })}
-          onFocus={() => dispatch({ type: "focused-input" })}
-          onClick={() => dispatch({ type: "pressed-input" })}
-          onKeyDown={(event) => {
-            const msg = Autocomplete.browserKeyboardEventKeyToMsg(event.key);
-            if (msg) {
-              dispatch(msg);
-            }
-          }}
-        />
-
-        {Autocomplete.isOpened(state) && (
-          <ul
-            {...aria.itemList}
+        <label {...state.aria.inputLabel}>
+          Movies
+          <input
+            {...state.aria.input}
             style={{
-              position: "absolute",
-              top: "100%",
-              zIndex: 2,
-              left: 0,
-              padding: 0,
-              margin: 0,
-              border: "1px solid black",
-              maxHeight: "360px",
-              overflow: "scroll",
               width: "100%",
-              listStyle: "none",
-            }}>
-            {Autocomplete.toVisibleItems(config, state).map((item, index) => {
-              const itemStatus = Autocomplete.toItemStatus(config, state, item);
-              return (
-                <li
-                  {...aria.item(item)}
-                  key={item.label}
-                  ref={(ref) => {
-                    if (ref) {
-                      refs.current.set(config.toItemId(item), ref);
-                    }
-                  }}
-                  onMouseDown={(event) => {
-                    event.preventDefault(); // prevent input blur
-                    dispatch({ type: "pressed-item", item });
-                  }}
-                  onMouseMove={() =>
-                    dispatch({ type: "hovered-over-item", index })
+              padding: "1rem",
+              fontSize: "inherit",
+              fontFamily: "inherit",
+              maxWidth: "100%",
+              margin: 0,
+              boxSizing: "border-box",
+            }}
+            ref={inputRef}
+            value={state.inputValue}
+            onInput={(event) =>
+              autocompleteRef.current.onInput(event.currentTarget.value)
+            }
+            onBlur={autocompleteRef.current.onInputBlur}
+            onFocus={autocompleteRef.current.onInputFocus}
+            onClick={autocompleteRef.current.onInputPress}
+            onKeyDown={(event) =>
+              autocompleteRef.current.onInputKeyDown(event.key)
+            }
+          />
+        </label>
+
+        <ul
+          {...state.aria.itemList}
+          style={{
+            display: state.isOpened ? "block" : "none",
+            position: "absolute",
+            top: "100%",
+            zIndex: 2,
+            left: 0,
+            padding: 0,
+            margin: 0,
+            border: "1px solid black",
+            maxHeight: "360px",
+            overflow: "scroll",
+            width: "100%",
+            listStyle: "none",
+          }}>
+          {state.items.map((item, index) => {
+            const status = state.itemStatus(item);
+            return (
+              <li
+                {...state.aria.item(item)}
+                key={item.label}
+                ref={(ref) => {
+                  if (ref) {
+                    refs.current.set(
+                      autocompleteRef.current.toItemId(item),
+                      ref
+                    );
                   }
-                  style={{
-                    margin: 0,
-                    padding: "0.5rem",
-                    cursor: "pointer",
-                    ...(itemStatus === "selected"
-                      ? {
-                          background: "lightblue",
-                          color: "white",
-                        }
-                      : itemStatus === "highlighted"
-                      ? {
-                          background: "black",
-                          color: "white",
-                        }
-                      : itemStatus === "selected-and-highlighted"
-                      ? {
-                          background: "blue",
-                          color: "white",
-                        }
-                      : itemStatus === "unselected"
-                      ? {}
-                      : {}),
-                  }}>
-                  {item.label} ({item.year})
-                </li>
-              );
-            })}
-          </ul>
-        )}
+                }}
+                onMouseDown={(event) => {
+                  event.preventDefault(); // prevent input blur
+                  autocompleteRef.current.onItemPress(item);
+                }}
+                onMouseMove={() => autocompleteRef.current.onItemHover(index)}
+                onFocus={() => autocompleteRef.current.onItemFocus(index)}
+                style={{
+                  margin: 0,
+                  padding: "0.5rem",
+                  cursor: "pointer",
+                  ...(status === "selected"
+                    ? {
+                        background: "lightblue",
+                        color: "white",
+                      }
+                    : status === "highlighted"
+                    ? {
+                        background: "black",
+                        color: "white",
+                      }
+                    : status === "selected-and-highlighted"
+                    ? {
+                        background: "blue",
+                        color: "white",
+                      }
+                    : status === "unselected"
+                    ? {}
+                    : {}),
+                }}>
+                {item.label} ({item.year})
+              </li>
+            );
+          })}
+        </ul>
       </div>
     </div>
   );

@@ -1,8 +1,13 @@
 {
   "cSpell.words": [
     "activedescendant",
+    "combobox",
+    "describedby",
     "haspopup",
+    "keydown",
+    "labelledby",
     "listbox",
+    "mousedown",
     "postpublish",
     "reduxjs"
   ]

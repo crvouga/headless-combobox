@@ -69,8 +69,8 @@ Or you could just copy & paste it into your source code. It's just one file with
 ### React
 
 ```ts
+import * as Autocomplete from "headless-autocomplete";
 import { useRef, useState } from "react";
-import * as Autocomplete from "./headless-autocomplete";
 
 //
 //
@@ -129,10 +129,6 @@ function Example() {
           block: "nearest",
         });
       }
-
-      if (effect.type === "focus-input") {
-        inputRef.current?.focus();
-      }
     }
 
     // Debug Logger
@@ -158,10 +154,6 @@ function Example() {
         margin: "auto",
         width: "100%",
       }}>
-      <a href="https://github.com/crvouga/headless-autocomplete">
-        Source Code Here
-      </a>
-
       <p>{state.type}</p>
 
       <div style={{ position: "relative", width: "100%" }}>
@@ -172,6 +164,8 @@ function Example() {
             fontSize: "inherit",
             fontFamily: "inherit",
             maxWidth: "100%",
+            margin: 0,
+            boxSizing: "border-box",
           }}
           ref={inputRef}
           value={Autocomplete.toCurrentInputValue(config, state)}
@@ -224,6 +218,7 @@ function Example() {
                     dispatch({ type: "hovered-over-item", index })
                   }
                   style={{
+                    margin: 0,
                     padding: "0.5rem",
                     cursor: "pointer",
                     ...(itemStatus === "selected"

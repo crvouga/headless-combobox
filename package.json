@@ -1,6 +1,6 @@
 {
   "name": "headless-autocomplete",
-  "version": "2.0.1",
+  "version": "2.0.3",
   "description": "",
   "types": "dist/index.d.ts",
   "main": "dist/index.js",
@@ -9,6 +9,7 @@
     "build": "tsc",
     "prepublish": "tsc",
     "prepublishOnly": "tsc",
+    "postpublish": "npm run update-example-deps",
     "update-example-deps": "cd example/react && npm install headless-autocomplete@latest",
     "gen-docs": "typedoc src/index.ts"
   },

@@ -166,14 +166,10 @@ export type Msg<TItem> =
  *
  *
  **/
-export type Effect<TItem> =
-  | {
-      type: "scroll-item-into-view";
-      item: TItem;
-    }
-  | {
-      type: "focus-input";
-    };
+export type Effect<TItem> = {
+  type: "scroll-item-into-view";
+  item: TItem;
+};
 
 /**
  *
@@ -297,11 +293,6 @@ const toEffects = <TItem>(
   }
 ): Effect<TItem>[] => {
   const effects: Effect<TItem>[] = [];
-
-  // focus on input when state changes from blurred to focused
-  if (isBlurred(prev) && isFocused(next)) {
-    effects.push({ type: "focus-input" });
-  }
 
   // scroll to selected item into view when state changes from closed to opened
   if (isClosed(prev) && isOpened(next) && isSelected(next)) {

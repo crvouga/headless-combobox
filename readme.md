@@ -21,7 +21,7 @@
 - you're working in a framework with a small ecosystem
 - you're working in a framework that always has breaking changes
 - you like programming in a functional style
-- you hate learning how to override styles of libraries
+- you hate learning how to override styles in autocomplete libraries
 
 ## Links
 

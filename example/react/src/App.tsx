@@ -14,15 +14,20 @@ const routeToName: { [route in Route]: string } = {
   "example-redux": "React + Redux",
 };
 
+const getRoute = (): Route => {
+  const hash = window.location.hash.replace("#", "");
+  if (hash === "example" || hash === "example-redux") {
+    return hash;
+  }
+  return "example";
+};
+
 export default function App() {
-  const [activeRoute, setActiveRoute] = useState<Route>("example");
+  const [activeRoute, setActiveRoute] = useState<Route>(getRoute);
 
   useEffect(() => {
     const onHashChange = () => {
-      const hash = window.location.hash.replace("#", "");
-      if (hash === "example" || hash === "example-redux") {
-        setActiveRoute(hash);
-      }
+      setActiveRoute(getRoute());
     };
     window.addEventListener("hashchange", onHashChange);
     return () => {
@@ -59,6 +64,7 @@ export default function App() {
         {Object.values(allRoutes).map((route) => {
           return (
             <a
+              key={route}
               style={{
                 padding: "0.5rem",
                 textDecoration: "none",

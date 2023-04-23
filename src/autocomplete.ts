@@ -1,5 +1,7 @@
+/** @module Config **/
+
 /**
- * @category Config
+ * @memberof Config
  * @description
  * The Config<TItem> represents the configuration needed for the autocomplete to work with generic items.
  * ⚠️ All these functions should be deterministic!
@@ -12,7 +14,7 @@ export type Config<TItem> = {
 };
 
 /**
- * @category Config
+ * @memberof Config
  */
 export const initConfig = <TItem>({
   namespace,
@@ -31,7 +33,7 @@ export const initConfig = <TItem>({
 };
 
 /**
- * @category Config
+ * @memberof Config
  * @description
  * The simpleFilter function is a default implementation of the deterministicFilter function.
  */
@@ -47,8 +49,10 @@ export const simpleFilter = <TItem>(
   );
 };
 
+/** @module Model **/
+
 /**
- * @category Model
+ * @memberof Model
  * @description
  * The Model<TItem> represents the state of the autocomplete.
  */
@@ -102,7 +106,7 @@ type SelectedFocusedOpenedHighlighted<TItem> = {
 };
 
 /**
- * @category Model
+ * @memberof Model
  */
 export type ModelState<TItem> =
   | UnselectedBlurred
@@ -115,7 +119,7 @@ export type ModelState<TItem> =
   | SelectedFocusedOpenedHighlighted<TItem>;
 
 /**
- * @category Model
+ * @memberof Model
  * @description
  * The init function returns the initial state of the autocomplete.
  */
@@ -131,8 +135,10 @@ export const init = <TItem>({
   };
 };
 
+/** @module Update **/
+
 /**
- * @category Update
+ * @memberof Update
  * @description
  * The Msg<TItem> represents all the possible state transitions that can happen to the autocomplete.
  */
@@ -170,7 +176,7 @@ export type Msg<TItem> =
     };
 
 /**
- * @category Update
+ * @memberof Update
  * @description
  * The Effect<TItem> represents all the possible effects that can happen to the autocomplete.
  * You as the user of the library has to implement the side effects
@@ -181,7 +187,7 @@ export type Effect<TItem> = {
 };
 
 /**
- * @category Update
+ * @memberof Update
  * @description
  * The update function is the main function.
  * The update function takes the current state of the autocomplete and a message and returns the new state of the
@@ -719,8 +725,10 @@ const circularIndex = (index: number, length: number) => {
   return ((index % length) + length) % length;
 };
 
+/** @module Selectors **/
+
 /**
- * @category Selectors
+ * @memberof Selectors
  * @description
  * Utility function to determine if any item is selected.
  */
@@ -741,7 +749,7 @@ export type SelectedState<TItem> =
   | SelectedFocusedOpenedHighlighted<TItem>;
 
 /**
- * @category Selectors
+ * @memberof Selectors
  * @description
  * Utility function to determine if in unselected state
  */
@@ -761,7 +769,7 @@ export type UnselectedState<TItem> = Exclude<
 >;
 
 /**
- * @category Selectors
+ * @memberof Selectors
  * @description
  * Utility function to determine if the dropdown is opened.
  */
@@ -782,7 +790,7 @@ export type OpenedState<TItem> =
   | SelectedFocusedOpenedHighlighted<TItem>;
 
 /**
- * @category Selectors
+ * @memberof Selectors
  * @description
  * Utility function to determine if the dropdown is closed.
  */
@@ -794,7 +802,7 @@ export const isClosed = <TItem>(
 export type ClosedState<TItem> = Exclude<ModelState<TItem>, OpenedState<TItem>>;
 
 /**
- * @category Selectors
+ * @memberof Selectors
  * @description
  * Utility function to determine if any item is highlighted.
  */
@@ -812,7 +820,7 @@ export type HighlightedState<TItem> =
   | SelectedFocusedOpenedHighlighted<TItem>;
 
 /**
- * @category Selectors
+ * @memberof Selectors
  * @description
  * Utility function to determine if input is blurred.
  */
@@ -826,7 +834,7 @@ export const isBlurred = <TItem>(
 export type BlurredState<TItem> = UnselectedBlurred | SelectedBlurred<TItem>;
 
 /**
- * @category Selectors
+ * @memberof Selectors
  * @description
  * Utility function to determine if input is focused.
  */
@@ -841,7 +849,7 @@ export type FocusedState<TItem> = Exclude<
 >;
 
 /**
- * @category Selectors
+ * @memberof Selectors
  * @description
  * This function returns the value that the input element should have.
  */
@@ -870,7 +878,7 @@ export const toCurrentInputValue = <TItem>(
 };
 
 /**
- * @category Selectors
+ * @memberof Selectors
  * @description
  * This function returns the highlighted item.
  */
@@ -898,7 +906,7 @@ export const toHighlightedItem = <TItem>(
 };
 
 /**
- * @category Selectors
+ * @memberof Selectors
  * @description
  * Utility function to determine if an item is highlighted.
  */
@@ -915,7 +923,7 @@ export const isItemHighlighted = <TItem>(
 };
 
 /**
- * @category Selectors
+ * @memberof Selectors
  * @description
  * This function returns the selected item
  */
@@ -936,7 +944,7 @@ export const toSelectedItem = <TItem>(model: Model<TItem>): TItem | null => {
 };
 
 /**
- * @category Selectors
+ * @memberof Selectors
  * @description
  * Utility function to determine if an item is selected.
  */
@@ -963,7 +971,7 @@ export const isItemSelected = <TItem>(
 };
 
 /**
- * @category Selectors
+ * @memberof Selectors
  * @description
  * Selector function to determine if an index is selected.
  */
@@ -989,7 +997,7 @@ export const isIndexHighlighted = <TItem>(
 };
 
 /**
- * @category Selectors
+ * @memberof Selectors
  * @description
  * Selector function to determine if an item is selected and highlighted.
  */
@@ -1005,7 +1013,7 @@ export const isItemSelectedAndHighlighted = <TItem>(
 };
 
 /**
- * @category Selectors
+ * @memberof Selectors
  * @description
  * This type represents all the possible states of an item
  */
@@ -1016,7 +1024,7 @@ export type ItemStatus =
   | "unselected";
 
 /**
- * @category Selectors
+ * @memberof Selectors
  * @description
  * This utility function returns the status of an item.
  */
@@ -1041,7 +1049,7 @@ export const toItemStatus = <TItem>(
 };
 
 /**
- * @category Selectors
+ * @memberof Selectors
  * @description
  * This function returns the all the visible items.
  * This function really isn't necessary, but it's here for a more consistent API.
@@ -1050,8 +1058,140 @@ export const toVisibleItems = <T>(config: Config<T>, model: Model<T>): T[] => {
   return config.deterministicFilter(model);
 };
 
+/** @module WAI-ARIA **/
+
 /**
- * @category Helpers
+ * @memberof WAI-ARIA
+ * @description
+ * This function returns WAI-ARIA attributes for the all html elements.
+ */
+export const aria = <T>(config: Config<T>, model: Model<T>) => {
+  return {
+    inputLabel: ariaInputLabel(config),
+    input: ariaInput(config, model),
+    helperText: ariaHelperText(config),
+    itemList: ariaItemList(config),
+    item: (item: T) => ariaItem(config, model, item),
+  };
+};
+
+/**
+ * @memberof WAI-ARIA
+ * @description
+ * This function returns WAI-ARIA attributes for html that describes the <input />.
+ */
+const ariaHelperText = <T>(config: Config<T>) => {
+  return {
+    id: helperTextHtmlId(config),
+  };
+};
+
+/**
+ * @memberof WAI-ARIA
+ * @description
+ * This function returns WAI-ARIA attributes for the <label />.
+ */
+export const ariaInputLabel = <T>(config: Config<T>) => {
+  return {
+    id: inputLabelHtmlId(config),
+    htmlFor: inputHtmlId(config),
+  };
+};
+
+/**
+ * @memberof WAI-ARIA
+ * @description
+ * This function returns WAI-ARIA attributes for the <input />.
+ */
+export const ariaInput = <T>(config: Config<T>, model: Model<T>) => {
+  const highlightedItem = toHighlightedItem(config, model);
+  return {
+    id: inputHtmlId(config),
+    role: "combobox",
+    tabindex: 0,
+    autoComplete: "off",
+    "aria-controls": itemListHtmlId(config),
+    "aria-haspopup": "listbox",
+    "aria-expanded": isOpened(model) ? "true" : "false",
+    "aria-describedby": helperTextHtmlId(config),
+    ...(highlightedItem
+      ? {
+          "aria-activedescendant": itemHtmlId(config, highlightedItem),
+        }
+      : {}),
+  } as const;
+};
+
+/**
+ * @memberof WAI-ARIA
+ * @description
+ * This function returns WAI-ARIA attributes for the "suggestion list" <ul />.
+ */
+export const ariaItemList = <T>(config: Config<T>) => {
+  return {
+    id: itemListHtmlId(config),
+    role: "listbox",
+    "aria-labelledby": inputLabelHtmlId(config),
+  } as const;
+};
+
+/**
+ * @memberof WAI-ARIA
+ * @description
+ * This function returns WAI-ARIA attributes for the "option" <li />.
+ */
+export const ariaItem = <T>(config: Config<T>, model: Model<T>, item: T) => {
+  const selected = toSelectedItem(model);
+  return {
+    id: itemHtmlId(config, item),
+    role: "option",
+    ...(selected
+      ? {
+          "aria-selected": config.toItemId(item) === config.toItemId(selected),
+        }
+      : {}),
+  } as const;
+};
+
+/**
+ * @memberof WAI-ARIA
+ */
+const inputLabelHtmlId = <T>({ namespace }: Config<T>) => {
+  return `${namespace}-input-label`;
+};
+
+/**
+ * @memberof WAI-ARIA
+ */
+const inputHtmlId = <T>({ namespace }: Config<T>) => {
+  return `${namespace}-input`;
+};
+
+/**
+ * @memberof WAI-ARIA
+ */
+const itemListHtmlId = <T>({ namespace }: Config<T>) => {
+  return `${namespace}-item-list`;
+};
+
+/**
+ * @memberof WAI-ARIA
+ */
+const itemHtmlId = <T>({ toItemId, namespace }: Config<T>, item: T) => {
+  return `${namespace}-item-${toItemId(item)}`;
+};
+
+/**
+ * @memberof WAI-ARIA
+ */
+const helperTextHtmlId = <T>({ namespace }: Config<T>) => {
+  return `${namespace}-helper-text`;
+};
+
+/** @module Helpers **/
+
+/**
+ * @memberof Helpers
  * @description
  * This helper function converts a keyboard event key property to a message.
  **/
@@ -1084,136 +1224,10 @@ export const browserKeyboardEventKeyToMsg = (key: string) => {
   return null;
 };
 
-/**
- * @category WAI-ARIA
- * @description
- * This function returns WAI-ARIA attributes for the all html elements.
- */
-export const aria = <T>(config: Config<T>, model: Model<T>) => {
-  return {
-    inputLabel: ariaInputLabel(config),
-    input: ariaInput(config, model),
-    helperText: ariaHelperText(config),
-    itemList: ariaItemList(config),
-    item: (item: T) => ariaItem(config, model, item),
-  };
-};
+/** @module Debug **/
 
 /**
- * @category WAI-ARIA
- * @description
- * This function returns WAI-ARIA attributes for html that describes the <input />.
- */
-const ariaHelperText = <T>(config: Config<T>) => {
-  return {
-    id: helperTextHtmlId(config),
-  };
-};
-
-/**
- * @category WAI-ARIA
- * @description
- * This function returns WAI-ARIA attributes for the <label />.
- */
-export const ariaInputLabel = <T>(config: Config<T>) => {
-  return {
-    id: inputLabelHtmlId(config),
-    htmlFor: inputHtmlId(config),
-  };
-};
-
-/**
- * @category WAI-ARIA
- * @description
- * This function returns WAI-ARIA attributes for the <input />.
- */
-export const ariaInput = <T>(config: Config<T>, model: Model<T>) => {
-  const highlightedItem = toHighlightedItem(config, model);
-  return {
-    id: inputHtmlId(config),
-    role: "combobox",
-    tabindex: 0,
-    autoComplete: "off",
-    "aria-controls": itemListHtmlId(config),
-    "aria-haspopup": "listbox",
-    "aria-expanded": isOpened(model) ? "true" : "false",
-    "aria-describedby": helperTextHtmlId(config),
-    ...(highlightedItem
-      ? {
-          "aria-activedescendant": itemHtmlId(config, highlightedItem),
-        }
-      : {}),
-  } as const;
-};
-
-/**
- * @category WAI-ARIA
- * @description
- * This function returns WAI-ARIA attributes for the "suggestion list" <ul />.
- */
-export const ariaItemList = <T>(config: Config<T>) => {
-  return {
-    id: itemListHtmlId(config),
-    role: "listbox",
-    "aria-labelledby": inputLabelHtmlId(config),
-  } as const;
-};
-
-/**
- * @category WAI-ARIA
- * @description
- * This function returns WAI-ARIA attributes for the "option" <li />.
- */
-export const ariaItem = <T>(config: Config<T>, model: Model<T>, item: T) => {
-  const selected = toSelectedItem(model);
-  return {
-    id: itemHtmlId(config, item),
-    role: "option",
-    ...(selected
-      ? {
-          "aria-selected": config.toItemId(item) === config.toItemId(selected),
-        }
-      : {}),
-  } as const;
-};
-
-/**
- * @category WAI-ARIA
- */
-const inputLabelHtmlId = <T>({ namespace }: Config<T>) => {
-  return `${namespace}-input-label`;
-};
-
-/**
- * @category WAI-ARIA
- */
-const inputHtmlId = <T>({ namespace }: Config<T>) => {
-  return `${namespace}-input`;
-};
-
-/**
- * @category WAI-ARIA
- */
-const itemListHtmlId = <T>({ namespace }: Config<T>) => {
-  return `${namespace}-item-list`;
-};
-
-/**
- * @category WAI-ARIA
- */
-const itemHtmlId = <T>({ toItemId, namespace }: Config<T>, item: T) => {
-  return `${namespace}-item-${toItemId(item)}`;
-};
-
-/**
- * @category WAI-ARIA
- */
-const helperTextHtmlId = <T>({ namespace }: Config<T>) => {
-  return `${namespace}-helper-text`;
-};
-
-/**
- * @category debug
+ * @memberof Debug
  * @description
  * This function logs the state of the model and the effects.
  **/

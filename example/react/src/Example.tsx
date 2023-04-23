@@ -1,5 +1,5 @@
+import * as Autocomplete from "headless-autocomplete";
 import { useRef, useState } from "react";
-import * as Autocomplete from "./headless-autocomplete";
 
 //
 //
@@ -57,10 +57,6 @@ function Example() {
         ref?.scrollIntoView({
           block: "nearest",
         });
-      }
-
-      if (effect.type === "focus-input") {
-        inputRef.current?.focus();
       }
     }
 

@@ -1,7 +1,7 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { useEffect, useRef } from "react";
 import { Provider, useDispatch, useSelector } from "react-redux";
-import * as Autocomplete from "./headless-autocomplete";
+import * as Autocomplete from "headless-autocomplete";
 import { Movie, top100Films } from "./movies";
 
 const config: Autocomplete.Config<Movie> = {
@@ -31,13 +31,6 @@ function ExampleRedux() {
 
           ref?.scrollIntoView({
             block: "nearest",
-          });
-        }
-
-        if (effect.type === "focus-input") {
-          console.log("FOCUS");
-          inputRef.current?.focus({
-            preventScroll: true,
           });
         }
       }
@@ -174,7 +167,7 @@ type AppAction = Autocomplete.Msg<Movie>;
 
 const store = configureStore<AppState, AppAction>({
   reducer: (state, action) => {
-    const autocompleteModel: Autocomplete.Model<Movie> =
+    const autocompleteModel =
       state?.autocomplete.model ?? Autocomplete.init({ allItems: top100Films });
 
     const autocomplete = Autocomplete.update(config, {

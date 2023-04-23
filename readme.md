@@ -7,7 +7,7 @@
 - ⚡️ Zero dependencies
 - ♿️ [WAI ARIA Combobox](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/) support
 - 💪 Written in TypeScript
-- 🌳 Simple pure functional [Elm](https://elm-lang.org/)-like API
+- 🌳 Simple API
 - 💼 Works anywhere JavaScript works. React Native, Vue, Node.js, Redux, Any legacy JS framework etc.
 
 ## Cons

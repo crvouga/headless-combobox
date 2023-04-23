@@ -1,5 +1,5 @@
 <script lang="ts">
-  import * as Autocomplete from "headless-autocomplete";
+  import * as Autocomplete from "./dev-headless-autocomplete";
 
   const fruits = ['apple', 'banana', 'orange', 'strawberry', 'kiwi', 'mango', 'pineapple', 'watermelon', 'grape', 'pear'];
 
@@ -28,14 +28,19 @@
 </script>
 
 <div class="container">
+  <pre>
+    {JSON.stringify(state, null, 2)}
+  </pre>
   <input
     {...aria.input}
+    class='input'
     value={Autocomplete.toCurrentInputValue(config, state)}
     on:input={(event) => dispatch({type: 'inputted-value', inputValue: event.currentTarget.value})}
     on:focus={() => dispatch({type: 'focused-input'})}
     on:blur={() => dispatch({type: 'blurred-input'})}
     on:keydown={(event) => {
       const msg = Autocomplete.browserKeyboardEventKeyToMsg(event.key)
+
       if(msg) {
         dispatch(msg)
       }
@@ -45,14 +50,17 @@
     <ul
     class='suggestions'
     {...aria.itemList}>
-      {#each state.allItems as item, index}
+      {#each Autocomplete.toVisibleItems(config, state) as item, index}
         <li
          {...aria.item(item)}
          class='option'
          class:highlighted={Autocomplete.toItemStatus(config, state, item) === 'highlighted'}
          class:selected={Autocomplete.toItemStatus(config, state, item) === 'selected'}
-         class:selected-highlighted={Autocomplete.toItemStatus(config, state, item) === 'selected-and-highlighted'}
-         on:mouseover={() => dispatch({type: "hovered-over-item", index})}
+         class:selected-and-highlighted={Autocomplete.toItemStatus(config, state, item) === 'selected-and-highlighted'}
+         on:mouseover={(event) =>{
+          event.preventDefault()
+           dispatch({type: "hovered-over-item", index})
+           }}
          on:focus={() => {}}
         >
         {item}
@@ -66,6 +74,10 @@
   .container {
     position: relative
   }
+  .input {
+    width: 100%;
+    padding: 0.5rem;
+  }
   .suggestions {
     position: absolute;
     top: 100%;
@@ -75,7 +87,8 @@
     max-height: 200px;
   }
   .option {
-    display: block
+    display: block;
+    cursor: pointer;
   }
   .highlighted {
     background-color: #eee;
@@ -84,7 +97,7 @@
   .selected {
     background-color: blue
   }
-  .selected-highlighted {
+  .selected-and-highlighted {
     background-color: lightblue
   }
 </style>

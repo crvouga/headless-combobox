@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { createAutocomplete } from "./dev-headless-autocomplete";
+  import { createCombobox } from "./headless-combobox";
 
   /*
 
@@ -27,7 +27,7 @@
   Step 1: Create an instance
 
   */
-  const autocomplete = createAutocomplete({
+  const combobox = createCombobox({
     allItems: fruits,
     toItemId: (item) => item.id,
     toItemInputValue: (item) => item.label,
@@ -45,9 +45,9 @@
   Step 2: Write some glue code
 
   */
-  let state = autocomplete.getState();
+  let state = combobox.getState();
   onMount(() =>
-    autocomplete.subscribe((stateNew) => {
+    combobox.subscribe((stateNew) => {
       state = stateNew;
     })
   );
@@ -66,26 +66,26 @@
     {...state.aria.input}
     class="input"
     value={state.inputValue}
-    on:input={(event) => autocomplete.onInput(event.currentTarget.value)}
-    on:focus={autocomplete.onInputFocus}
-    on:blur={autocomplete.onInputBlur}
-    on:keydown={(event) => autocomplete.onInputKeyDown(event.key)}
+    on:input={(event) => combobox.onInput(event.currentTarget.value)}
+    on:focus={combobox.onInputFocus}
+    on:blur={combobox.onInputBlur}
+    on:keydown={(event) => combobox.onInputKeyDown(event.key)}
   />
   <ul {...state.aria.itemList} class="suggestions" class:hide={!state.isOpened}>
     {#each state.items as item, index}
       <li
         {...state.aria.item(item)}
-        bind:this={listItems[autocomplete.toItemId(item)]}
-        on:mouseover={() => autocomplete.onItemHover(index)}
-        on:mousedown|preventDefault={() => autocomplete.onItemPress(item)}
-        on:focus={() => autocomplete.onItemFocus(index)}
+        bind:this={listItems[combobox.toItemId(item)]}
+        on:mouseover={() => combobox.onItemHover(index)}
+        on:mousedown|preventDefault={() => combobox.onItemPress(item)}
+        on:focus={() => combobox.onItemFocus(index)}
         class="option"
         class:highlighted={state.itemStatus(item) === "highlighted"}
         class:selected={state.itemStatus(item) === "selected"}
         class:selected-and-highlighted={state.itemStatus(item) ===
           "selected-and-highlighted"}
       >
-        {autocomplete.toItemInputValue(item)}
+        {combobox.toItemInputValue(item)}
       </li>
     {/each}
   </ul>

@@ -1,6 +1,6 @@
 {
-  "name": "headless-autocomplete",
-  "version": "3.0.2",
+  "name": "headless-combobox",
+  "version": "3.0.3",
   "description": "",
   "types": "dist/index.d.ts",
   "main": "dist/index.js",
@@ -10,7 +10,7 @@
     "prepublish": "tsc",
     "prepublishOnly": "tsc",
     "postpublish": "npm run update-example-deps",
-    "update-example-deps": "cd example/react && npm install headless-autocomplete@latest && cd ../svelte && npm install headless-autocomplete@latest",
+    "update-example-deps": "cd example/react && npm install headless-combobox@latest && cd ../svelte && npm install headless-combobox@latest",
     "gen-docs": "typedoc src/index.ts"
   },
   "repository": {

@@ -1,40 +1,6 @@
-import { useEffect, useState } from "react";
 import Example from "./Example";
-import ExampleRedux from "./ExampleRedux";
-
-type Route = "example" | "example-redux";
-
-const allRoutes: { [route in Route]: Route } = {
-  example: "example",
-  "example-redux": "example-redux",
-};
-
-const routeToName: { [route in Route]: string } = {
-  example: "React",
-  "example-redux": "React + Redux",
-};
-
-const getRoute = (): Route => {
-  const hash = window.location.hash.replace("#", "");
-  if (hash === "example" || hash === "example-redux") {
-    return hash;
-  }
-  return "example";
-};
 
 export default function App() {
-  const [activeRoute, setActiveRoute] = useState<Route>(getRoute);
-
-  useEffect(() => {
-    const onHashChange = () => {
-      setActiveRoute(getRoute());
-    };
-    window.addEventListener("hashchange", onHashChange);
-    return () => {
-      window.removeEventListener("hashchange", onHashChange);
-    };
-  }, []);
-
   return (
     <div
       style={{
@@ -45,7 +11,7 @@ export default function App() {
       }}>
       <div style={{ padding: "1rem 0" }}>
         <a
-          href="https://github.com/crvouga/headless-autocomplete"
+          href="https://github.com/crvouga/headless-combobox"
           target="_blank"
           rel="noopener noreferrer"
           style={{
@@ -60,28 +26,7 @@ export default function App() {
         </a>
       </div>
 
-      <nav style={{ width: "100%", display: "flex", alignItems: "center" }}>
-        {Object.values(allRoutes).map((route) => {
-          return (
-            <a
-              key={route}
-              style={{
-                padding: "0.5rem",
-                textDecoration: "none",
-                textAlign: "center",
-                flex: 1,
-                border: "1px solid black",
-                backgroundColor: route === activeRoute ? "black" : "white",
-                color: route === activeRoute ? "white" : "black",
-              }}
-              href={`#${route}`}>
-              {routeToName[route]}
-            </a>
-          );
-        })}
-      </nav>
-      {activeRoute === "example" && <Example />}
-      {activeRoute === "example-redux" && <ExampleRedux />}
+      <Example />
     </div>
   );
 }

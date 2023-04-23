@@ -1,4 +1,4 @@
-# headless-autocomplete
+# headless-combobox
 
 ## Pros
 
@@ -17,44 +17,45 @@
 
 ## Good use cases are
 
-- You need a custom looking autocomplete
+- You need a custom looking combobox
 - You're working in a legacy framework
 - You're working in a framework with a small ecosystem
 - You're working in a framework that always has breaking changes
 - You like programming in a functional style
-- You hate learning how to override styles in autocomplete libraries
+- You hate learning how to override styles in combobox libraries
 
 ## Links
 
-- [React Example](https://headless-autocomplete-example.vercel.app/)
-- [Documentation](https://headless-autocomplete.vercel.app/)
-- [Github](https://github.com/crvouga/headless-autocomplete)
-- [NPM](https://www.npmjs.com/package/headless-autocomplete)
+- [React Example](https://headless-combobox-example.vercel.app/)
+- [Documentation](https://headless-combobox.vercel.app/)
+- [Github](https://github.com/crvouga/headless-combobox)
+- [NPM](https://www.npmjs.com/package/headless-combobox)
 
 ## Installation
 
 ### NPM
 
 ```shell
-npm install headless-autocomplete
+npm install headless-combobox
 ```
 
 ### Yarn
 
 ```shell
-yarn add headless-autocomplete
+yarn add headless-combobox
 ```
 
 ### PNPM
 
 ```shell
-pnpm install headless-autocomplete
+pnpm install headless-combobox
 ```
 
 Or you could just copy & paste it into your source code. It's just one file with zero dependencies.
 
 ## TODO
 
+- Select Only
 - Multi select
 
 ## Complementary Libraries
@@ -69,7 +70,7 @@ Or you could just copy & paste it into your source code. It's just one file with
 ```svelte
 <script lang="ts">
   import { onMount } from "svelte";
-  import { createAutocomplete } from "headless-autocomplete";
+  import { createCombobox } from "headless-combobox";
 
   /*
 
@@ -96,7 +97,7 @@ Or you could just copy & paste it into your source code. It's just one file with
   Step 1: Create an instance
 
   */
-  const autocomplete = createAutocomplete({
+  const combobox = createCombobox({
     allItems: fruits,
     toItemId: (item) => item.id,
     toItemInputValue: (item) => item.label,
@@ -114,9 +115,9 @@ Or you could just copy & paste it into your source code. It's just one file with
   Step 2: Write some glue code
 
   */
-  let state = autocomplete.getState();
+  let state = combobox.getState();
   onMount(() =>
-    autocomplete.subscribe((stateNew) => {
+    combobox.subscribe((stateNew) => {
       state = stateNew;
     })
   );
@@ -135,26 +136,26 @@ Or you could just copy & paste it into your source code. It's just one file with
     {...state.aria.input}
     class="input"
     value={state.inputValue}
-    on:input={(event) => autocomplete.onInput(event.currentTarget.value)}
-    on:focus={autocomplete.onInputFocus}
-    on:blur={autocomplete.onInputBlur}
-    on:keydown={(event) => autocomplete.onInputKeyDown(event.key)}
+    on:input={(event) => combobox.onInput(event.currentTarget.value)}
+    on:focus={combobox.onInputFocus}
+    on:blur={combobox.onInputBlur}
+    on:keydown={(event) => combobox.onInputKeyDown(event.key)}
   />
   <ul {...state.aria.itemList} class="suggestions" class:hide={!state.isOpened}>
     {#each state.items as item, index}
       <li
         {...state.aria.item(item)}
-        bind:this={listItems[autocomplete.toItemId(item)]}
-        on:mouseover={() => autocomplete.onItemHover(index)}
-        on:mousedown|preventDefault={() => autocomplete.onItemPress(item)}
-        on:focus={() => autocomplete.onItemFocus(index)}
+        bind:this={listItems[combobox.toItemId(item)]}
+        on:mouseover={() => combobox.onItemHover(index)}
+        on:mousedown|preventDefault={() => combobox.onItemPress(item)}
+        on:focus={() => combobox.onItemFocus(index)}
         class="option"
         class:highlighted={state.itemStatus(item) === "highlighted"}
         class:selected={state.itemStatus(item) === "selected"}
         class:selected-and-highlighted={state.itemStatus(item) ===
           "selected-and-highlighted"}
       >
-        {autocomplete.toItemInputValue(item)}
+        {combobox.toItemInputValue(item)}
       </li>
     {/each}
   </ul>
@@ -216,7 +217,7 @@ Or you could just copy & paste it into your source code. It's just one file with
 
 ```ts
 import { useEffect, useRef, useState } from "react";
-import { createAutocomplete } from "headless-autocomplete";
+import { createCombobox } from "headless-combobox";
 
 /*
 
@@ -237,8 +238,8 @@ function Example() {
   Step 1. Create the instance
 
   */
-  const autocompleteRef = useRef(
-    createAutocomplete<Movie>({
+  const comboboxRef = useRef(
+    createCombobox<Movie>({
       allItems: top100Films,
       toItemId: (item) => item.label,
       toItemInputValue: (item) => item.label,
@@ -256,10 +257,10 @@ function Example() {
   Step 2. Write some glue code
 
   */
-  const [state, setState] = useState(() => autocompleteRef.current.getState());
+  const [state, setState] = useState(() => comboboxRef.current.getState());
 
   useEffect(() => {
-    return autocompleteRef.current.subscribe((state) => {
+    return comboboxRef.current.subscribe((state) => {
       setState(state);
     });
   }, []);
@@ -296,14 +297,12 @@ function Example() {
             ref={inputRef}
             value={state.inputValue}
             onInput={(event) =>
-              autocompleteRef.current.onInput(event.currentTarget.value)
+              comboboxRef.current.onInput(event.currentTarget.value)
             }
-            onBlur={autocompleteRef.current.onInputBlur}
-            onFocus={autocompleteRef.current.onInputFocus}
-            onClick={autocompleteRef.current.onInputPress}
-            onKeyDown={(event) =>
-              autocompleteRef.current.onInputKeyDown(event.key)
-            }
+            onBlur={comboboxRef.current.onInputBlur}
+            onFocus={comboboxRef.current.onInputFocus}
+            onClick={comboboxRef.current.onInputPress}
+            onKeyDown={(event) => comboboxRef.current.onInputKeyDown(event.key)}
           />
         </label>
 
@@ -331,18 +330,15 @@ function Example() {
                 key={item.label}
                 ref={(ref) => {
                   if (ref) {
-                    refs.current.set(
-                      autocompleteRef.current.toItemId(item),
-                      ref
-                    );
+                    refs.current.set(comboboxRef.current.toItemId(item), ref);
                   }
                 }}
                 onMouseDown={(event) => {
                   event.preventDefault(); // prevent input blur
-                  autocompleteRef.current.onItemPress(item);
+                  comboboxRef.current.onItemPress(item);
                 }}
-                onMouseMove={() => autocompleteRef.current.onItemHover(index)}
-                onFocus={() => autocompleteRef.current.onItemFocus(index)}
+                onMouseMove={() => comboboxRef.current.onItemHover(index)}
+                onFocus={() => comboboxRef.current.onItemFocus(index)}
                 style={{
                   margin: 0,
                   padding: "0.5rem",

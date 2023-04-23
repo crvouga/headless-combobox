@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { createAutocomplete } from "./dev-headless-autocomplete";
+import { createCombobox } from "./headless-combobox";
 
 /*
 
@@ -17,11 +17,11 @@ function Example() {
 
   /*
 
-  Step 1. Create the autocomplete instance
+  Step 1. Create the instance
 
   */
-  const autocompleteRef = useRef(
-    createAutocomplete<Movie>({
+  const comboboxRef = useRef(
+    createCombobox<Movie>({
       allItems: top100Films,
       toItemId: (item) => item.label,
       toItemInputValue: (item) => item.label,
@@ -36,20 +36,20 @@ function Example() {
 
   /*
 
-  Step 2. Glue the autocomplete instance to your framework
+  Step 2. Write some glue code
 
   */
-  const [state, setState] = useState(() => autocompleteRef.current.getState());
+  const [state, setState] = useState(() => comboboxRef.current.getState());
 
   useEffect(() => {
-    return autocompleteRef.current.subscribe((state) => {
+    return comboboxRef.current.subscribe((state) => {
       setState(state);
     });
   }, []);
 
   /*
 
-  Step 3. Wire up the autocomplete instance to your UI
+  Step 3. Wire up to the UI
 
   */
   return (
@@ -79,14 +79,12 @@ function Example() {
             ref={inputRef}
             value={state.inputValue}
             onInput={(event) =>
-              autocompleteRef.current.onInput(event.currentTarget.value)
+              comboboxRef.current.onInput(event.currentTarget.value)
             }
-            onBlur={autocompleteRef.current.onInputBlur}
-            onFocus={autocompleteRef.current.onInputFocus}
-            onClick={autocompleteRef.current.onInputPress}
-            onKeyDown={(event) =>
-              autocompleteRef.current.onInputKeyDown(event.key)
-            }
+            onBlur={comboboxRef.current.onInputBlur}
+            onFocus={comboboxRef.current.onInputFocus}
+            onClick={comboboxRef.current.onInputPress}
+            onKeyDown={(event) => comboboxRef.current.onInputKeyDown(event.key)}
           />
         </label>
 
@@ -114,18 +112,15 @@ function Example() {
                 key={item.label}
                 ref={(ref) => {
                   if (ref) {
-                    refs.current.set(
-                      autocompleteRef.current.toItemId(item),
-                      ref
-                    );
+                    refs.current.set(comboboxRef.current.toItemId(item), ref);
                   }
                 }}
                 onMouseDown={(event) => {
                   event.preventDefault(); // prevent input blur
-                  autocompleteRef.current.onItemPress(item);
+                  comboboxRef.current.onItemPress(item);
                 }}
-                onMouseMove={() => autocompleteRef.current.onItemHover(index)}
-                onFocus={() => autocompleteRef.current.onItemFocus(index)}
+                onMouseMove={() => comboboxRef.current.onItemHover(index)}
+                onFocus={() => comboboxRef.current.onItemFocus(index)}
                 style={{
                   margin: 0,
                   padding: "0.5rem",

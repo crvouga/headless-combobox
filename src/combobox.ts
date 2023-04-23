@@ -3,7 +3,8 @@
 /**
  * @memberof Config
  * @description
- * The Config<TItem> represents the configuration needed for the autocomplete to work with generic items.
+ * The Config<TItem> represents the configuration needed for the combobox to work with generic items.
+ * @remark
  * ⚠️ All these functions should be deterministic!
  */
 export type Config<TItem> = {
@@ -27,7 +28,7 @@ export const initConfig = <TItem>({
 }): Config<TItem> => {
   return {
     ...config,
-    namespace: namespace ?? "autocomplete",
+    namespace: namespace ?? "combobox",
     deterministicFilter: (model) => simpleFilter(config, model),
   };
 };
@@ -54,7 +55,7 @@ export const simpleFilter = <TItem>(
 /**
  * @memberof Model
  * @description
- * The Model<TItem> represents the state of the autocomplete.
+ * The Model<TItem> represents the state of the combobox.
  */
 export type Model<TItem> = ModelState<TItem> & {
   allItems: TItem[];
@@ -121,7 +122,7 @@ export type ModelState<TItem> =
 /**
  * @memberof Model
  * @description
- * The init function returns the initial state of the autocomplete.
+ * The init function returns the initial state of the combobox.
  */
 export const init = <TItem>({
   allItems,
@@ -140,7 +141,7 @@ export const init = <TItem>({
 /**
  * @memberof Update
  * @description
- * The Msg<TItem> represents all the possible state transitions that can happen to the autocomplete.
+ * The Msg<TItem> represents all the possible state transitions that can happen to the combobox.
  */
 export type Msg<TItem> =
   | {
@@ -178,7 +179,7 @@ export type Msg<TItem> =
 /**
  * @memberof Update
  * @description
- * The Effect<TItem> represents all the possible effects that can happen to the autocomplete.
+ * The Effect<TItem> represents all the possible effects that can happen to the combobox.
  * You as the user of the library has to implement the side effects
  **/
 export type Effect<TItem> = {
@@ -190,8 +191,8 @@ export type Effect<TItem> = {
  * @memberof Update
  * @description
  * The update function is the main function.
- * The update function takes the current state of the autocomplete and a message and returns the new state of the
- * autocomplete and effects that need to be run.
+ * The update function takes the current state of the combobox and a message and returns the new state of the
+ * combobox and effects that need to be run.
  */
 export const update = <TItem>(
   config: Config<TItem>,
@@ -1110,7 +1111,7 @@ export const ariaInput = <T>(config: Config<T>, model: Model<T>) => {
     id: inputHtmlId(config),
     role: "combobox",
     tabindex: 0,
-    autoComplete: "off",
+    combobox: "off",
     "aria-controls": itemListHtmlId(config),
     "aria-haspopup": "listbox",
     "aria-expanded": isOpened(model) ? "true" : "false",
@@ -1245,14 +1246,14 @@ const modelToState = <T>(config: Config<T>, model: Model<T>) => {
 
 type State<T> = ReturnType<typeof modelToState<T>>;
 
-export type AutocompleteState<T> = State<T>;
+export type comboboxState<T> = State<T>;
 
 /**
  * @memberof Helpers
  * @description
  * This is a helper function that returns an object that can be glued into your app with less boilerplate.
  */
-export const createAutocomplete = <T>({
+export const createCombobox = <T>({
   allItems,
   toItemId,
   toItemInputValue,
@@ -1339,7 +1340,6 @@ export const createAutocomplete = <T>({
   return {
     ...config,
     ...events,
-    events,
     setAllItems,
     getState,
     dispatch,

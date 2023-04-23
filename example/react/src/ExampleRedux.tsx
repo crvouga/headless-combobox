@@ -1,14 +1,13 @@
 import { configureStore } from "@reduxjs/toolkit";
+import * as Autocomplete from "headless-autocomplete";
 import { useEffect, useRef } from "react";
 import { Provider, useDispatch, useSelector } from "react-redux";
-import * as Autocomplete from "headless-autocomplete";
 import { Movie, top100Films } from "./movies";
 
-const config: Autocomplete.Config<Movie> = {
+const config = Autocomplete.initConfig<Movie>({
   toItemId: (item) => item.label,
   toItemInputValue: (item) => item.label,
-  deterministicFilter: (model) => Autocomplete.simpleFilter(config, model),
-};
+});
 
 function ExampleRedux() {
   const autocompleteState = useSelector(

@@ -1,78 +1,92 @@
 <script lang="ts">
   import * as Autocomplete from "./dev-headless-autocomplete";
 
-  const fruits = ['apple', 'banana', 'orange', 'strawberry', 'kiwi', 'mango', 'pineapple', 'watermelon', 'grape', 'pear'];
+  const fruits = [
+    "apple",
+    "banana",
+    "orange",
+    "strawberry",
+    "kiwi",
+    "mango",
+    "pineapple",
+    "watermelon",
+    "grape",
+    "pear",
+  ];
 
   const config = Autocomplete.initConfig<string>({
     toItemId: (item) => item,
     toItemInputValue: (item) => item,
-  })
-
+  });
 
   let state = Autocomplete.init({
-    allItems: fruits
-  })
+    allItems: fruits,
+  });
 
   const dispatch = (msg: Autocomplete.Msg<string>) => {
-    const output = Autocomplete.update(config, {model:state, msg})
-    state = output.model
+    const output = Autocomplete.update(config, { model: state, msg });
+    state = output.model;
 
     Autocomplete.debug({
       log: console.log,
-      input: {model:state, msg},
-      output
-    })
-  }
+      input: { model: state, msg },
+      output,
+    });
+  };
 
-  $: aria = Autocomplete.aria(config, state)
+  $: aria = Autocomplete.aria(config, state);
 </script>
 
 <div class="container">
-  <pre>
-    {JSON.stringify(state, null, 2)}
-  </pre>
   <input
     {...aria.input}
-    class='input'
+    class="input"
     value={Autocomplete.toCurrentInputValue(config, state)}
-    on:input={(event) => dispatch({type: 'inputted-value', inputValue: event.currentTarget.value})}
-    on:focus={() => dispatch({type: 'focused-input'})}
-    on:blur={() => dispatch({type: 'blurred-input'})}
+    on:input={(event) =>
+      dispatch({
+        type: "inputted-value",
+        inputValue: event.currentTarget.value,
+      })}
+    on:focus={() => dispatch({ type: "focused-input" })}
+    on:blur={() => dispatch({ type: "blurred-input" })}
     on:keydown={(event) => {
-      const msg = Autocomplete.browserKeyboardEventKeyToMsg(event.key)
-
-      if(msg) {
-        dispatch(msg)
+      const msg = Autocomplete.browserKeyboardEventKeyToMsg(event.key);
+      if (msg) {
+        dispatch(msg);
       }
     }}
   />
-  {#if Autocomplete.isOpened(state) }
-    <ul
-    class='suggestions'
-    {...aria.itemList}>
+  {#if Autocomplete.isOpened(state)}
+    <ul class="suggestions" {...aria.itemList}>
       {#each Autocomplete.toVisibleItems(config, state) as item, index}
         <li
-         {...aria.item(item)}
-         class='option'
-         class:highlighted={Autocomplete.toItemStatus(config, state, item) === 'highlighted'}
-         class:selected={Autocomplete.toItemStatus(config, state, item) === 'selected'}
-         class:selected-and-highlighted={Autocomplete.toItemStatus(config, state, item) === 'selected-and-highlighted'}
-         on:mouseover={(event) =>{
-          event.preventDefault()
-           dispatch({type: "hovered-over-item", index})
-           }}
-         on:focus={() => {}}
+          {...aria.item(item)}
+          class="option"
+          class:highlighted={Autocomplete.toItemStatus(config, state, item) ===
+            "highlighted"}
+          class:selected={Autocomplete.toItemStatus(config, state, item) ===
+            "selected"}
+          class:selected-and-highlighted={Autocomplete.toItemStatus(
+            config,
+            state,
+            item
+          ) === "selected-and-highlighted"}
+          on:mouseover={(event) => {
+            event.preventDefault();
+            dispatch({ type: "hovered-over-item", index });
+          }}
+          on:focus={() => {}}
         >
-        {item}
-      </li>
+          {item}
+        </li>
       {/each}
     </ul>
   {/if}
-  </div>
+</div>
 
 <style>
   .container {
-    position: relative
+    position: relative;
   }
   .input {
     width: 100%;
@@ -95,9 +109,9 @@
     color: black;
   }
   .selected {
-    background-color: blue
+    background-color: blue;
   }
   .selected-and-highlighted {
-    background-color: lightblue
+    background-color: lightblue;
   }
 </style>

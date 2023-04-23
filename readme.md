@@ -14,7 +14,7 @@
 - 🧠 Headless. You do have to write your own styles.
 - 🔌 Framework agnostic. You do have to write glue code.
 
-## Good use cases are when
+## Good use cases are
 
 - You need a custom looking autocomplete
 - You're working in a legacy framework

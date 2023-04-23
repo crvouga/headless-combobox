@@ -1,6 +1,6 @@
 {
   "name": "headless-autocomplete",
-  "version": "2.0.5",
+  "version": "2.0.6",
   "description": "",
   "types": "dist/index.d.ts",
   "main": "dist/index.js",

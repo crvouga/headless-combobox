@@ -25,10 +25,9 @@
 
 ## Links
 
+- [React Example](https://headless-autocomplete-example.vercel.app/)
 - [Documentation](https://headless-autocomplete.vercel.app/)
-
 - [Github](https://github.com/crvouga/headless-autocomplete)
-
 - [NPM](https://www.npmjs.com/package/headless-autocomplete)
 
 ## Installation
@@ -56,7 +55,6 @@ Or you could just copy & paste it into your source code. It's just one file with
 ## TODO
 
 - Multi select
-
 - Accessibility Helpers (you can do this yourself since its headless)
 
 ## Complementary Libraries

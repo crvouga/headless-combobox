@@ -5,6 +5,7 @@
 - 🧠 Headless. Bring your own styles.
 - 🔌 Framework agnostic. Bring your own framework.
 - ⚡️ Zero dependencies
+- 👨‍🦯 [WAI ARIA Combobox](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/) support
 - 💪 Written in TypeScript
 - 🌳 Simple pure functional [Elm](https://elm-lang.org/)-like API
 - 💼 Works anywhere JavaScript works. React Native, Vue, Node.js, Redux, Any legacy JS framework etc.
@@ -55,7 +56,6 @@ Or you could just copy & paste it into your source code. It's just one file with
 ## TODO
 
 - Multi select
-- Accessibility Helpers (you can do this yourself since its headless)
 
 ## Complementary Libraries
 
@@ -82,14 +82,13 @@ type Movie = {
 
 //
 //
-// Step 1: Define the config
+// Step 1: Init the config
 //
 //
-const config: Autocomplete.Config<Movie> = {
+const config = Autocomplete.initConfig<Movie>({
   toItemId: (item) => item.label,
   toItemInputValue: (item) => item.label,
-  deterministicFilter: (model) => Autocomplete.simpleFilter(config, model),
-};
+});
 
 function Example() {
   //
@@ -142,6 +141,8 @@ function Example() {
   // Step 4. Wire up to the view
   //
   //
+
+  const aria = Autocomplete.aria(config, state);
   return (
     <div
       style={{
@@ -155,7 +156,9 @@ function Example() {
       <p>{state.type}</p>
 
       <div style={{ position: "relative", width: "100%" }}>
+        <label {...aria.inputLabel}>Movies</label>
         <input
+          {...aria.input}
           style={{
             width: "100%",
             padding: "1rem",
@@ -183,8 +186,10 @@ function Example() {
             }
           }}
         />
+
         {Autocomplete.isOpened(state) && (
           <ul
+            {...aria.itemList}
             style={{
               position: "absolute",
               top: "100%",
@@ -202,6 +207,7 @@ function Example() {
               const itemStatus = Autocomplete.toItemStatus(config, state, item);
               return (
                 <li
+                  {...aria.item(item)}
                   key={item.label}
                   ref={(ref) => {
                     if (ref) {

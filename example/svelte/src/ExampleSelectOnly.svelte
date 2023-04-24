@@ -28,6 +28,8 @@
 
   */
   const combobox = createCombobox({
+    namespace: "example-select-only",
+    mode: "select-only",
     allItems: fruits,
     toItemId: (item) => item.id,
     toItemInputValue: (item) => item.label,
@@ -59,18 +61,18 @@
   */
 </script>
 
-<label class="label" {...state.aria.inputLabel}>
+<div class="container">
   <p {...state.aria.helperText}>Use arrow keys to navigate the list</p>
-  Fruits
-  <input
+
+  <div
     {...state.aria.input}
     class="input"
-    value={state.inputValue}
-    on:input={(event) => combobox.onInput(event.currentTarget.value)}
     on:focus={combobox.onInputFocus}
     on:blur={combobox.onInputBlur}
     on:keydown={(event) => combobox.onInputKeyDown(event.key)}
-  />
+  >
+    {state.inputValue}
+  </div>
   <ul {...state.aria.itemList} class="suggestions" class:hide={!state.isOpened}>
     {#each state.items as item, index}
       <li
@@ -89,9 +91,14 @@
       </li>
     {/each}
   </ul>
-</label>
+</div>
 
 <style>
+  .container {
+    position: relative;
+    display: block;
+    width: 100%;
+  }
   .label {
     position: relative;
     display: block;

@@ -51,8 +51,6 @@ yarn add headless-combobox
 pnpm install headless-combobox
 ```
 
-Or you could just copy & paste it into your source code. It's just one file with zero dependencies.
-
 ## TODO
 
 - Select Only

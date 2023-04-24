@@ -1112,6 +1112,7 @@ export const ariaInput = <T>(config: Config<T>, model: Model<T>) => {
     role: "combobox",
     tabindex: 0,
     combobox: "off",
+    "aria-autocomplete": "list",
     "aria-controls": itemListHtmlId(config),
     "aria-haspopup": "listbox",
     "aria-expanded": isOpened(model) ? "true" : "false",

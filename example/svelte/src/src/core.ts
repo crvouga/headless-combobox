@@ -418,6 +418,8 @@ const updateSetters = <TItem>({
       mode: msg.mode,
     };
   }
+
+  return model;
 };
 
 const updateModel = <TItem>(

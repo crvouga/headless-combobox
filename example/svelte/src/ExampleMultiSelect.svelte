@@ -155,6 +155,7 @@
   }
   .input {
     width: 100%;
+    font-size: large;
     padding: 0.5rem;
     box-sizing: border-box;
     border: 1px solid #ccc;
@@ -173,22 +174,38 @@
     max-width: 100%;
     margin: 0;
     padding: 0;
-    background: #121212;
+    background: #efefef;
   }
+
+  @media (prefers-color-scheme: dark) {
+    .suggestions {
+      background: #121212;
+    }
+  }
+
   .option {
     display: block;
     cursor: pointer;
     list-style: none;
     width: 100%;
+    font-size: large;
     margin: 0;
     padding: 0;
   }
   .highlighted {
-    background-color: #eee;
-    color: black;
+    background-color: #333;
+    color: white;
   }
+  @media (prefers-color-scheme: dark) {
+    .highlighted {
+      background-color: #eee;
+      color: black;
+    }
+  }
+
   .selected {
     background-color: blue;
+    color: white;
   }
   .selected-and-highlighted {
     background-color: lightblue;
@@ -203,8 +220,14 @@
     align-items: center;
     padding: 0.5rem;
     margin: 0.5rem;
-    background: #121212;
+    background: #efefef;
     border-radius: 0.5rem;
     height: 1.5rem;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .chip {
+      background: #121212;
+    }
   }
 </style>

@@ -166,7 +166,7 @@ export const init = <TItem>({
  */
 export type Msg<TItem> =
   | {
-      type: "pressed-arrow-key";
+      type: "pressed-vertical-arrow-key";
       key: "arrow-up" | "arrow-down";
     }
   | {
@@ -311,7 +311,10 @@ export const update = <TItem>(
   }
 
   // scroll highlighted item into view when navigating with keyboard
-  if (isHighlighted(output.model) && msg.type === "pressed-arrow-key") {
+  if (
+    isHighlighted(output.model) &&
+    msg.type === "pressed-vertical-arrow-key"
+  ) {
     const filtered = config.deterministicFilter(output.model);
 
     const highlightedItem = filtered[output.model.highlightIndex];
@@ -506,7 +509,7 @@ const updateModel = <TItem>(
           };
         }
 
-        case "pressed-arrow-key": {
+        case "pressed-vertical-arrow-key": {
           return {
             ...model,
             inputValue: modelToInputValue(config, model),
@@ -575,7 +578,7 @@ const updateModel = <TItem>(
           };
         }
 
-        case "pressed-arrow-key": {
+        case "pressed-vertical-arrow-key": {
           const filtered = deterministicFilter(model);
 
           const selectedIndex = filtered.findIndex((item) =>
@@ -685,7 +688,7 @@ const updateModel = <TItem>(
           return { ...model, inputValue: msg.inputValue };
         }
 
-        case "pressed-arrow-key": {
+        case "pressed-vertical-arrow-key": {
           const filtered = deterministicFilter(model);
           const delta = msg.key === "arrow-down" ? 1 : -1;
           const highlightIndex = circularIndex(
@@ -785,7 +788,7 @@ const updateModel = <TItem>(
           };
         }
 
-        case "pressed-arrow-key": {
+        case "pressed-vertical-arrow-key": {
           return { ...model, type: "unselected__focused__opened" };
         }
 
@@ -826,7 +829,7 @@ const updateModel = <TItem>(
           return { ...model, inputValue: msg.inputValue };
         }
 
-        case "pressed-arrow-key": {
+        case "pressed-vertical-arrow-key": {
           const filtered = deterministicFilter(model);
           const highlightIndex =
             msg.key === "arrow-up" ? filtered.length - 1 : 0;
@@ -878,7 +881,7 @@ const updateModel = <TItem>(
           };
         }
 
-        case "pressed-arrow-key": {
+        case "pressed-vertical-arrow-key": {
           const filtered = deterministicFilter(model);
           const delta = msg.key === "arrow-down" ? 1 : -1;
           const highlightIndex = circularIndex(
@@ -1336,7 +1339,7 @@ export const browserKeyboardEventKeyToMsg = <T>(
 
   if (eq(key, "ArrowDown")) {
     return {
-      type: "pressed-arrow-key",
+      type: "pressed-vertical-arrow-key",
       key: "arrow-down",
       shouldPreventDefault: true,
     };
@@ -1344,7 +1347,7 @@ export const browserKeyboardEventKeyToMsg = <T>(
 
   if (eq(key, "ArrowUp")) {
     return {
-      type: "pressed-arrow-key",
+      type: "pressed-vertical-arrow-key",
       key: "arrow-up",
       shouldPreventDefault: true,
     };

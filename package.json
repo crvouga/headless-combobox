@@ -15,14 +15,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/crvouga/headless-autocomplete.git"
+    "url": "git+https://github.com/crvouga/headless-combobox.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/crvouga/headless-autocomplete/issues"
+    "url": "https://github.com/crvouga/headless-combobox/issues"
   },
-  "homepage": "https://github.com/crvouga/headless-autocomplete#readme",
+  "homepage": "https://github.com/crvouga/headless-combobox#readme",
   "devDependencies": {
     "typedoc": "^0.24.4",
     "typescript": "^5.0.4"

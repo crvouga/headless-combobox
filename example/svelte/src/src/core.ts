@@ -62,6 +62,18 @@ export const simpleFilter = <TItem>(
 export type Model<TItem> = ModelState<TItem> & {
   allItems: TItem[];
   skipOnce: Msg<TItem>["type"][];
+  mode: Mode;
+};
+
+/**
+ * @memberof Model
+ * @description
+ * The Mode represents the mode of the combobox.
+ * "You don't say? 😑" - probably you
+ */
+export type Mode = {
+  type: "multi-select";
+  maxSelected: number;
 };
 
 type UnselectedBlurred = {
@@ -108,10 +120,7 @@ type SelectedFocusedOpenedHighlighted<TItem> = {
   highlightIndex: number;
 };
 
-/**
- * @memberof Model
- */
-export type ModelState<TItem> =
+type ModelState<TItem> =
   | UnselectedBlurred
   | UnselectedFocusedOpened
   | UnselectedFocusedOpenedHighlighted
@@ -128,13 +137,21 @@ export type ModelState<TItem> =
  */
 export const init = <TItem>({
   allItems,
+  mode,
 }: {
   allItems: TItem[];
+  mode?: Mode;
 }): Model<TItem> => {
   return {
     type: "unselected__blurred",
     allItems,
     skipOnce: [],
+    mode: mode
+      ? {
+          type: "multi-select",
+          maxSelected: 1,
+        }
+      : mode,
   };
 };
 

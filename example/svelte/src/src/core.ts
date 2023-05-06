@@ -482,7 +482,7 @@ const updateModel = <TItem>(
         }
 
         case "inputted-value": {
-          if (msg.inputValue === "") {
+          if (msg.inputValue === "" && isSingle(model.selected)) {
             return {
               ...model,
               inputValue: msg.inputValue,

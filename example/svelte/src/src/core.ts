@@ -658,7 +658,7 @@ const updateModel = <TItem>(
           if (!isItemSelected(config, model, enteredItem)) {
             return {
               ...model,
-              inputValue: toItemInputValue(enteredItem),
+              inputValue: "",
               selected: addSelected(model.mode, enteredItem, model.selected),
               type: "selected__focused__closed",
             };

@@ -82,13 +82,13 @@
 </script>
 
 <p>Selections</p>
-<ul>
+<div class="chip-list">
   {#each state.selections as selection}
-    <li>
+    <span class="chip">
       {selection.label}
-    </li>
+    </span>
   {/each}
-</ul>
+</div>
 
 <label class="label" {...state.aria.inputLabel}>
   <p {...state.aria.helperText}>Use arrow keys to navigate the list</p>
@@ -151,7 +151,7 @@
     right: 0;
     z-index: 1;
     width: 100%;
-    max-height: 100px;
+    max-height: 200px;
     overflow: scroll;
     border: 1px solid #ccc;
     width: 100%;
@@ -177,5 +177,19 @@
   }
   .selected-and-highlighted {
     background-color: lightblue;
+  }
+
+  .chip-list {
+    display: flex;
+    height: 4rem;
+  }
+  .chip {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    margin: 0.5rem;
+    background: #121212;
+    border-radius: 0.5rem;
+    height: 1.5rem;
   }
 </style>

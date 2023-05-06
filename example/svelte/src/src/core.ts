@@ -251,6 +251,11 @@ export const update = <TItem>(
   model: Model<TItem>;
   effects: Effect<TItem>[];
 } => {
+  /**
+   *
+   *
+   *
+   */
   if (model.skipOnce.includes(msg.type)) {
     return {
       model: {
@@ -261,16 +266,63 @@ export const update = <TItem>(
     };
   }
 
-  const modelUpdated = updateSetters({
+  /**
+   *
+   *
+   *
+   */
+
+  let output: {
+    model: Model<TItem>;
+    effects: Effect<TItem>[];
+  } = {
+    model,
+    effects: [],
+  };
+
+  /**
+   *
+   * Update Model
+   *
+   */
+
+  output.model = updateSetters({
     msg,
     model: updateModel(config, { msg, model }),
   });
 
-  const effects = toEffects(config, {
-    msg,
-    prev: model,
-    next: modelUpdated,
-  });
+  /**
+   *
+   * Add Effects
+   *
+   */
+
+  // scroll to selected item into view when state changes from closed to opened
+  if (
+    isClosed(model) &&
+    isOpened(output.model) &&
+    isSelected(output.model) &&
+    isNonEmpty(output.model.selected)
+  ) {
+    output.effects.push({
+      type: "scroll-item-into-view",
+      item: output.model.selected[0],
+    });
+  }
+
+  // scroll highlighted item into view when navigating with keyboard
+  if (isHighlighted(output.model) && msg.type === "pressed-arrow-key") {
+    const filtered = config.deterministicFilter(output.model);
+
+    const highlightedItem = filtered[output.model.highlightIndex];
+
+    if (highlightedItem) {
+      output.effects.push({
+        type: "scroll-item-into-view",
+        item: highlightedItem,
+      });
+    }
+  }
 
   /**
 
@@ -288,22 +340,19 @@ export const update = <TItem>(
    */
   if (
     isClosed(model) &&
-    isOpened(modelUpdated) &&
-    effects.some((effect) => effect.type === "scroll-item-into-view")
+    isOpened(output.model) &&
+    output.effects.some((effect) => effect.type === "scroll-item-into-view")
   ) {
-    return {
-      model: {
-        ...modelUpdated,
-        skipOnce: ["hovered-over-item", "hovered-over-item"],
-      },
-      effects: effects,
+    output.model = {
+      ...output.model,
+      skipOnce: ["hovered-over-item", "hovered-over-item"],
     };
   }
 
-  if (isClosed(model) && isOpened(modelUpdated)) {
-    return {
-      model: { ...modelUpdated, skipOnce: ["hovered-over-item"] },
-      effects: effects,
+  if (isClosed(model) && isOpened(output.model)) {
+    output.model = {
+      ...output.model,
+      skipOnce: [...output.model.skipOnce, "hovered-over-item"],
     };
   }
 
@@ -321,67 +370,34 @@ export const update = <TItem>(
    The item that was hovered over is scrolled into view.
 
    */
-  if (effects.some((effect) => effect.type === "scroll-item-into-view")) {
-    return {
-      model: { ...modelUpdated, skipOnce: ["hovered-over-item"] },
-      effects: effects,
+  if (
+    output.effects.some((effect) => effect.type === "scroll-item-into-view")
+  ) {
+    output.model = { ...output.model, skipOnce: ["hovered-over-item"] };
+  }
+
+  /**
+
+   ⚠️ Edge case
+
+   ⏱ Happens when:
+   Pressing input when the input is blurred
+
+   🤔 Expected Behavior:
+   The the suggestion drop down opens
+
+   😑 Actual Behavior:
+   Two events fire. input focused then input pressed. This causes the suggestion drop down to open and then close.
+
+   */
+  if (isBlurred(model) && isFocused(output.model)) {
+    output.model = {
+      ...output.model,
+      skipOnce: [...output.model.skipOnce, "pressed-input"],
     };
   }
 
-  return {
-    model: modelUpdated,
-    effects: effects,
-  };
-};
-
-const removeFirst = <T>(predicate: (x: T) => boolean, arr: T[]): T[] => {
-  const index = arr.findIndex(predicate);
-  if (index === -1) return arr;
-  return [...arr.slice(0, index), ...arr.slice(index + 1)];
-};
-
-const toEffects = <TItem>(
-  config: Config<TItem>,
-  {
-    prev,
-    next,
-    msg,
-  }: {
-    prev: Model<TItem>;
-    next: Model<TItem>;
-    msg: Msg<TItem>;
-  }
-): Effect<TItem>[] => {
-  const effects: Effect<TItem>[] = [];
-
-  // scroll to selected item into view when state changes from closed to opened
-  if (
-    isClosed(prev) &&
-    isOpened(next) &&
-    isSelected(next) &&
-    isNonEmpty(next.selected)
-  ) {
-    effects.push({
-      type: "scroll-item-into-view",
-      item: next.selected[0],
-    });
-  }
-
-  // scroll highlighted item into view when navigating with keyboard
-  if (isHighlighted(next) && msg.type === "pressed-arrow-key") {
-    const filtered = config.deterministicFilter(next);
-
-    const highlightedItem = filtered[next.highlightIndex];
-
-    if (highlightedItem) {
-      effects.push({
-        type: "scroll-item-into-view",
-        item: highlightedItem,
-      });
-    }
-  }
-
-  return effects;
+  return output;
 };
 
 const updateSetters = <TItem>({
@@ -427,16 +443,6 @@ const updateSetters = <TItem>({
   }
 
   return model;
-};
-
-type NonEmpty<T> = [T, ...T[]];
-
-const isNonEmpty = <T>(arr: T[]): arr is NonEmpty<T> => {
-  return arr.length > 0;
-};
-
-export const isSingle = <T>(arr: T[]): arr is [T] => {
-  return arr.length === 1;
 };
 
 const updateModel = <TItem>(
@@ -523,14 +529,22 @@ const updateModel = <TItem>(
           };
         }
 
-        case "pressed-item": {
+        case "pressed-input": {
           return {
             ...model,
             type: "selected__focused__closed",
-            inputValue: isNonEmpty(model.selected)
-              ? toItemInputValue(model.selected[0])
-              : "",
+          };
+        }
+
+        case "pressed-item": {
+          const modelNew: Model<TItem> = {
+            ...model,
+            type: "selected__focused__closed",
             selected: addSelected(model.mode, msg.item, model.selected),
+          };
+          return {
+            ...modelNew,
+            inputValue: modelToInputValue(config, modelNew),
           };
         }
 
@@ -608,11 +622,47 @@ const updateModel = <TItem>(
         }
 
         case "pressed-item": {
+          const pressedItem = msg.item;
+
+          if (model.mode.type === "single-select") {
+            const modelNew: Model<TItem> = {
+              ...model,
+              type: "selected__focused__closed",
+              selected: addSelected(model.mode, pressedItem, model.selected),
+            };
+            return {
+              ...modelNew,
+              inputValue: modelToInputValue(config, modelNew),
+            };
+          }
+
+          if (!isItemSelected(config, model, pressedItem)) {
+            const modelNew: Model<TItem> = {
+              ...model,
+              type: "selected__focused__closed",
+              selected: addSelected(model.mode, pressedItem, model.selected),
+            };
+            return {
+              ...modelNew,
+              inputValue: modelToInputValue(config, modelNew),
+            };
+          }
+
+          const removed = model.selected.filter(
+            (selection) => toItemId(selection) !== toItemId(pressedItem)
+          );
+
+          if (isNonEmpty(removed)) {
+            return {
+              ...model,
+              type: "selected__focused__closed",
+              selected: removed,
+            };
+          }
+
           return {
             ...model,
-            type: "selected__focused__closed",
-            inputValue: toItemInputValue(msg.item),
-            selected: addSelected(model.mode, msg.item, model.selected),
+            type: "unselected__focused__closed",
           };
         }
 
@@ -751,6 +801,10 @@ const updateModel = <TItem>(
           return { ...model, type: "unselected__blurred" };
         }
 
+        case "pressed-input": {
+          return { ...model, type: "unselected__focused__closed" };
+        }
+
         case "pressed-item": {
           return {
             ...model,
@@ -797,11 +851,14 @@ const updateModel = <TItem>(
         }
 
         case "pressed-item": {
-          return {
+          const modelNew: Model<TItem> = {
             ...model,
             type: "selected__focused__closed",
             selected: [msg.item],
-            inputValue: toItemInputValue(msg.item),
+          };
+          return {
+            ...modelNew,
+            inputValue: modelToInputValue(config, modelNew),
           };
         }
 
@@ -837,7 +894,7 @@ const updateModel = <TItem>(
 
           return {
             ...model,
-            inputValue: toItemInputValue(selectedNew),
+            inputValue: modelToInputValue(config, model),
             selected: [selectedNew],
             type: "selected__focused__closed",
           };
@@ -881,7 +938,7 @@ const modelToInputValue = <TItem>(
   config: Config<TItem>,
   model: Model<TItem>
 ): string => {
-  if (isSelected(model) && isNonEmpty(model.selected)) {
+  if (isSelected(model) && model.mode.type === "single-select") {
     return config.toItemInputValue(model.selected[0]);
   }
   return "";
@@ -1346,4 +1403,28 @@ export const debug = <TItem>({
     log("effects: ", output.effects.map((eff) => eff.type).join(", "));
   }
   log("\n");
+};
+
+/**
+ *
+ *
+ * Helpers
+ *
+ *
+ */
+
+const removeFirst = <T>(predicate: (x: T) => boolean, arr: T[]): T[] => {
+  const index = arr.findIndex(predicate);
+  if (index === -1) return arr;
+  return [...arr.slice(0, index), ...arr.slice(index + 1)];
+};
+
+type NonEmpty<T> = [T, ...T[]];
+
+const isNonEmpty = <T>(arr: T[]): arr is NonEmpty<T> => {
+  return arr.length > 0;
+};
+
+export const isSingle = <T>(arr: T[]): arr is [T] => {
+  return arr.length === 1;
 };

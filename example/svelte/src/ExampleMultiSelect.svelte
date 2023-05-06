@@ -59,7 +59,7 @@
     const output = Combobox.update(config, { msg, model });
 
     model = output.model;
-    console.log(model);
+    console.log(msg.type, model);
 
     for (const effect of output.effects) {
       if (effect.type === "scroll-item-into-view") {
@@ -102,6 +102,7 @@
         type: "inputted-value",
         inputValue: event.currentTarget.value,
       })}
+    on:click={() => dispatch({ type: "pressed-input" })}
     on:focus={() => dispatch({ type: "focused-input" })}
     on:blur={() => dispatch({ type: "blurred-input" })}
     on:keydown={(event) =>
@@ -112,7 +113,7 @@
       <li
         {...state.aria.item(item)}
         bind:this={listItems[item.id]}
-        on:mouseover={() => dispatch({ type: "hovered-over-item", index })}
+        on:mousemove={() => dispatch({ type: "hovered-over-item", index })}
         on:mousedown|preventDefault={() =>
           dispatch({ type: "pressed-item", item })}
         on:focus={() => dispatch({ type: "hovered-over-item", index })}

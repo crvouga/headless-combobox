@@ -151,11 +151,11 @@ export const init = <TItem>({
     allItems,
     skipOnce: [],
     mode: mode
-      ? {
+      ? mode
+      : {
           type: "multi-select",
           max: 1,
-        }
-      : mode,
+        },
   };
 };
 
@@ -840,6 +840,9 @@ const addSelected = <TItem>(
   item: TItem,
   selected: NonEmpty<TItem>
 ): NonEmpty<TItem> => {
+  if (isSingle(selected)) {
+    return [item];
+  }
   const selectedNew = [...selected, item].slice(0, max);
   if (isNonEmpty(selectedNew)) {
     return selectedNew;

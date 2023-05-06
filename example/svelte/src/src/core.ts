@@ -166,6 +166,10 @@ export const init = <TItem>({
  */
 export type Msg<TItem> =
   | {
+      type: "pressed-horizontal-arrow-key";
+      key: "arrow-left" | "arrow-right";
+    }
+  | {
       type: "pressed-vertical-arrow-key";
       key: "arrow-up" | "arrow-down";
     }
@@ -1336,6 +1340,20 @@ export const browserKeyboardEventKeyToMsg = <T>(
 ): (Msg<T> & { shouldPreventDefault?: boolean }) | null => {
   const eq = (a: string, b: string) =>
     a.toLowerCase().trim() === b.toLowerCase().trim();
+
+  if (eq(key, "ArrowLeft")) {
+    return {
+      type: "pressed-horizontal-arrow-key",
+      key: "arrow-left",
+    };
+  }
+
+  if (eq(key, "ArrowRight")) {
+    return {
+      type: "pressed-horizontal-arrow-key",
+      key: "arrow-right",
+    };
+  }
 
   if (eq(key, "ArrowDown")) {
     return {

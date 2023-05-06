@@ -148,6 +148,8 @@
     position: relative;
     display: block;
     width: 100%;
+    max-width: 300px;
+    margin: auto;
   }
 
   .hide {
@@ -155,6 +157,7 @@
   }
   .input {
     width: 100%;
+
     font-size: large;
     padding: 0.5rem;
     box-sizing: border-box;

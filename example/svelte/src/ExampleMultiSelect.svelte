@@ -1,12 +1,13 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  import { createCombobox } from "./headless-combobox";
+  import * as Combobox from "./src";
 
   /*
 
   Step 0: Have some data to display
 
   */
+
+  type Item = { id: number; label: string };
   const fruits = [
     { id: 0, label: "pear" },
     { id: 1, label: "apple" },
@@ -24,81 +25,110 @@
 
   /*
 
-  Step 1: Create an instance
+  Step 1: Init the config
 
   */
-  const combobox = createCombobox({
-    namespace: "example-select-only",
-    mode: "select-only",
-    allItems: fruits,
+
+  const config = Combobox.initConfig<Item>({
     toItemId: (item) => item.id,
     toItemInputValue: (item) => item.label,
-    onScroll: (item, config) => {
-      const li = listItems[config.toItemId(item)];
-      if (!li) {
-        return;
-      }
-      li.scrollIntoView({ block: "nearest" });
-    },
   });
 
   /*
 
-  Step 2: Write some glue code
+  Step 2: Init the state
 
   */
-  let state = combobox.getState();
-  onMount(() =>
-    combobox.subscribe((stateNew) => {
-      state = stateNew;
-    })
-  );
+
+  let model = Combobox.init({
+    allItems: fruits,
+    mode: { type: "multi-select" },
+  });
+
+  /*
+
+  Step 3: Write some glue code
+
+  */
+
+  const dispatch = (msg: Combobox.Msg<Item> | null) => {
+    if (!msg) {
+      return;
+    }
+
+    const output = Combobox.update(config, { msg, model });
+
+    model = output.model;
+    console.log(model);
+
+    for (const effect of output.effects) {
+      if (effect.type === "scroll-item-into-view") {
+        const li = listItems[effect.item.id];
+        if (!li) {
+          continue;
+        }
+        li.scrollIntoView({ block: "nearest" });
+      }
+    }
+  };
 
   /*
 
   Step 3: Wire up to the UI
 
   */
+
+  $: state = Combobox.toState(config, model);
 </script>
 
-<div class="container">
-  <p {...state.aria.helperText}>Use arrow keys to navigate the list</p>
+<p>Selections</p>
+<ul>
+  {#each state.selections as selection}
+    <li>
+      {selection.label}
+    </li>
+  {/each}
+</ul>
 
-  <div
+<label class="label" {...state.aria.inputLabel}>
+  <p {...state.aria.helperText}>Use arrow keys to navigate the list</p>
+  Multi Select Fruits
+  <input
     {...state.aria.input}
     class="input"
-    on:focus={combobox.onInputFocus}
-    on:blur={combobox.onInputBlur}
-    on:keydown={(event) => combobox.onInputKeyDown(event.key)}
-  >
-    {state.inputValue}
-  </div>
+    value={state.inputValue}
+    on:input={(event) =>
+      dispatch({
+        type: "inputted-value",
+        inputValue: event.currentTarget.value,
+      })}
+    on:focus={() => dispatch({ type: "focused-input" })}
+    on:blur={() => dispatch({ type: "blurred-input" })}
+    on:keydown={(event) =>
+      dispatch(Combobox.browserKeyboardEventKeyToMsg(event.key))}
+  />
   <ul {...state.aria.itemList} class="suggestions" class:hide={!state.isOpened}>
     {#each state.items as item, index}
       <li
         {...state.aria.item(item)}
-        bind:this={listItems[combobox.toItemId(item)]}
-        on:mouseover={() => combobox.onItemHover(index)}
-        on:mousedown|preventDefault={() => combobox.onItemPress(item)}
-        on:focus={() => combobox.onItemFocus(index)}
+        bind:this={listItems[item.id]}
+        on:mouseover={() => dispatch({ type: "hovered-over-item", index })}
+        on:mousedown|preventDefault={() =>
+          dispatch({ type: "pressed-item", item })}
+        on:focus={() => dispatch({ type: "hovered-over-item", index })}
         class="option"
         class:highlighted={state.itemStatus(item) === "highlighted"}
         class:selected={state.itemStatus(item) === "selected"}
         class:selected-and-highlighted={state.itemStatus(item) ===
           "selected-and-highlighted"}
       >
-        {combobox.toItemInputValue(item)}
+        {config.toItemInputValue(item)}
       </li>
     {/each}
   </ul>
-</div>
+</label>
 
 <style>
-  .container {
-    position: relative;
-    display: block;
-    width: 100%;
-  }
   .label {
     position: relative;
     display: block;
@@ -128,6 +158,7 @@
     max-width: 100%;
     margin: 0;
     padding: 0;
+    background: #121212;
   }
   .option {
     display: block;

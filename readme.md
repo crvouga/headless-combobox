@@ -20,6 +20,7 @@ But I (the author) am using in my personal and professional projects.
 - 🧠 Headless. You do have to write your own styles.
 - 🔌 Framework agnostic. You do have to write glue code.
 - 🌳 [Elm](https://elm-lang.org/)-like API. Some people may hate that.
+- 📭 Missing good documentation. (Only con that could change in the future).
 
 ## Good use cases are
 
@@ -32,7 +33,7 @@ But I (the author) am using in my personal and professional projects.
 ## Links
 
 - [Svelte Example](https://headless-combobox-example-svelte.vercel.app/)
-- [Documentation](https://headless-combobox.vercel.app/)
+- [API Reference](https://headless-combobox.vercel.app/)
 - [Github](https://github.com/crvouga/headless-combobox)
 - [NPM](https://www.npmjs.com/package/headless-combobox)
 

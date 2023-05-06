@@ -1,47 +1,15 @@
 import {
-  type Config,
-  type Model,
-  type Msg,
   browserKeyboardEventKeyToMsg,
   init,
   initConfig,
-  isBlurred,
-  isFocused,
-  isItemIndexHighlighted,
-  isItemHighlighted,
-  isItemSelected,
-  isOpened,
-  toCurrentInputValue,
-  toHighlightedItem,
-  toItemStatus,
-  toSelectedItem,
-  toVisibleItems,
+  toState,
   update,
+  type Config,
+  type Model,
+  type Msg,
 } from "./core";
-import { aria } from "./wai-aria";
 
-const modelToState = <T>(config: Config<T>, model: Model<T>) => {
-  return {
-    allItems: model.allItems,
-    items: toVisibleItems(config, model),
-    isOpened: isOpened(model),
-    highlightedItem: toHighlightedItem(config, model),
-    isItemHighlighted: (item: T) => isItemHighlighted<T>(config, model, item),
-    isItemSelected: (item: T) => isItemSelected<T>(config, model, item),
-    isIndexHighlighted: (index: number) =>
-      isItemIndexHighlighted<T>(model, index),
-    inputValue: toCurrentInputValue(config, model),
-    selectedItem: toSelectedItem(model),
-    aria: aria(config, model),
-    isBlurred: isBlurred(model),
-    isFocused: isFocused(model),
-    itemStatus: (item: T) => toItemStatus(config, model, item),
-  } as const;
-};
-
-type State<T> = ReturnType<typeof modelToState<T>>;
-
-export type comboboxState<T> = State<T>;
+type State<T> = ReturnType<typeof toState<T>>;
 
 /**
  * @memberof Observable
@@ -79,12 +47,12 @@ export const createObservable = <T>({
   const setModel = (newModel: Model<T>) => {
     model = newModel;
     for (const subscriber of subscribers.values()) {
-      subscriber(modelToState(config, model));
+      subscriber(toState(config, model));
     }
   };
 
   const getState = () => {
-    return modelToState(config, model);
+    return toState(config, model);
   };
 
   const dispatch = (msg: Msg<T>) => {

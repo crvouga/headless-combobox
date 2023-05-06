@@ -149,7 +149,7 @@ export const init = <TItem>({
     mode: mode
       ? {
           type: "multi-select",
-          maxSelected: 1,
+          max: 1,
         }
       : mode,
   };
@@ -193,6 +193,29 @@ export type Msg<TItem> =
     }
   | {
       type: "pressed-input";
+    }
+  //
+  // Setters
+  //
+  | {
+      type: "set-all-items";
+      allItems: TItem[];
+    }
+  | {
+      type: "set-selected-item";
+      selected: TItem;
+    }
+  | {
+      type: "set-input-value";
+      inputValue: string;
+    }
+  | {
+      type: "set-highlight-index";
+      highlightIndex: number;
+    }
+  | {
+      type: "set-mode";
+      mode: Mode;
     };
 
 /**
@@ -236,7 +259,10 @@ export const update = <TItem>(
     };
   }
 
-  const modelUpdated = updateModel(config, { msg, model });
+  const modelUpdated = updateSetters({
+    msg,
+    model: updateModel(config, { msg, model }),
+  });
 
   const effects = toEffects(config, {
     msg,
@@ -349,6 +375,49 @@ const toEffects = <TItem>(
   }
 
   return effects;
+};
+
+const updateSetters = <TItem>({
+  model,
+  msg,
+}: {
+  model: Model<TItem>;
+  msg: Msg<TItem>;
+}): Model<TItem> => {
+  if (msg.type === "set-all-items") {
+    return {
+      ...model,
+      allItems: msg.allItems,
+    };
+  }
+
+  if (msg.type === "set-selected-item" && isSelected(model)) {
+    return {
+      ...model,
+      selected: msg.selected,
+    };
+  }
+
+  if (msg.type === "set-input-value" && isOpened(model)) {
+    return {
+      ...model,
+      inputValue: msg.inputValue,
+    };
+  }
+
+  if (msg.type === "set-highlight-index" && isHighlighted(model)) {
+    return {
+      ...model,
+      highlightIndex: msg.highlightIndex,
+    };
+  }
+
+  if (msg.type === "set-mode") {
+    return {
+      ...model,
+      mode: msg.mode,
+    };
+  }
 };
 
 const updateModel = <TItem>(

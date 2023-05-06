@@ -7,7 +7,9 @@
     "keydown",
     "labelledby",
     "listbox",
+    "listitem",
     "mousedown",
+    "multiselectable",
     "postpublish",
     "reduxjs"
   ]

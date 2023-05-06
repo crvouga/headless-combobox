@@ -1,9 +1,10 @@
 import {
+  isItemSelected,
+  isOpened,
+  isSelectionFocused,
+  toHighlightedItem,
   type Config,
   type Model,
-  isOpened,
-  toHighlightedItem,
-  toSelectedItem,
 } from "./core";
 
 /** @module WAI-ARIA **/
@@ -44,6 +45,7 @@ export const ariaInput = <T>(config: Config<T>, model: Model<T>) => {
     role: "combobox",
     tabindex: 0,
     combobox: "off",
+    spellcheck: "false",
     "aria-autocomplete": "list",
     "aria-controls": itemListHtmlId(config),
     "aria-haspopup": "listbox",
@@ -62,12 +64,13 @@ export const ariaInput = <T>(config: Config<T>, model: Model<T>) => {
  * @description
  * This function returns WAI-ARIA attributes for the "suggestion list" <ul />.
  */
-export const ariaItemList = <T>(config: Config<T>) => {
+export const ariaItemList = <T>(config: Config<T>, model: Model<T>) => {
   return {
     id: itemListHtmlId(config),
     role: "listbox",
     "aria-labelledby": inputLabelHtmlId(config),
     tabindex: -1,
+    "aria-multiselectable": model.mode.type === "multi-select",
   } as const;
 };
 
@@ -77,15 +80,10 @@ export const ariaItemList = <T>(config: Config<T>) => {
  * This function returns WAI-ARIA attributes for the "option" <li />.
  */
 export const ariaItem = <T>(config: Config<T>, model: Model<T>, item: T) => {
-  const selected = toSelectedItem(model);
   return {
     id: itemHtmlId(config, item),
     role: "option",
-    ...(selected
-      ? {
-          "aria-selected": config.toItemId(item) === config.toItemId(selected),
-        }
-      : {}),
+    "aria-selected": isItemSelected(config, model, item),
   } as const;
 };
 
@@ -126,6 +124,69 @@ const helperTextHtmlId = <T>({ namespace }: Config<T>) => {
 
 /**
  * @memberof WAI-ARIA
+ */
+const selectedListId = <T>({ namespace }: Config<T>) => {
+  return `${namespace}-selected-list`;
+};
+
+/**
+ * @memberof WAI-ARIA
+ */
+const selectedListItemId = <T>({ namespace, toItemId }: Config<T>, item: T) => {
+  return `${namespace}-selected-list-item-${toItemId(item)}`;
+};
+
+/**
+ * @memberof WAI-ARIA
+ * @description
+ * This function returns WAI-ARIA attributes for the all html elements.
+ */
+
+const ariaSelectedList = <T>(config: Config<T>, model: Model<T>) => {
+  const highlightedSelectedItem = isSelectionFocused(model)
+    ? model.selected[model.focusedIndex] ?? null
+    : null;
+  return {
+    id: selectedListId(config),
+    role: "list",
+    "aria-label": "Selected items. Press backspace to unselect one",
+    ...(highlightedSelectedItem
+      ? {
+          "aria-activedescendant": selectedListItemId(
+            config,
+            highlightedSelectedItem
+          ),
+        }
+      : {}),
+  };
+};
+
+const ariaSelectedItem = <T>(config: Config<T>, model: Model<T>, item: T) => {
+  // const highlightedSelectedItem = isHighlightedSelection(model)
+  //   ? model.selected[model.selectedItemHighlightIndex] ?? null
+  //   : null;
+  return {
+    id: selectedListItemId(config, item),
+    role: "listitem",
+    tabindex: 0,
+  };
+};
+
+/**
+ * @memberof WAI-ARIA
+ * @description
+ * This function returns WAI-ARIA attributes for the "unselect" button.
+ */
+const ariaUnselectButton = () => {
+  return {
+    role: "button",
+    // "aria-label": `Click or Backspace to unselect`,
+    tabindex: -1,
+  };
+};
+
+/**
+ * @memberof WAI-ARIA
  * @description
  * This function returns WAI-ARIA attributes for the all html elements.
  */
@@ -134,7 +195,10 @@ export const aria = <T>(config: Config<T>, model: Model<T>) => {
     inputLabel: ariaInputLabel(config),
     input: ariaInput(config, model),
     helperText: ariaHelperText(config),
-    itemList: ariaItemList(config),
+    itemList: ariaItemList(config, model),
     item: (item: T) => ariaItem(config, model, item),
+    selectedList: ariaSelectedList(config, model),
+    selectedItem: (item: T) => ariaSelectedItem(config, model, item),
+    unselectButton: (_item: T) => ariaUnselectButton(),
   };
 };

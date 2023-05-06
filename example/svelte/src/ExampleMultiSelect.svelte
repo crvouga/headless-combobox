@@ -21,7 +21,8 @@
     { id: 9, label: "grape" },
   ];
 
-  let listItems: { [itemId: string]: HTMLElement } = {};
+  let selectedItems: { [itemId: string]: HTMLElement } = {};
+  let items: { [itemId: string]: HTMLElement } = {};
   let input: HTMLInputElement | null = null;
 
   /*
@@ -57,11 +58,22 @@
 
     model = output.model;
 
-    console.log(msg.type, model);
+    console.log(msg.type, model, output.effects);
 
     Combobox.runEffects(output, {
+      focusSelectedItem: (selectedItem) => {
+        const li = selectedItems[selectedItem.id];
+        if (li) {
+          li.focus();
+        }
+      },
+      focusInput: () => {
+        if (input) {
+          input.focus();
+        }
+      },
       scrollItemIntoView: (item) => {
-        const li = listItems[item.id];
+        const li = items[item.id];
         if (li) {
           li.scrollIntoView({ block: "nearest" });
         }
@@ -69,11 +81,7 @@
     });
   };
 
-  const handleKeyDown = (
-    event: KeyboardEvent & {
-      currentTarget: EventTarget & HTMLInputElement;
-    }
-  ) => {
+  const handleKeyDown = (event: KeyboardEvent) => {
     const msg = Combobox.browserKeyboardEventKeyToMsg<Item>(event.key);
     if (!msg) {
       return;
@@ -93,72 +101,99 @@
   $: state = Combobox.toState(config, model);
 </script>
 
-<label class="label" {...state.aria.inputLabel}>
-  <p {...state.aria.helperText}>Use arrow keys to navigate the list</p>
-  <div class="chip-list">
-    {#each state.selections as selectedItem}
-      <span
-        class="chip"
-        class:chip-highlighted={state.isSelectedItemHighlighted(selectedItem)}
-      >
-        {selectedItem.label}
-        <button
-          class="chip-delete-btn"
-          on:mousedown|preventDefault={() =>
-            dispatch({ type: "pressed-unselect-button", item: selectedItem })}
-        >
-          X
-        </button>
-      </span>
-    {/each}
-  </div>
+<main>
+  <label
+    class="label"
+    {...state.aria.inputLabel}
+    for={state.aria.inputLabel.for}
+  >
+    Fruits
+  </label>
 
-  Multi Select Fruits
-  <input
-    {...state.aria.input}
-    class="input"
-    value={state.inputValue}
-    bind:this={input}
-    on:input={(event) =>
-      dispatch({
-        type: "inputted-value",
-        inputValue: event.currentTarget.value,
-      })}
-    on:click={() => dispatch({ type: "pressed-input" })}
-    on:focus={() => dispatch({ type: "focused-input" })}
-    on:blur={() => dispatch({ type: "blurred-input" })}
-    on:keydown={handleKeyDown}
-  />
-  <ul {...state.aria.itemList} class="suggestions" class:hide={!state.isOpened}>
-    {#if state.items.length === 0}
-      <li>No results</li>
-    {/if}
-    {#each state.items as item, index}
-      <li
-        {...state.aria.item(item)}
-        bind:this={listItems[item.id]}
-        on:mousemove={() => dispatch({ type: "hovered-over-item", index })}
-        on:mousedown|preventDefault={() =>
-          dispatch({ type: "pressed-item", item })}
-        on:focus={() => dispatch({ type: "hovered-over-item", index })}
-        class="option"
-        class:highlighted={state.itemStatus(item) === "highlighted"}
-        class:selected={state.itemStatus(item) === "selected"}
-        class:selected-and-highlighted={state.itemStatus(item) ===
-          "selected-and-highlighted"}
-      >
-        {config.toItemInputValue(item)}
-      </li>
-    {/each}
-  </ul>
-</label>
+  <div class="input-container">
+    <p {...state.aria.helperText}>
+      Use arrow keys to navigate. Enter key to toggle
+    </p>
+
+    <ul class="chip-list" {...state.aria.selectedList}>
+      {#each state.selections as selectedItem}
+        <li
+          {...state.aria.selectedItem(selectedItem)}
+          bind:this={selectedItems[selectedItem.id]}
+          class="chip"
+          class:chip-highlighted={state.isSelectedItemFocused(selectedItem)}
+          on:keydown={handleKeyDown}
+          on:focus={() =>
+            dispatch({ type: "focused-selected-item", item: selectedItem })}
+        >
+          {selectedItem.label}
+          <button
+            {...state.aria.unselectButton(selectedItem)}
+            class="chip-delete-btn"
+            on:mousedown|preventDefault={() =>
+              dispatch({ type: "pressed-unselect-button", item: selectedItem })}
+          >
+            X
+          </button>
+        </li>
+      {/each}
+    </ul>
+
+    <input
+      {...state.aria.input}
+      class="input"
+      value={state.inputValue}
+      bind:this={input}
+      on:input={(event) =>
+        dispatch({
+          type: "inputted-value",
+          inputValue: event.currentTarget.value,
+        })}
+      on:click={() => dispatch({ type: "pressed-input" })}
+      on:focus={() => dispatch({ type: "focused-input" })}
+      on:blur={() => dispatch({ type: "blurred-input" })}
+      on:keydown={handleKeyDown}
+    />
+    <ul
+      {...state.aria.itemList}
+      class="suggestions"
+      class:hide={!state.isOpened}
+    >
+      {#if state.items.length === 0}
+        <li>No results</li>
+      {/if}
+      {#each state.items as item, index}
+        <li
+          {...state.aria.item(item)}
+          bind:this={items[item.id]}
+          on:mousemove={() => dispatch({ type: "hovered-over-item", index })}
+          on:mousedown|preventDefault={() =>
+            dispatch({ type: "pressed-item", item })}
+          on:focus={() => dispatch({ type: "hovered-over-item", index })}
+          class="option"
+          class:highlighted={state.itemStatus(item) === "highlighted"}
+          class:selected={state.itemStatus(item) === "selected"}
+          class:selected-and-highlighted={state.itemStatus(item) ===
+            "selected-and-highlighted"}
+        >
+          {config.toItemInputValue(item)}
+        </li>
+      {/each}
+    </ul>
+  </div>
+</main>
 
 <style>
+  .input-container {
+    position: relative;
+    width: 100%;
+    max-width: 300px;
+  }
+
   .label {
     position: relative;
     display: block;
     width: 100%;
-    max-width: 300px;
     margin: auto;
   }
 
@@ -227,7 +262,7 @@
   .chip-list {
     display: flex;
     flex-direction: row-reverse;
-    height: 4rem;
+    flex-wrap: wrap-reverse;
   }
   .chip {
     display: flex;

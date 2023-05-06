@@ -28,10 +28,14 @@ export const initConfig = <TItem>({
   deterministicFilter?: (model: Model<TItem>) => TItem[];
   namespace?: string;
 }): Config<TItem> => {
-  return {
+  const configFull: Config<TItem> = {
     ...config,
     namespace: namespace ?? "combobox",
-    deterministicFilter: (model) => simpleFilter(config, model),
+    deterministicFilter: (model) => model.allItems,
+  };
+  return {
+    ...configFull,
+    deterministicFilter: (model) => simpleFilter(configFull, model),
   };
 };
 
@@ -41,7 +45,7 @@ export const initConfig = <TItem>({
  * The simpleFilter function is a default implementation of the deterministicFilter function.
  */
 export const simpleFilter = <TItem>(
-  config: Pick<Config<TItem>, "toItemInputValue">,
+  config: Config<TItem>,
   model: Model<TItem>
 ) => {
   return model.allItems.filter((item) =>
@@ -98,24 +102,24 @@ type UnselectedFocusedClosed = {
 
 type SelectedBlurred<TItem> = {
   type: "selected__blurred";
-  selected: TItem;
+  selected: NonEmpty<TItem>;
 };
 
 type SelectedFocusedClosed<TItem> = {
   type: "selected__focused__closed";
   inputValue: string;
-  selected: TItem;
+  selected: NonEmpty<TItem>;
 };
 
 type SelectedFocusedOpened<TItem> = {
   type: "selected__focused__opened";
-  selected: TItem;
+  selected: NonEmpty<TItem>;
   inputValue: string;
 };
 
 type SelectedFocusedOpenedHighlighted<TItem> = {
   type: "selected__focused__opened__highlighted";
-  selected: TItem;
+  selected: NonEmpty<TItem>;
   inputValue: string;
   highlightIndex: number;
 };
@@ -202,8 +206,8 @@ export type Msg<TItem> =
       allItems: TItem[];
     }
   | {
-      type: "set-selected-item";
-      selected: TItem;
+      type: "set-selected";
+      selected: NonEmpty<TItem>;
     }
   | {
       type: "set-input-value";
@@ -353,10 +357,15 @@ const toEffects = <TItem>(
   const effects: Effect<TItem>[] = [];
 
   // scroll to selected item into view when state changes from closed to opened
-  if (isClosed(prev) && isOpened(next) && isSelected(next)) {
+  if (
+    isClosed(prev) &&
+    isOpened(next) &&
+    isSelected(next) &&
+    isNonEmpty(next.selected)
+  ) {
     effects.push({
       type: "scroll-item-into-view",
-      item: next.selected,
+      item: next.selected[0],
     });
   }
 
@@ -391,7 +400,7 @@ const updateSetters = <TItem>({
     };
   }
 
-  if (msg.type === "set-selected-item" && isSelected(model)) {
+  if (msg.type === "set-selected" && isSelected(model)) {
     return {
       ...model,
       selected: msg.selected,
@@ -422,8 +431,18 @@ const updateSetters = <TItem>({
   return model;
 };
 
+type NonEmpty<T> = [T, ...T[]];
+
+const isNonEmpty = <T>(arr: T[]): arr is NonEmpty<T> => {
+  return arr.length > 0;
+};
+
+export const isSingle = <T>(arr: T[]): arr is [T] => {
+  return arr.length === 1;
+};
+
 const updateModel = <TItem>(
-  { toItemInputValue, toItemId, deterministicFilter }: Config<TItem>,
+  config: Config<TItem>,
   {
     model,
     msg,
@@ -432,6 +451,7 @@ const updateModel = <TItem>(
     msg: Msg<TItem>;
   }
 ): Model<TItem> => {
+  const { toItemInputValue, toItemId, deterministicFilter } = config;
   switch (model.type) {
     case "selected__blurred": {
       switch (msg.type) {
@@ -439,7 +459,9 @@ const updateModel = <TItem>(
           return {
             ...model,
             type: "selected__focused__opened",
-            inputValue: toItemInputValue(model.selected),
+            inputValue: isNonEmpty(model.selected)
+              ? toItemInputValue(model.selected[0])
+              : "",
             selected: model.selected,
           };
         }
@@ -509,8 +531,10 @@ const updateModel = <TItem>(
           return {
             ...model,
             type: "selected__focused__closed",
-            inputValue: toItemInputValue(model.selected),
-            selected: msg.item,
+            inputValue: isNonEmpty(model.selected)
+              ? toItemInputValue(model.selected[0])
+              : "",
+            selected: addSelected(model.mode.max, msg.item, model.selected),
           };
         }
 
@@ -528,7 +552,7 @@ const updateModel = <TItem>(
         case "pressed-enter-key": {
           return {
             ...model,
-            inputValue: toItemInputValue(model.selected),
+            inputValue: modelToInputValue(config, model),
             type: "selected__focused__closed",
           };
         }
@@ -536,8 +560,10 @@ const updateModel = <TItem>(
         case "pressed-arrow-key": {
           const filtered = deterministicFilter(model);
 
-          const selectedIndex = filtered.findIndex(
-            (item) => toItemId(item) === toItemId(model.selected)
+          const selectedIndex = filtered.findIndex((item) =>
+            model.selected.some(
+              (selection) => toItemId(item) === toItemId(selection)
+            )
           );
 
           if (selectedIndex === -1) {
@@ -590,7 +616,7 @@ const updateModel = <TItem>(
             ...model,
             type: "selected__focused__closed",
             inputValue: toItemInputValue(msg.item),
-            selected: msg.item,
+            selected: addSelected(model.mode.max, msg.item, model.selected),
           };
         }
 
@@ -627,7 +653,7 @@ const updateModel = <TItem>(
           return {
             ...model,
             inputValue: toItemInputValue(selectedNew),
-            selected: selectedNew,
+            selected: addSelected(model.mode.max, selectedNew, model.selected),
             type: "selected__focused__closed",
           };
         }
@@ -702,7 +728,7 @@ const updateModel = <TItem>(
           return {
             ...model,
             type: "selected__focused__closed",
-            selected: msg.item,
+            selected: [msg.item],
             inputValue: toItemInputValue(msg.item),
           };
         }
@@ -747,7 +773,7 @@ const updateModel = <TItem>(
           return {
             ...model,
             type: "selected__focused__closed",
-            selected: msg.item,
+            selected: [msg.item],
             inputValue: toItemInputValue(msg.item),
           };
         }
@@ -785,7 +811,7 @@ const updateModel = <TItem>(
           return {
             ...model,
             inputValue: toItemInputValue(selectedNew),
-            selected: selectedNew,
+            selected: [selectedNew],
             type: "selected__focused__closed",
           };
         }
@@ -807,6 +833,28 @@ const updateModel = <TItem>(
       return exhaustive;
     }
   }
+};
+
+const addSelected = <TItem>(
+  max: number,
+  item: TItem,
+  selected: NonEmpty<TItem>
+): NonEmpty<TItem> => {
+  const selectedNew = [...selected, item].slice(0, max);
+  if (isNonEmpty(selectedNew)) {
+    return selectedNew;
+  }
+  return selected;
+};
+
+const modelToInputValue = <TItem>(
+  config: Config<TItem>,
+  model: Model<TItem>
+): string => {
+  if (isSelected(model) && isNonEmpty(model.selected)) {
+    return config.toItemInputValue(model.selected[0]);
+  }
+  return "";
 };
 
 const circularIndex = (index: number, length: number) => {
@@ -945,7 +993,7 @@ export type FocusedState<TItem> = Exclude<
  * This function returns the value that the input element should have.
  */
 export const toCurrentInputValue = <TItem>(
-  { toItemInputValue }: Pick<Config<TItem>, "toItemInputValue">,
+  config: Config<TItem>,
   model: Model<TItem>
 ) => {
   switch (model.type) {
@@ -954,7 +1002,7 @@ export const toCurrentInputValue = <TItem>(
     }
 
     case "selected__blurred": {
-      return toItemInputValue(model.selected);
+      return modelToInputValue(config, model);
     }
 
     case "selected__focused__closed":
@@ -1024,7 +1072,10 @@ export const toSelectedItem = <TItem>(model: Model<TItem>): TItem | null => {
     case "selected__focused__opened":
     case "selected__focused__closed":
     case "selected__focused__opened__highlighted":
-      return model.selected;
+      if (isSingle(model.selected)) {
+        return model.selected[0];
+      }
+      return null;
 
     case "unselected__blurred":
     case "unselected__focused__closed":
@@ -1049,7 +1100,9 @@ export const isItemSelected = <TItem>(
     case "selected__focused__opened":
     case "selected__focused__closed":
     case "selected__focused__opened__highlighted": {
-      return toItemId(model.selected) === toItemId(item);
+      return model.selected.some(
+        (selection) => toItemId(selection) === toItemId(item)
+      );
     }
 
     case "unselected__blurred":

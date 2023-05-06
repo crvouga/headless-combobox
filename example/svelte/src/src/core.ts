@@ -498,10 +498,18 @@ const updateModel = <TItem>(
           };
         }
 
+        case "pressed-enter-key": {
+          return {
+            ...model,
+            inputValue: modelToInputValue(config, model),
+            type: "selected__focused__opened",
+          };
+        }
+
         case "pressed-arrow-key": {
           return {
             ...model,
-            inputValue: "",
+            inputValue: modelToInputValue(config, model),
             type: "selected__focused__opened",
           };
         }

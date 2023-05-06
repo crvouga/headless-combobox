@@ -7,7 +7,7 @@ import {
   initConfig,
   isBlurred,
   isFocused,
-  isIndexHighlighted,
+  isItemIndexHighlighted,
   isItemHighlighted,
   isItemSelected,
   isOpened,
@@ -28,7 +28,8 @@ const modelToState = <T>(config: Config<T>, model: Model<T>) => {
     highlightedItem: toHighlightedItem(config, model),
     isItemHighlighted: (item: T) => isItemHighlighted<T>(config, model, item),
     isItemSelected: (item: T) => isItemSelected<T>(config, model, item),
-    isIndexHighlighted: (index: number) => isIndexHighlighted<T>(model, index),
+    isIndexHighlighted: (index: number) =>
+      isItemIndexHighlighted<T>(model, index),
     inputValue: toCurrentInputValue(config, model),
     selectedItem: toSelectedItem(model),
     aria: aria(config, model),

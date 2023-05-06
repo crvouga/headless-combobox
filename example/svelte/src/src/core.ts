@@ -127,6 +127,12 @@ type SelectedFocusedOpenedHighlighted<TItem> = {
   highlightIndex: number;
 };
 
+type HighlightedSelection<TItem> = {
+  type: "highlighted_selection";
+  selected: NonEmpty<TItem>;
+  selectedItemHighlightIndex: number;
+};
+
 type ModelState<TItem> =
   | UnselectedBlurred
   | UnselectedFocusedOpened
@@ -135,7 +141,8 @@ type ModelState<TItem> =
   | SelectedBlurred<TItem>
   | SelectedFocusedClosed<TItem>
   | SelectedFocusedOpened<TItem>
-  | SelectedFocusedOpenedHighlighted<TItem>;
+  | SelectedFocusedOpenedHighlighted<TItem>
+  | HighlightedSelection<TItem>;
 
 /**
  * @memberof Model
@@ -174,6 +181,9 @@ export type Msg<TItem> =
       key: "arrow-up" | "arrow-down";
     }
   | {
+      type: "pressed-backspace-key";
+    }
+  | {
       type: "pressed-escape-key";
     }
   | {
@@ -199,6 +209,10 @@ export type Msg<TItem> =
     }
   | {
       type: "pressed-input";
+    }
+  | {
+      type: "pressed-unselect-button";
+      item: TItem;
     }
   //
   // Setters
@@ -474,6 +488,16 @@ const updateModel = <TItem>(
             selected: model.selected,
           };
         }
+
+        case "pressed-unselect-button": {
+          const removed = model.selected.filter(
+            (selection) => toItemId(selection) !== toItemId(msg.item)
+          );
+          if (isNonEmpty(removed)) {
+            return { ...model, selected: removed };
+          }
+          return { ...model, type: "unselected__blurred" };
+        }
         default: {
           return model;
         }
@@ -519,6 +543,27 @@ const updateModel = <TItem>(
             inputValue: modelToInputValue(config, model),
             type: "selected__focused__opened",
           };
+        }
+
+        case "pressed-horizontal-arrow-key": {
+          if (model.inputValue === "" && msg.key === "arrow-left") {
+            return {
+              ...model,
+              type: "highlighted_selection",
+              selectedItemHighlightIndex: 0,
+            };
+          }
+          return model;
+        }
+
+        case "pressed-unselect-button": {
+          const removed = model.selected.filter(
+            (selection) => toItemId(selection) !== toItemId(msg.item)
+          );
+          if (isNonEmpty(removed)) {
+            return { ...model, selected: removed };
+          }
+          return { ...model, type: "unselected__focused__closed" };
         }
 
         default: {
@@ -620,6 +665,27 @@ const updateModel = <TItem>(
           };
         }
 
+        case "pressed-horizontal-arrow-key": {
+          if (model.inputValue === "" && msg.key === "arrow-left") {
+            return {
+              ...model,
+              type: "highlighted_selection",
+              selectedItemHighlightIndex: 0,
+            };
+          }
+          return model;
+        }
+
+        case "pressed-unselect-button": {
+          const removed = model.selected.filter(
+            (selection) => toItemId(selection) !== toItemId(msg.item)
+          );
+          if (isNonEmpty(removed)) {
+            return { ...model, selected: removed };
+          }
+          return { ...model, type: "unselected__focused__opened" };
+        }
+
         default: {
           return model;
         }
@@ -699,7 +765,7 @@ const updateModel = <TItem>(
             model.highlightIndex + delta,
             filtered.length
           );
-          return { ...model, highlightIndex };
+          return { ...model, highlightIndex: highlightIndex };
         }
 
         case "pressed-enter-key": {
@@ -751,6 +817,16 @@ const updateModel = <TItem>(
 
         case "pressed-escape-key": {
           return { ...model, type: "selected__focused__closed" };
+        }
+
+        case "pressed-unselect-button": {
+          const removed = model.selected.filter(
+            (selection) => toItemId(selection) !== toItemId(msg.item)
+          );
+          if (isNonEmpty(removed)) {
+            return { ...model, selected: removed };
+          }
+          return { ...model, type: "unselected__focused__opened__highlighted" };
         }
 
         default: {
@@ -894,7 +970,7 @@ const updateModel = <TItem>(
           );
           return {
             ...model,
-            highlightIndex,
+            highlightIndex: highlightIndex,
           };
         }
 
@@ -924,6 +1000,100 @@ const updateModel = <TItem>(
             type: "unselected__focused__closed",
           };
         }
+        default: {
+          return model;
+        }
+      }
+    }
+
+    case "highlighted_selection": {
+      switch (msg.type) {
+        case "pressed-horizontal-arrow-key": {
+          if (
+            model.selectedItemHighlightIndex === 0 &&
+            msg.key === "arrow-right"
+          ) {
+            return {
+              ...model,
+              inputValue: "",
+              type: "selected__focused__closed",
+            };
+          }
+
+          const delta = msg.key === "arrow-right" ? -1 : 1;
+          const selectedItemHighlightIndexNew = clampIndex(
+            model.selectedItemHighlightIndex + delta,
+            model.selected.length
+          );
+          return {
+            ...model,
+            selectedItemHighlightIndex: selectedItemHighlightIndexNew,
+          };
+        }
+
+        case "pressed-vertical-arrow-key": {
+          return {
+            ...model,
+            inputValue: "",
+            type: "selected__focused__opened",
+          };
+        }
+
+        case "inputted-value": {
+          return {
+            ...model,
+            inputValue: msg.inputValue,
+            type: "selected__focused__opened",
+          };
+        }
+
+        case "pressed-escape-key": {
+          return {
+            ...model,
+            inputValue: "",
+            type: "selected__focused__closed",
+          };
+        }
+
+        case "pressed-backspace-key": {
+          const removedHighlightedIndex = model.selected.filter(
+            (_, index) => index !== model.selectedItemHighlightIndex
+          );
+
+          if (isNonEmpty(removedHighlightedIndex)) {
+            return {
+              ...model,
+              selected: removedHighlightedIndex,
+              inputValue: "",
+              type: "selected__focused__closed",
+            };
+          }
+
+          return {
+            ...model,
+            inputValue: "",
+            type: "unselected__focused__closed",
+          };
+        }
+
+        case "pressed-unselect-button": {
+          const removed = model.selected.filter(
+            (selection) => toItemId(selection) !== toItemId(msg.item)
+          );
+          if (isNonEmpty(removed)) {
+            const selectedItemHighlightIndex = clampIndex(
+              model.selectedItemHighlightIndex,
+              removed.length
+            );
+            return { ...model, selected: removed, selectedItemHighlightIndex };
+          }
+          return {
+            ...model,
+            inputValue: "",
+            type: "unselected__focused__closed",
+          };
+        }
+
         default: {
           return model;
         }
@@ -967,6 +1137,13 @@ const circularIndex = (index: number, length: number) => {
     return 0;
   }
   return ((index % length) + length) % length;
+};
+
+const clampIndex = (index: number, length: number) => {
+  if (length === 0) {
+    return 0;
+  }
+  return Math.min(Math.max(0, index), length - 1);
 };
 
 /** @module Selectors **/
@@ -1080,6 +1257,16 @@ export type BlurredState<TItem> = UnselectedBlurred | SelectedBlurred<TItem>;
 /**
  * @memberof Selectors
  * @description
+ */
+export const isHighlightedSelection = <T>(
+  model: ModelState<T>
+): model is HighlightedSelection<T> => {
+  return model.type === "highlighted_selection";
+};
+
+/**
+ * @memberof Selectors
+ * @description
  * Utility function to determine if input is focused.
  */
 export const isFocused = <TItem>(
@@ -1100,7 +1287,7 @@ export type FocusedState<TItem> = Exclude<
 export const toCurrentInputValue = <TItem>(
   config: Config<TItem>,
   model: Model<TItem>
-) => {
+): string => {
   switch (model.type) {
     case "unselected__blurred": {
       return "";
@@ -1117,6 +1304,10 @@ export const toCurrentInputValue = <TItem>(
     case "unselected__focused__opened":
     case "unselected__focused__opened__highlighted": {
       return model.inputValue;
+    }
+
+    case "highlighted_selection": {
+      return "";
     }
   }
 };
@@ -1136,6 +1327,7 @@ export const toHighlightedItem = <TItem>(
     case "unselected__focused__opened":
     case "selected__blurred":
     case "selected__focused__opened":
+    case "highlighted_selection":
     case "selected__focused__closed": {
       return null;
     }
@@ -1177,6 +1369,7 @@ export const toSelections = <TItem>(model: Model<TItem>): TItem[] => {
     case "selected__focused__opened":
     case "selected__focused__closed":
     case "selected__focused__opened__highlighted":
+    case "highlighted_selection":
       return model.selected;
 
     case "unselected__blurred":
@@ -1198,6 +1391,7 @@ export const toSelectedItem = <TItem>(model: Model<TItem>): TItem | null => {
     case "selected__focused__opened":
     case "selected__focused__closed":
     case "selected__focused__opened__highlighted":
+    case "highlighted_selection":
       if (isSingle(model.selected)) {
         return model.selected[0];
       }
@@ -1220,8 +1414,9 @@ export const isItemSelected = <TItem>(
   { toItemId }: Pick<Config<TItem>, "toItemId">,
   model: Model<TItem>,
   item: TItem
-) => {
+): boolean => {
   switch (model.type) {
+    case "highlighted_selection":
     case "selected__blurred":
     case "selected__focused__opened":
     case "selected__focused__closed":
@@ -1245,7 +1440,7 @@ export const isItemSelected = <TItem>(
  * @description
  * Selector function to determine if an index is selected.
  */
-export const isIndexHighlighted = <TItem>(
+export const isItemIndexHighlighted = <TItem>(
   model: Model<TItem>,
   index: number
 ): boolean => {
@@ -1255,6 +1450,7 @@ export const isIndexHighlighted = <TItem>(
     case "unselected__focused__opened":
     case "selected__blurred":
     case "selected__focused__opened":
+    case "highlighted_selection":
     case "selected__focused__closed": {
       return false;
     }
@@ -1279,6 +1475,24 @@ export const isItemSelectedAndHighlighted = <TItem>(
   return (
     isItemSelected(config, model, item) &&
     isItemHighlighted(config, model, item)
+  );
+};
+
+/**
+ *
+ * @memberof Selectors
+ *
+ */
+export const isSelectedItemHighlighted = <T>(
+  config: Config<T>,
+  model: Model<T>,
+  selectedItem: T
+) => {
+  return (
+    isHighlightedSelection(model) &&
+    model.selected.findIndex(
+      (item) => config.toItemId(item) === config.toItemId(selectedItem)
+    ) === model.selectedItemHighlightIndex
   );
 };
 
@@ -1341,6 +1555,12 @@ export const browserKeyboardEventKeyToMsg = <T>(
   const eq = (a: string, b: string) =>
     a.toLowerCase().trim() === b.toLowerCase().trim();
 
+  if (eq(key, "Backspace")) {
+    return {
+      type: "pressed-backspace-key",
+    };
+  }
+
   if (eq(key, "ArrowLeft")) {
     return {
       type: "pressed-horizontal-arrow-key",
@@ -1389,20 +1609,23 @@ export const browserKeyboardEventKeyToMsg = <T>(
  */
 export const toState = <T>(config: Config<T>, model: Model<T>) => {
   return {
+    aria: aria(config, model),
     allItems: model.allItems,
     items: toVisibleItems(config, model),
     isOpened: isOpened(model),
-    highlightedItem: toHighlightedItem(config, model),
     selections: toSelections(model),
     inputValue: toCurrentInputValue(config, model),
-    selectedItem: toSelectedItem(model),
-    aria: aria(config, model),
     isBlurred: isBlurred(model),
     isFocused: isFocused(model),
+    selectedItem: toSelectedItem(model),
+    highlightedItem: toHighlightedItem(config, model),
     isItemHighlighted: (item: T) => isItemHighlighted<T>(config, model, item),
     isItemSelected: (item: T) => isItemSelected<T>(config, model, item),
-    isIndexHighlighted: (index: number) => isIndexHighlighted<T>(model, index),
+    isItemIndexHighlighted: (index: number) =>
+      isItemIndexHighlighted<T>(model, index),
     itemStatus: (item: T) => toItemStatus(config, model, item),
+    isSelectedItemHighlighted: (selectedItem: T) =>
+      isSelectedItemHighlighted(config, model, selectedItem),
   } as const;
 };
 
@@ -1463,4 +1686,20 @@ const isNonEmpty = <T>(arr: T[]): arr is NonEmpty<T> => {
 
 export const isSingle = <T>(arr: T[]): arr is [T] => {
   return arr.length === 1;
+};
+
+export const runEffects = <TItem>(
+  { effects }: { effects: Effect<TItem>[] },
+  handlers: {
+    scrollItemIntoView: (item: TItem) => void;
+  }
+) => {
+  for (const effect of effects) {
+    switch (effect.type) {
+      case "scroll-item-into-view": {
+        handlers.scrollItemIntoView(effect.item);
+        break;
+      }
+    }
+  }
 };

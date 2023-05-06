@@ -22,6 +22,7 @@
   ];
 
   let listItems: { [itemId: string]: HTMLElement } = {};
+  let input: HTMLInputElement | null = null;
 
   /*
 
@@ -51,25 +52,21 @@
 
   */
 
-  const dispatch = (msg: Combobox.Msg<Item> | null) => {
-    if (!msg) {
-      return;
-    }
-
+  const dispatch = (msg: Combobox.Msg<Item>) => {
     const output = Combobox.update(config, { msg, model });
 
     model = output.model;
+
     console.log(msg.type, model);
 
-    for (const effect of output.effects) {
-      if (effect.type === "scroll-item-into-view") {
-        const li = listItems[effect.item.id];
-        if (!li) {
-          continue;
+    Combobox.runEffects(output, {
+      scrollItemIntoView: (item) => {
+        const li = listItems[item.id];
+        if (li) {
+          li.scrollIntoView({ block: "nearest" });
         }
-        li.scrollIntoView({ block: "nearest" });
-      }
-    }
+      },
+    });
   };
 
   const handleKeyDown = (
@@ -78,10 +75,13 @@
     }
   ) => {
     const msg = Combobox.browserKeyboardEventKeyToMsg<Item>(event.key);
-    dispatch(msg);
+    if (!msg) {
+      return;
+    }
     if (msg?.shouldPreventDefault) {
       event.preventDefault();
     }
+    dispatch(msg);
   };
 
   /*
@@ -93,22 +93,32 @@
   $: state = Combobox.toState(config, model);
 </script>
 
-<p>Selections</p>
-<div class="chip-list">
-  {#each state.selections as selection}
-    <span class="chip">
-      {selection.label}
-    </span>
-  {/each}
-</div>
-
 <label class="label" {...state.aria.inputLabel}>
   <p {...state.aria.helperText}>Use arrow keys to navigate the list</p>
+  <div class="chip-list">
+    {#each state.selections as selectedItem}
+      <span
+        class="chip"
+        class:chip-highlighted={state.isSelectedItemHighlighted(selectedItem)}
+      >
+        {selectedItem.label}
+        <button
+          class="chip-delete-btn"
+          on:mousedown|preventDefault={() =>
+            dispatch({ type: "pressed-unselect-button", item: selectedItem })}
+        >
+          X
+        </button>
+      </span>
+    {/each}
+  </div>
+
   Multi Select Fruits
   <input
     {...state.aria.input}
     class="input"
     value={state.inputValue}
+    bind:this={input}
     on:input={(event) =>
       dispatch({
         type: "inputted-value",
@@ -216,6 +226,7 @@
 
   .chip-list {
     display: flex;
+    flex-direction: row-reverse;
     height: 4rem;
   }
   .chip {
@@ -226,6 +237,19 @@
     background: #efefef;
     border-radius: 0.5rem;
     height: 1.5rem;
+    cursor: default;
+  }
+
+  .chip-highlighted {
+    background: #333;
+    color: white;
+  }
+
+  .child-delete-btn {
+    font-family: monospace;
+    font-size: xx-small;
+    background: transparent;
+    border-radius: 100%;
   }
 
   @media (prefers-color-scheme: dark) {

@@ -21,7 +21,7 @@
     { id: 9, label: "grape" },
   ];
 
-  let listItems: { [itemId: string]: HTMLElement } = {};
+  let items: { [itemId: string]: HTMLElement } = {};
 
   /*
 
@@ -59,15 +59,13 @@
 
     model = output.model;
 
-    for (const effect of output.effects) {
-      if (effect.type === "scroll-item-into-view") {
-        const li = listItems[effect.item.id];
-        if (!li) {
-          continue;
-        }
-        li.scrollIntoView({ block: "nearest" });
-      }
-    }
+    Combobox.runEffects(output, {
+      focusInput: () => {},
+      focusSelectedItem: () => {},
+      scrollItemIntoView: (item) => {
+        items[item.id]?.scrollIntoView({ block: "nearest" });
+      },
+    });
   };
 
   /*
@@ -79,49 +77,69 @@
   $: state = Combobox.toState(config, model);
 </script>
 
-<label class="label" {...state.aria.inputLabel}>
+<div class="container">
+  <label
+    class="label"
+    {...state.aria.inputLabel}
+    for={state.aria.inputLabel.for}
+  >
+    Fruits
+  </label>
   <p {...state.aria.helperText}>Use arrow keys to navigate the list</p>
-  Fruits
-  <input
-    {...state.aria.input}
-    class="input"
-    value={state.inputValue}
-    on:input={(event) =>
-      dispatch({
-        type: "inputted-value",
-        inputValue: event.currentTarget.value,
-      })}
-    on:focus={() => dispatch({ type: "focused-input" })}
-    on:blur={() => dispatch({ type: "blurred-input" })}
-    on:click={() => dispatch({ type: "pressed-input" })}
-    on:keydown={(event) =>
-      dispatch(Combobox.browserKeyboardEventKeyToMsg(event.key))}
-  />
-  <ul {...state.aria.itemList} class="suggestions" class:hide={!state.isOpened}>
-    {#if state.items.length === 0}
-      <li>No results</li>
-    {/if}
-    {#each state.items as item, index}
-      <li
-        {...state.aria.item(item)}
-        bind:this={listItems[item.id]}
-        on:mousemove={() => dispatch({ type: "hovered-over-item", index })}
-        on:mousedown|preventDefault={() =>
-          dispatch({ type: "pressed-item", item })}
-        on:focus={() => dispatch({ type: "hovered-over-item", index })}
-        class="option"
-        class:highlighted={state.itemStatus(item) === "highlighted"}
-        class:selected={state.itemStatus(item) === "selected"}
-        class:selected-and-highlighted={state.itemStatus(item) ===
-          "selected-and-highlighted"}
-      >
-        {config.toItemInputValue(item)}
-      </li>
-    {/each}
-  </ul>
-</label>
+  <div class="input-container">
+    <input
+      {...state.aria.input}
+      class="input"
+      value={state.inputValue}
+      on:input={(event) =>
+        dispatch({
+          type: "inputted-value",
+          inputValue: event.currentTarget.value,
+        })}
+      on:focus={() => dispatch({ type: "focused-input" })}
+      on:blur={() => dispatch({ type: "blurred-input" })}
+      on:click={() => dispatch({ type: "pressed-input" })}
+      on:keydown={(event) =>
+        dispatch(Combobox.browserKeyboardEventKeyToMsg(event.key))}
+    />
+    <ul
+      {...state.aria.itemList}
+      class="suggestions"
+      class:hide={!state.isOpened}
+    >
+      {#if state.items.length === 0}
+        <li>No results</li>
+      {/if}
+      {#each state.items as item, index}
+        <li
+          {...state.aria.item(item)}
+          bind:this={items[item.id]}
+          on:mousemove={() => dispatch({ type: "hovered-over-item", index })}
+          on:mousedown|preventDefault={() =>
+            dispatch({ type: "pressed-item", item })}
+          on:focus={() => dispatch({ type: "hovered-over-item", index })}
+          class="option"
+          class:highlighted={state.itemStatus(item) === "highlighted"}
+          class:selected={state.itemStatus(item) === "selected"}
+          class:selected-and-highlighted={state.itemStatus(item) ===
+            "selected-and-highlighted"}
+        >
+          {config.toItemInputValue(item)}
+        </li>
+      {/each}
+    </ul>
+  </div>
+</div>
 
 <style>
+  .container {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .input-container {
+    position: relative;
+  }
   .label {
     position: relative;
     display: block;
@@ -134,6 +152,7 @@
   .input {
     width: 100%;
     padding: 0.5rem;
+    font-size: large;
     box-sizing: border-box;
     border: 1px solid #ccc;
   }
@@ -144,15 +163,30 @@
     right: 0;
     z-index: 1;
     width: 100%;
-    max-height: 150px;
+    max-height: 200px;
     overflow: scroll;
     border: 1px solid #ccc;
     width: 100%;
     max-width: 100%;
     margin: 0;
     padding: 0;
-    background: #121212;
+    background: #efefef;
+    font-size: large;
   }
+
+  @media (prefers-color-scheme: dark) {
+    .suggestions {
+      background: #121212;
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .highlighted {
+      background-color: #eee;
+      color: black;
+    }
+  }
+
   .option {
     display: block;
     cursor: pointer;
@@ -162,11 +196,12 @@
     padding: 0;
   }
   .highlighted {
-    background-color: #eee;
-    color: black;
+    background-color: #333;
+    color: white;
   }
   .selected {
     background-color: blue;
+    color: #fff;
   }
   .selected-and-highlighted {
     background-color: lightblue;

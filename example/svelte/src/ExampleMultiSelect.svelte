@@ -60,21 +60,13 @@
 
     Combobox.runEffects(output, {
       focusSelectedItem: (selectedItem) => {
-        const li = selectedItems[selectedItem.id];
-        if (li) {
-          li.focus();
-        }
+        selectedItems[selectedItem.id]?.focus();
       },
       focusInput: () => {
-        if (input) {
-          input.focus();
-        }
+        input?.focus();
       },
       scrollItemIntoView: (item) => {
-        const li = items[item.id];
-        if (li) {
-          li.scrollIntoView({ block: "nearest" });
-        }
+        items[item.id]?.scrollIntoView({ block: "nearest" });
       },
     });
   };
@@ -99,7 +91,7 @@
   $: state = Combobox.toState(config, model);
 </script>
 
-<main>
+<div>
   <label
     class="label"
     {...state.aria.inputLabel}
@@ -177,7 +169,7 @@
       {/each}
     </ul>
   </div>
-</main>
+</div>
 
 <style>
   .input-container {
@@ -236,10 +228,12 @@
     margin: 0;
     padding: 0;
   }
+
   .highlighted {
     background-color: #333;
     color: white;
   }
+
   @media (prefers-color-scheme: dark) {
     .highlighted {
       background-color: #eee;

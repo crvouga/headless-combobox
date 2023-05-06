@@ -10,7 +10,7 @@
     "prepublish": "tsc",
     "prepublishOnly": "tsc",
     "postpublish": "npm run update-example-deps",
-    "update-example-deps": "cd example/react && npm install headless-combobox@latest && cd ../svelte && npm install headless-combobox@latest",
+    "update-example-deps": "Øcd ../svelte && npm install headless-combobox@latest",
     "gen-docs": "typedoc src/index.ts"
   },
   "repository": {

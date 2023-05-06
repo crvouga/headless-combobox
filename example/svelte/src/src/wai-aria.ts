@@ -149,7 +149,6 @@ const ariaSelectedList = <T>(config: Config<T>, model: Model<T>) => {
   return {
     id: selectedListId(config),
     role: "list",
-    "aria-label": "Selected items. Press backspace to unselect one",
     ...(highlightedSelectedItem
       ? {
           "aria-activedescendant": selectedListItemId(
@@ -162,9 +161,6 @@ const ariaSelectedList = <T>(config: Config<T>, model: Model<T>) => {
 };
 
 const ariaSelectedItem = <T>(config: Config<T>, model: Model<T>, item: T) => {
-  // const highlightedSelectedItem = isHighlightedSelection(model)
-  //   ? model.selected[model.selectedItemHighlightIndex] ?? null
-  //   : null;
   return {
     id: selectedListItemId(config, item),
     role: "listitem",
@@ -180,7 +176,7 @@ const ariaSelectedItem = <T>(config: Config<T>, model: Model<T>, item: T) => {
 const ariaUnselectButton = () => {
   return {
     role: "button",
-    // "aria-label": `Click or Backspace to unselect`,
+
     tabindex: -1,
   };
 };
@@ -201,4 +197,9 @@ export const aria = <T>(config: Config<T>, model: Model<T>) => {
     selectedItem: (item: T) => ariaSelectedItem(config, model, item),
     unselectButton: (_item: T) => ariaUnselectButton(),
   };
+};
+
+export const defaultContent = {
+  helperText: "Use arrow keys to navigate. Enter key to toggle selection",
+  selectedList: "Use arrow keys to navigate. Backspace to unselect",
 };

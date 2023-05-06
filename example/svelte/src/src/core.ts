@@ -73,7 +73,7 @@ export type Model<TItem> = ModelState<TItem> & {
  */
 export type Mode = {
   type: "multi-select";
-  maxSelected: number;
+  max: number;
 };
 
 type UnselectedBlurred = {

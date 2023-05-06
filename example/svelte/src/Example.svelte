@@ -55,6 +55,8 @@
 
     const output = Combobox.update(config, { msg, model });
 
+    console.log(model.type, msg.type, output.model);
+
     model = output.model;
 
     for (const effect of output.effects) {
@@ -91,6 +93,7 @@
       })}
     on:focus={() => dispatch({ type: "focused-input" })}
     on:blur={() => dispatch({ type: "blurred-input" })}
+    on:click={() => dispatch({ type: "pressed-input" })}
     on:keydown={(event) =>
       dispatch(Combobox.browserKeyboardEventKeyToMsg(event.key))}
   />
@@ -99,7 +102,7 @@
       <li
         {...state.aria.item(item)}
         bind:this={listItems[item.id]}
-        on:mouseover={() => dispatch({ type: "hovered-over-item", index })}
+        on:mousemove={() => dispatch({ type: "hovered-over-item", index })}
         on:mousedown|preventDefault={() =>
           dispatch({ type: "pressed-item", item })}
         on:focus={() => dispatch({ type: "hovered-over-item", index })}
@@ -138,7 +141,7 @@
     right: 0;
     z-index: 1;
     width: 100%;
-    max-height: 100px;
+    max-height: 150px;
     overflow: scroll;
     border: 1px solid #ccc;
     width: 100%;

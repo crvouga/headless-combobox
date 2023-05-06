@@ -892,11 +892,14 @@ const updateModel = <TItem>(
             return { ...model, type: "unselected__focused__closed" };
           }
 
-          return {
+          const modelNew: Model<TItem> = {
             ...model,
-            inputValue: modelToInputValue(config, model),
             selected: [selectedNew],
             type: "selected__focused__closed",
+          };
+          return {
+            ...modelNew,
+            inputValue: modelToInputValue(config, modelNew),
           };
         }
 

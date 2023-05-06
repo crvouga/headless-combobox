@@ -1,5 +1,7 @@
 /** @module Config **/
 
+import { aria } from "./wai-aria";
+
 /**
  * @memberof Config
  * @description
@@ -1059,138 +1061,6 @@ export const toVisibleItems = <T>(config: Config<T>, model: Model<T>): T[] => {
   return config.deterministicFilter(model);
 };
 
-/** @module WAI-ARIA **/
-
-/**
- * @memberof WAI-ARIA
- * @description
- * This function returns WAI-ARIA attributes for the all html elements.
- */
-export const aria = <T>(config: Config<T>, model: Model<T>) => {
-  return {
-    inputLabel: ariaInputLabel(config),
-    input: ariaInput(config, model),
-    helperText: ariaHelperText(config),
-    itemList: ariaItemList(config),
-    item: (item: T) => ariaItem(config, model, item),
-  };
-};
-
-/**
- * @memberof WAI-ARIA
- * @description
- * This function returns WAI-ARIA attributes for html that describes the <input />.
- */
-const ariaHelperText = <T>(config: Config<T>) => {
-  return {
-    id: helperTextHtmlId(config),
-  };
-};
-
-/**
- * @memberof WAI-ARIA
- * @description
- * This function returns WAI-ARIA attributes for the <label />.
- */
-export const ariaInputLabel = <T>(config: Config<T>) => {
-  return {
-    id: inputLabelHtmlId(config),
-    for: inputHtmlId(config),
-    htmlFor: inputHtmlId(config),
-  };
-};
-
-/**
- * @memberof WAI-ARIA
- * @description
- * This function returns WAI-ARIA attributes for the <input />.
- */
-export const ariaInput = <T>(config: Config<T>, model: Model<T>) => {
-  const highlightedItem = toHighlightedItem(config, model);
-  return {
-    id: inputHtmlId(config),
-    role: "combobox",
-    tabindex: 0,
-    combobox: "off",
-    "aria-controls": itemListHtmlId(config),
-    "aria-haspopup": "listbox",
-    "aria-expanded": isOpened(model) ? "true" : "false",
-    "aria-describedby": helperTextHtmlId(config),
-    ...(highlightedItem
-      ? {
-          "aria-activedescendant": itemHtmlId(config, highlightedItem),
-        }
-      : {}),
-  } as const;
-};
-
-/**
- * @memberof WAI-ARIA
- * @description
- * This function returns WAI-ARIA attributes for the "suggestion list" <ul />.
- */
-export const ariaItemList = <T>(config: Config<T>) => {
-  return {
-    id: itemListHtmlId(config),
-    role: "listbox",
-    "aria-labelledby": inputLabelHtmlId(config),
-    tabindex: -1,
-  } as const;
-};
-
-/**
- * @memberof WAI-ARIA
- * @description
- * This function returns WAI-ARIA attributes for the "option" <li />.
- */
-export const ariaItem = <T>(config: Config<T>, model: Model<T>, item: T) => {
-  const selected = toSelectedItem(model);
-  return {
-    id: itemHtmlId(config, item),
-    role: "option",
-    ...(selected
-      ? {
-          "aria-selected": config.toItemId(item) === config.toItemId(selected),
-        }
-      : {}),
-  } as const;
-};
-
-/**
- * @memberof WAI-ARIA
- */
-const inputLabelHtmlId = <T>({ namespace }: Config<T>) => {
-  return `${namespace}-input-label`;
-};
-
-/**
- * @memberof WAI-ARIA
- */
-const inputHtmlId = <T>({ namespace }: Config<T>) => {
-  return `${namespace}-input`;
-};
-
-/**
- * @memberof WAI-ARIA
- */
-const itemListHtmlId = <T>({ namespace }: Config<T>) => {
-  return `${namespace}-item-list`;
-};
-
-/**
- * @memberof WAI-ARIA
- */
-const itemHtmlId = <T>({ toItemId, namespace }: Config<T>, item: T) => {
-  return `${namespace}-item-${toItemId(item)}`;
-};
-
-/**
- * @memberof WAI-ARIA
- */
-const helperTextHtmlId = <T>({ namespace }: Config<T>) => {
-  return `${namespace}-helper-text`;
-};
-
 /** @module Helpers **/
 
 /**
@@ -1227,14 +1097,20 @@ export const browserKeyboardEventKeyToMsg = (key: string) => {
   return null;
 };
 
-const modelToState = <T>(config: Config<T>, model: Model<T>) => {
+/**
+ * @memberof Selectors
+ * @description
+ * This function returns an object of all the returns of all the selectors.
+ */
+export const toState = <T>(config: Config<T>, model: Model<T>) => {
   return {
     allItems: model.allItems,
     items: toVisibleItems(config, model),
     isOpened: isOpened(model),
     highlightedItem: toHighlightedItem(config, model),
-    isItemHighlighted: (item: T) => isItemHighlighted(config, model, item),
-    isItemSelected: (item: T) => isItemSelected(config, model, item),
+    isItemHighlighted: (item: T) => isItemHighlighted<T>(config, model, item),
+    isItemSelected: (item: T) => isItemSelected<T>(config, model, item),
+    isIndexHighlighted: (index: number) => isIndexHighlighted<T>(model, index),
     inputValue: toCurrentInputValue(config, model),
     selectedItem: toSelectedItem(model),
     aria: aria(config, model),
@@ -1242,109 +1118,6 @@ const modelToState = <T>(config: Config<T>, model: Model<T>) => {
     isFocused: isFocused(model),
     itemStatus: (item: T) => toItemStatus(config, model, item),
   } as const;
-};
-
-type State<T> = ReturnType<typeof modelToState<T>>;
-
-export type comboboxState<T> = State<T>;
-
-/**
- * @memberof Helpers
- * @description
- * This is a helper function that returns an object that can be glued into your app with less boilerplate.
- */
-export const createCombobox = <T>({
-  allItems,
-  toItemId,
-  toItemInputValue,
-  onScroll,
-  namespace,
-  deterministicFilter,
-}: {
-  allItems: T[];
-  toItemId: (item: T) => string | number;
-  toItemInputValue: (item: T) => string;
-  onScroll: (item: T, config: Config<T>) => void;
-  namespace?: string;
-  deterministicFilter?: (model: Model<T>) => T[];
-}) => {
-  const config = initConfig({
-    toItemId,
-    toItemInputValue,
-    namespace,
-    deterministicFilter,
-  });
-
-  const subscribers = new Map<string, (state: State<T>) => void>();
-
-  let model = init({
-    allItems,
-  });
-
-  const setModel = (newModel: Model<T>) => {
-    model = newModel;
-    for (const subscriber of subscribers.values()) {
-      subscriber(modelToState(config, model));
-    }
-  };
-
-  const getState = () => {
-    return modelToState(config, model);
-  };
-
-  const dispatch = (msg: Msg<T>) => {
-    const output = update(config, { model, msg });
-    setModel(output.model);
-    for (const effect of output.effects) {
-      if (effect.type === "scroll-item-into-view") {
-        onScroll(effect.item, config);
-      }
-    }
-  };
-
-  const subscribe = (subscriber: (state: State<T>) => void) => {
-    const id = Math.random().toString(36).substring(2, 9);
-    subscribers.set(id, subscriber);
-    return () => {
-      subscribers.delete(id);
-    };
-  };
-
-  const events = {
-    onInput: (inputValue: string) =>
-      dispatch({ type: "inputted-value", inputValue }),
-    onInputKeyDown: (key: string) => {
-      const msg = browserKeyboardEventKeyToMsg(key);
-      if (msg) {
-        dispatch(msg);
-      }
-    },
-    onInputBlur: () => dispatch({ type: "blurred-input" }),
-    onInputFocus: () => dispatch({ type: "focused-input" }),
-    onInputPress: () => dispatch({ type: "pressed-input" }),
-    //
-    onItemPress: (item: T) => dispatch({ type: "pressed-item", item }),
-    onItemFocus: (index: number) =>
-      dispatch({ type: "hovered-over-item", index }),
-    onItemHover: (index: number) =>
-      dispatch({ type: "hovered-over-item", index }),
-  };
-
-  const setAllItems = (allItems: T[]) => {
-    setModel({
-      ...model,
-      allItems,
-    });
-  };
-
-  return {
-    ...config,
-    ...events,
-    setAllItems,
-    getState,
-    dispatch,
-    subscribe,
-  };
 };
 
 /** @module Debug **/

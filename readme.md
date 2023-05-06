@@ -1,6 +1,8 @@
 # headless-combobox
 
-## Currently a work in progress
+# ⚠️ Currently a work in progress. ⚠️
+
+But I (the author) am using in my personal and professional projects.
 
 ## Pros
 
@@ -8,14 +10,16 @@
 - 🔌 Framework agnostic. Bring your own framework.
 - ⚡️ Zero dependencies
 - ♿️ [WAI ARIA Combobox](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/) support
+- 🧺 Multi Select supported
 - 💪 Written in TypeScript
-- 🌳 Simple API
+- 🌳 Simple pure functional [Elm](https://elm-lang.org/)-like API
 - 💼 Works anywhere JavaScript works. React Native, Vue, Node.js, Redux, Any legacy JS framework etc.
 
 ## Cons
 
 - 🧠 Headless. You do have to write your own styles.
 - 🔌 Framework agnostic. You do have to write glue code.
+- 🌳 [Elm](https://elm-lang.org/)-like API. Some people may hate that.
 
 ## Good use cases are
 
@@ -28,7 +32,6 @@
 ## Links
 
 - [Svelte Example](https://headless-combobox-example-svelte.vercel.app/)
-- [React Example](https://headless-combobox-example-react.vercel.app/)
 - [Documentation](https://headless-combobox.vercel.app/)
 - [Github](https://github.com/crvouga/headless-combobox)
 - [NPM](https://www.npmjs.com/package/headless-combobox)
@@ -52,10 +55,6 @@ yarn add headless-combobox
 ```shell
 pnpm install headless-combobox
 ```
-
-## TODO
-
-- Select Only
 
 ## Complementary Libraries
 

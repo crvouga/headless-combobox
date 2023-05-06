@@ -58,8 +58,6 @@
 
     model = output.model;
 
-    console.log(msg.type, model, output.effects);
-
     Combobox.runEffects(output, {
       focusSelectedItem: (selectedItem) => {
         const li = selectedItems[selectedItem.id];
@@ -86,7 +84,7 @@
     if (!msg) {
       return;
     }
-    if (msg?.shouldPreventDefault) {
+    if (msg.shouldPreventDefault) {
       event.preventDefault();
     }
     dispatch(msg);
@@ -110,7 +108,7 @@
     Fruits
   </label>
 
-  <div class="input-container">
+  <div class="input-container" on:keydown={handleKeyDown}>
     <p {...state.aria.helperText}>
       Use arrow keys to navigate. Enter key to toggle
     </p>
@@ -122,7 +120,6 @@
           bind:this={selectedItems[selectedItem.id]}
           class="chip"
           class:chip-highlighted={state.isSelectedItemFocused(selectedItem)}
-          on:keydown={handleKeyDown}
           on:focus={() =>
             dispatch({ type: "focused-selected-item", item: selectedItem })}
         >
@@ -152,7 +149,6 @@
       on:click={() => dispatch({ type: "pressed-input" })}
       on:focus={() => dispatch({ type: "focused-input" })}
       on:blur={() => dispatch({ type: "blurred-input" })}
-      on:keydown={handleKeyDown}
     />
     <ul
       {...state.aria.itemList}

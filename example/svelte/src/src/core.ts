@@ -616,6 +616,17 @@ const updateModel = <T>(
             ),
           };
         }
+
+        case "pressed-backspace-key": {
+          if (model.inputValue === "") {
+            const removed = model.selected.slice(1);
+            if (isNonEmpty(removed)) {
+              return { ...model, selected: removed };
+            }
+            return { ...model, type: "unselected__focused__opened" };
+          }
+          return model;
+        }
         default: {
           return model;
         }
@@ -734,6 +745,17 @@ const updateModel = <T>(
             return { ...model, selected: removed };
           }
           return { ...model, type: "unselected__focused__opened" };
+        }
+
+        case "pressed-backspace-key": {
+          if (model.inputValue === "") {
+            const removed = model.selected.slice(1);
+            if (isNonEmpty(removed)) {
+              return { ...model, selected: removed };
+            }
+            return { ...model, type: "unselected__focused__opened" };
+          }
+          return model;
         }
 
         default: {
@@ -898,6 +920,17 @@ const updateModel = <T>(
               (item) => toItemId(item) === toItemId(msg.item)
             ),
           };
+        }
+
+        case "pressed-backspace-key": {
+          if (model.inputValue === "") {
+            const removed = model.selected.slice(1);
+            if (isNonEmpty(removed)) {
+              return { ...model, selected: removed };
+            }
+            return { ...model, type: "unselected__focused__opened" };
+          }
+          return model;
         }
 
         default: {

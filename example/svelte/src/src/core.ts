@@ -1328,7 +1328,9 @@ export const toVisibleItems = <T>(config: Config<T>, model: Model<T>): T[] => {
  * @description
  * This helper function converts a keyboard event key property to a message.
  **/
-export const browserKeyboardEventKeyToMsg = <T>(key: string): Msg<T> | null => {
+export const browserKeyboardEventKeyToMsg = <T>(
+  key: string
+): (Msg<T> & { shouldPreventDefault?: boolean }) | null => {
   const eq = (a: string, b: string) =>
     a.toLowerCase().trim() === b.toLowerCase().trim();
 
@@ -1336,6 +1338,7 @@ export const browserKeyboardEventKeyToMsg = <T>(key: string): Msg<T> | null => {
     return {
       type: "pressed-arrow-key",
       key: "arrow-down",
+      shouldPreventDefault: true,
     };
   }
 
@@ -1343,15 +1346,16 @@ export const browserKeyboardEventKeyToMsg = <T>(key: string): Msg<T> | null => {
     return {
       type: "pressed-arrow-key",
       key: "arrow-up",
+      shouldPreventDefault: true,
     };
   }
 
   if (eq(key, "Escape")) {
-    return { type: "pressed-escape-key" } satisfies Msg<unknown>;
+    return { type: "pressed-escape-key" };
   }
 
   if (eq(key, "Enter")) {
-    return { type: "pressed-enter-key" } satisfies Msg<unknown>;
+    return { type: "pressed-enter-key" };
   }
 
   return null;

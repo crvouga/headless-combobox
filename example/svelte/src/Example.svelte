@@ -98,6 +98,9 @@
       dispatch(Combobox.browserKeyboardEventKeyToMsg(event.key))}
   />
   <ul {...state.aria.itemList} class="suggestions" class:hide={!state.isOpened}>
+    {#if state.items.length === 0}
+      <li>No results</li>
+    {/if}
     {#each state.items as item, index}
       <li
         {...state.aria.item(item)}

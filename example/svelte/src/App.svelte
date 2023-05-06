@@ -1,9 +1,9 @@
 <script lang="ts">
-  import Example from "./Example.svelte";
+  // import Example from "./Example.svelte";
   import ExampleMultiSelect from "./ExampleMultiSelect.svelte";
 </script>
 
 <main>
-  <!-- <ExampleMultiSelect /> -->
-  <Example />
+  <ExampleMultiSelect />
+  <!-- <Example /> -->
 </main>

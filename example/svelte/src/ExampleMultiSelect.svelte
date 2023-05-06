@@ -72,6 +72,18 @@
     }
   };
 
+  const handleKeyDown = (
+    event: KeyboardEvent & {
+      currentTarget: EventTarget & HTMLInputElement;
+    }
+  ) => {
+    const msg = Combobox.browserKeyboardEventKeyToMsg<Item>(event.key);
+    dispatch(msg);
+    if (msg?.shouldPreventDefault) {
+      event.preventDefault();
+    }
+  };
+
   /*
 
   Step 3: Wire up to the UI
@@ -105,10 +117,12 @@
     on:click={() => dispatch({ type: "pressed-input" })}
     on:focus={() => dispatch({ type: "focused-input" })}
     on:blur={() => dispatch({ type: "blurred-input" })}
-    on:keydown={(event) =>
-      dispatch(Combobox.browserKeyboardEventKeyToMsg(event.key))}
+    on:keydown={handleKeyDown}
   />
   <ul {...state.aria.itemList} class="suggestions" class:hide={!state.isOpened}>
+    {#if state.items.length === 0}
+      <li>No results</li>
+    {/if}
     {#each state.items as item, index}
       <li
         {...state.aria.item(item)}

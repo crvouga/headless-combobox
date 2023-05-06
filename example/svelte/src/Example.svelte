@@ -83,9 +83,9 @@
     {...state.aria.inputLabel}
     for={state.aria.inputLabel.for}
   >
-    Fruits
+    Fruit Single Select
   </label>
-  <p {...state.aria.helperText}>Use arrow keys to navigate the list</p>
+  <p {...state.aria.helperText}>{Combobox.ariaContentDefaults.helperText}</p>
   <div class="input-container">
     <input
       {...state.aria.input}

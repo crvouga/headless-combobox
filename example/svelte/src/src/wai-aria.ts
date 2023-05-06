@@ -138,16 +138,14 @@ const selectedListItemId = <T>({ namespace, toItemId }: Config<T>, item: T) => {
 
 /**
  * @memberof WAI-ARIA
- * @description
- * This function returns WAI-ARIA attributes for the all html elements.
  */
-
 const ariaSelectedList = <T>(config: Config<T>, model: Model<T>) => {
   const highlightedSelectedItem = isSelectionFocused(model)
     ? model.selected[model.focusedIndex] ?? null
     : null;
   return {
     id: selectedListId(config),
+    "aria-label": ariaContentDefaults.selectedListLabel,
     role: "list",
     ...(highlightedSelectedItem
       ? {
@@ -176,9 +174,10 @@ const ariaSelectedItem = <T>(config: Config<T>, model: Model<T>, item: T) => {
 const ariaUnselectButton = () => {
   return {
     role: "button",
-
     tabindex: -1,
-  };
+    "aria-label": "Unselect",
+    "aria-hidden": "true", // right now unselect button is hidden from screen readers
+  } as const;
 };
 
 /**
@@ -199,7 +198,7 @@ export const aria = <T>(config: Config<T>, model: Model<T>) => {
   };
 };
 
-export const defaultContent = {
-  helperText: "Use arrow keys to navigate. Enter key to toggle selection",
-  selectedList: "Use arrow keys to navigate. Backspace to unselect",
+export const ariaContentDefaults = {
+  helperText: "Use arrow keys to navigate. Enter key to toggle item selection.",
+  selectedListLabel: "Use arrow keys to navigate. Backspace to unselect item.",
 };

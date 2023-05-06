@@ -97,12 +97,12 @@
     {...state.aria.inputLabel}
     for={state.aria.inputLabel.for}
   >
-    Fruits
+    Fruit Multi Select
   </label>
 
   <div class="input-container" on:keydown={handleKeyDown}>
     <p {...state.aria.helperText}>
-      Use arrow keys to navigate. Enter key to toggle
+      {Combobox.ariaContentDefaults.helperText}
     </p>
 
     <ul class="chip-list" {...state.aria.selectedList}>
@@ -116,14 +116,14 @@
             dispatch({ type: "focused-selected-item", item: selectedItem })}
         >
           {selectedItem.label}
-          <button
+          <span
             {...state.aria.unselectButton(selectedItem)}
             class="chip-delete-btn"
             on:mousedown|preventDefault={() =>
               dispatch({ type: "pressed-unselect-button", item: selectedItem })}
           >
-            X
-          </button>
+            &times;
+          </span>
         </li>
       {/each}
     </ul>
@@ -259,6 +259,7 @@
     align-items: center;
     padding: 0.5rem;
     margin: 0.5rem;
+    gap: 0.5rem;
     background: #efefef;
     border-radius: 0.5rem;
     height: 1.5rem;
@@ -271,10 +272,11 @@
   }
 
   .child-delete-btn {
-    font-family: monospace;
-    font-size: xx-small;
+    font-size: small;
     background: transparent;
+    padding: 4px;
     border-radius: 100%;
+    cursor: pointer;
   }
 
   @media (prefers-color-scheme: dark) {

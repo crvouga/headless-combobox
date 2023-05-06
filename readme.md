@@ -1,5 +1,7 @@
 # headless-combobox
 
+## Currently a work in progress
+
 ## Pros
 
 - 🧠 Headless. Bring your own styles.

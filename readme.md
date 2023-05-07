@@ -75,6 +75,11 @@ pnpm install headless-combobox
 - [match-sorter](https://github.com/kentcdodds/match-sorter) for filtering items
 - [floating-ui](https://floating-ui.com/) for rendering the drop down.
 
+## Prior Art
+
+- [MUI's Autocomplete](https://mui.com/material-ui/react-autocomplete/#multiple-values)
+- [Headless UI's Comobox](https://headlessui.com/react/combobox)
+
 ## Usage
 
 ### Svelte Multi Select

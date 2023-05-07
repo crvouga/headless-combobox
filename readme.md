@@ -1,5 +1,7 @@
 # headless-combobox
 
+![demo](./demo.gif)
+
 ## ⚠️ WORK IN PROGRESS ⚠️
 
 But I (the author) am using in my personal and professional projects.

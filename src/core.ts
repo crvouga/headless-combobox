@@ -3,7 +3,7 @@
 import { aria } from "./wai-aria";
 
 /**
- * @memberof Config
+ * @category Config
  * @description
  * The Config<TItem> represents the configuration needed for the combobox to work with generic items.
  * @remark
@@ -17,7 +17,7 @@ export type Config<TItem> = {
 };
 
 /**
- * @memberof Config
+ * @category Config
  */
 export const initConfig = <TItem>({
   namespace,
@@ -40,7 +40,7 @@ export const initConfig = <TItem>({
 };
 
 /**
- * @memberof Config
+ * @category Config
  * @description
  * The simpleFilter function is a default implementation of the deterministicFilter function.
  */
@@ -59,7 +59,7 @@ export const simpleFilter = <TItem>(
 /** @module Model **/
 
 /**
- * @memberof Model
+ * @category Model
  * @description
  * The Model<TItem> represents the state of the combobox.
  */
@@ -70,7 +70,7 @@ export type Model<TItem> = ModelState<TItem> & {
 };
 
 /**
- * @memberof Model
+ * @category Model
  * @description
  * The Mode represents the mode of the combobox.
  * "You don't say? 😑" - probably you
@@ -145,7 +145,7 @@ type ModelState<TItem> =
   | SelectionFocused<TItem>;
 
 /**
- * @memberof Model
+ * @category Model
  * @description
  * The init function returns the initial state of the combobox.
  */
@@ -167,7 +167,7 @@ export const init = <TItem>({
 /** @module Update **/
 
 /**
- * @memberof Update
+ * @category Update
  * @description
  * The Msg<TItem> represents all the possible state transitions that can happen to the combobox.
  */
@@ -247,7 +247,7 @@ export type Msg<TItem> =
     };
 
 /**
- * @memberof Update
+ * @category Update
  * @description
  * The Effect<TItem> represents all the possible effects that can happen to the combobox.
  * You as the user of the library has to implement the side effects
@@ -266,7 +266,7 @@ export type Effect<TItem> =
     };
 
 /**
- * @memberof Update
+ * @category Update
  * @description
  * The update function is the main function.
  * The update function takes the current state of the combobox and a message and returns the new state of the
@@ -1341,7 +1341,7 @@ const clampIndex = (index: number, length: number) => {
 /** @module Selectors **/
 
 /**
- * @memberof Selectors
+ * @category Selectors
  * @description
  * Utility function to determine if any item is selected.
  */
@@ -1362,7 +1362,7 @@ export type SelectedState<TItem> =
   | SelectedFocusedOpenedHighlighted<TItem>;
 
 /**
- * @memberof Selectors
+ * @category Selectors
  * @description
  * Utility function to determine if in unselected state
  */
@@ -1382,7 +1382,7 @@ export type UnselectedState<TItem> = Exclude<
 >;
 
 /**
- * @memberof Selectors
+ * @category Selectors
  * @description
  * Utility function to determine if the dropdown is opened.
  */
@@ -1403,7 +1403,7 @@ export type OpenedState<TItem> =
   | SelectedFocusedOpenedHighlighted<TItem>;
 
 /**
- * @memberof Selectors
+ * @category Selectors
  * @description
  * Utility function to determine if the dropdown is closed.
  */
@@ -1415,7 +1415,7 @@ export const isClosed = <TItem>(
 export type ClosedState<TItem> = Exclude<ModelState<TItem>, OpenedState<TItem>>;
 
 /**
- * @memberof Selectors
+ * @category Selectors
  * @description
  * Utility function to determine if any item is highlighted.
  */
@@ -1433,7 +1433,7 @@ export type HighlightedState<TItem> =
   | SelectedFocusedOpenedHighlighted<TItem>;
 
 /**
- * @memberof Selectors
+ * @category Selectors
  * @description
  * Utility function to determine if input is blurred.
  */
@@ -1447,7 +1447,7 @@ export const isBlurred = <TItem>(
 export type BlurredState<TItem> = UnselectedBlurred | SelectedBlurred<TItem>;
 
 /**
- * @memberof Selectors
+ * @category Selectors
  * @description
  */
 export const isSelectionFocused = <T>(
@@ -1457,7 +1457,7 @@ export const isSelectionFocused = <T>(
 };
 
 /**
- * @memberof Selectors
+ * @category Selectors
  * @description
  * Utility function to determine if input is focused.
  */
@@ -1472,7 +1472,7 @@ export type FocusedState<TItem> = Exclude<
 >;
 
 /**
- * @memberof Selectors
+ * @category Selectors
  * @description
  * This function returns the value that the input element should have.
  */
@@ -1505,7 +1505,7 @@ export const toCurrentInputValue = <TItem>(
 };
 
 /**
- * @memberof Selectors
+ * @category Selectors
  * @description
  * This function returns the highlighted item.
  */
@@ -1534,7 +1534,7 @@ export const toHighlightedItem = <TItem>(
 };
 
 /**
- * @memberof Selectors
+ * @category Selectors
  * @description
  * Utility function to determine if an item is highlighted.
  */
@@ -1551,7 +1551,7 @@ export const isItemHighlighted = <TItem>(
 };
 
 /**
- * @memberof Selectors
+ * @category Selectors
  * @description
  * This function returns the selected item
  */
@@ -1573,7 +1573,7 @@ export const toSelections = <TItem>(model: Model<TItem>): TItem[] => {
 };
 
 /**
- * @memberof Selectors
+ * @category Selectors
  * @description
  * This function returns the selected item
  */
@@ -1598,7 +1598,7 @@ export const toSelectedItem = <TItem>(model: Model<TItem>): TItem | null => {
 };
 
 /**
- * @memberof Selectors
+ * @category Selectors
  * @description
  * Utility function to determine if an item is selected.
  */
@@ -1628,7 +1628,7 @@ export const isItemSelected = <TItem>(
 };
 
 /**
- * @memberof Selectors
+ * @category Selectors
  * @description
  * Selector function to determine if an index is selected.
  */
@@ -1655,7 +1655,7 @@ export const isItemIndexHighlighted = <TItem>(
 };
 
 /**
- * @memberof Selectors
+ * @category Selectors
  * @description
  * Selector function to determine if an item is selected and highlighted.
  */
@@ -1672,7 +1672,7 @@ export const isItemSelectedAndHighlighted = <TItem>(
 
 /**
  *
- * @memberof Selectors
+ * @category Selectors
  *
  */
 export const isSelectedItemFocused = <T>(
@@ -1689,7 +1689,7 @@ export const isSelectedItemFocused = <T>(
 };
 
 /**
- * @memberof Selectors
+ * @category Selectors
  * @description
  * This type represents all the possible states of an item
  */
@@ -1700,7 +1700,7 @@ export type ItemStatus =
   | "unselected";
 
 /**
- * @memberof Selectors
+ * @category Selectors
  * @description
  * This utility function returns the status of an item.
  */
@@ -1725,7 +1725,7 @@ export const toItemStatus = <TItem>(
 };
 
 /**
- * @memberof Selectors
+ * @category Selectors
  * @description
  * This function returns the all the visible items.
  * This function really isn't necessary, but it's here for a more consistent API.
@@ -1737,7 +1737,7 @@ export const toVisibleItems = <T>(config: Config<T>, model: Model<T>): T[] => {
 /** @module Helpers **/
 
 /**
- * @memberof Helpers
+ * @category Helpers
  * @description
  * This helper function converts a keyboard event key property to a message.
  **/
@@ -1795,7 +1795,7 @@ export const browserKeyboardEventKeyToMsg = <T>(
 };
 
 /**
- * @memberof Selectors
+ * @category Selectors
  * @description
  * This function returns an object of all the returns of all the selectors.
  */

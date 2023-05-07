@@ -1,5 +1,5 @@
 import {
-  browserKeyboardEventKeyToMsg,
+  keyToMsg,
   init,
   initConfig,
   toState,
@@ -77,7 +77,7 @@ export const createObservable = <T>({
     onInput: (inputValue: string) =>
       dispatch({ type: "inputted-value", inputValue }),
     onInputKeyDown: (key: string) => {
-      const msg = browserKeyboardEventKeyToMsg<T>(key);
+      const msg = keyToMsg<T>(key);
       if (msg) {
         dispatch(msg);
       }

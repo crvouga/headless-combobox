@@ -1855,7 +1855,7 @@ export const toVisibleItems = <T>(config: Config<T>, model: Model<T>): T[] => {
  * @description
  * This helper function converts a keyboard event key property to a message.
  **/
-export const browserKeyboardEventKeyToMsg = <T>(
+export const keyToMsg = <T>(
   key: string
 ): Msg<T> & { shouldPreventDefault?: boolean } => {
   const eq = (a: string, b: string) =>
@@ -1902,7 +1902,7 @@ export const browserKeyboardEventKeyToMsg = <T>(
   }
 
   if (eq(key, "Enter")) {
-    return { type: "pressed-enter-key" };
+    return { type: "pressed-enter-key", shouldPreventDefault: true };
   }
 
   return { type: "pressed-key", key };

@@ -2,7 +2,6 @@
 
 ![demo](https://github.com/crvouga/headless-combobox/raw/main/demo.gif)
 
-
 ## ⚠️ WORK IN PROGRESS
 
 I'm comfortable using it in my projects but use this library at you own risk!
@@ -90,7 +89,7 @@ This library was inspired by and borrows code from the following libraries:
 
 ```svelte
 <script lang="ts">
-  import * as Combobox from "headless-combobox";
+  import * as Combobox from "./src";
 
   /*
 
@@ -141,7 +140,10 @@ This library was inspired by and borrows code from the following libraries:
 
   let model = Combobox.init({
     allItems: fruits,
-    mode: { type: "multi-select" },
+    mode: {
+      type: "multi-select",
+      selectedItemsDirection: "right-to-left",
+    },
   });
 
   /*
@@ -173,7 +175,7 @@ This library was inspired by and borrows code from the following libraries:
   };
 
   const handleKeyDown = (event: KeyboardEvent) => {
-    const msg = Combobox.browserKeyboardEventKeyToMsg<Item>(event.key);
+    const msg = Combobox.keyToMsg<Item>(event.key);
     if (msg.shouldPreventDefault) {
       event.preventDefault();
     }
@@ -205,15 +207,27 @@ This library was inspired by and borrows code from the following libraries:
       {Combobox.ariaContentDefaults.helperText}
     </p>
 
-    <ul class="chip-list" {...state.aria.selectedList}>
+    <button on:click={() => dispatch({ type: "pressed-unselect-all-button" })}>
+      Clear
+    </button>
+
+    <ul
+      class="chip-list"
+      class:ltr={state.selectedItemDirection === "left-to-right"}
+      class:rtl={state.selectedItemDirection === "right-to-left"}
+      {...state.aria.selectedList}
+    >
       {#each state.selections as selectedItem}
         <li
           {...state.aria.selectedItem(selectedItem)}
           bind:this={selectedItems[selectedItem.id]}
           class="chip"
           class:chip-highlighted={state.isSelectedItemFocused(selectedItem)}
+          on:mousedown|preventDefault
           on:focus={() =>
             dispatch({ type: "focused-selected-item", item: selectedItem })}
+          on:blur={() =>
+            dispatch({ type: "blurred-selected-item", item: selectedItem })}
         >
           {selectedItem.label}
           <span
@@ -351,9 +365,18 @@ This library was inspired by and borrows code from the following libraries:
 
   .chip-list {
     display: flex;
+  }
+
+  .ltr {
+    flex-wrap: wrap;
+    flex-direction: row;
+  }
+
+  .rtl {
     flex-direction: row-reverse;
     flex-wrap: wrap-reverse;
   }
+
   .chip {
     display: flex;
     align-items: center;
@@ -365,6 +388,7 @@ This library was inspired by and borrows code from the following libraries:
     height: 1.5rem;
     cursor: default;
     font-size: large;
+    user-select: none;
   }
   .chip-highlighted {
     background: #333;
@@ -385,4 +409,5 @@ This library was inspired by and borrows code from the following libraries:
     }
   }
 </style>
+
 ```

@@ -1,4 +1,4 @@
-import { StyleSheet, SafeAreaView } from "react-native";
+import { SafeAreaView, StyleSheet } from "react-native";
 import ExampleMultiSelect from "./ExampleMultiSelect";
 
 export default function App() {

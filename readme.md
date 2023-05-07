@@ -4,7 +4,7 @@
 
 ## ⚠️ WORK IN PROGRESS ⚠️
 
-But I (the author) am using in my personal and professional projects.
+This is a work in progress but it's stable enough where I'm using it in some of my other projects.
 
 ## Pros
 

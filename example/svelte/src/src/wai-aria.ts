@@ -162,7 +162,7 @@ const ariaSelectedItem = <T>(config: Config<T>, model: Model<T>, item: T) => {
   return {
     id: selectedListItemId(config, item),
     role: "listitem",
-    tabindex: 0,
+    tabindex: -1,
   };
 };
 

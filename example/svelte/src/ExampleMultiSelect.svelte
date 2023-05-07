@@ -116,6 +116,10 @@
       {Combobox.ariaContentDefaults.helperText}
     </p>
 
+    <button on:click={() => dispatch({ type: "pressed-unselect-all-button" })}>
+      Clear All Selections
+    </button>
+
     <ul class="chip-list" {...state.aria.selectedList}>
       {#each state.selections as selectedItem}
         <li

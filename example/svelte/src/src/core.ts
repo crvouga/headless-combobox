@@ -215,6 +215,9 @@ export type Msg<TItem> =
       type: "pressed-input";
     }
   | {
+      type: "pressed-unselect-all-button";
+    }
+  | {
       type: "pressed-unselect-button";
       item: TItem;
     }
@@ -380,6 +383,13 @@ export const update = <TItem>(
     });
   }
 
+  // focus on input after clearing selections
+  if (msg.type === "pressed-unselect-all-button") {
+    output.effects.push({
+      type: "focus-input",
+    });
+  }
+
   /**
 
    ⚠️ Edge case
@@ -527,6 +537,13 @@ const updateModel = <T>(
           };
         }
 
+        case "pressed-unselect-all-button": {
+          return {
+            ...model,
+            type: "unselected__blurred",
+          };
+        }
+
         case "pressed-unselect-button": {
           const removed = model.selected.filter(
             (selection) => toItemId(selection) !== toItemId(msg.item)
@@ -634,6 +651,14 @@ const updateModel = <T>(
           }
           return model;
         }
+
+        case "pressed-unselect-all-button": {
+          return {
+            ...model,
+            type: "unselected__focused__closed",
+          };
+        }
+
         default: {
           return model;
         }
@@ -764,6 +789,13 @@ const updateModel = <T>(
             return { ...model, type: "unselected__focused__opened" };
           }
           return model;
+        }
+
+        case "pressed-unselect-all-button": {
+          return {
+            ...model,
+            type: "unselected__focused__opened",
+          };
         }
 
         default: {
@@ -939,6 +971,13 @@ const updateModel = <T>(
             return { ...model, type: "unselected__focused__opened" };
           }
           return model;
+        }
+
+        case "pressed-unselect-all-button": {
+          return {
+            ...model,
+            type: "unselected__focused__opened",
+          };
         }
 
         default: {
@@ -1228,6 +1267,14 @@ const updateModel = <T>(
             ...model,
             inputValue: "",
             type: "selected__focused__opened",
+          };
+        }
+
+        case "pressed-unselect-all-button": {
+          return {
+            ...model,
+            inputValue: "",
+            type: "unselected__focused__opened",
           };
         }
 

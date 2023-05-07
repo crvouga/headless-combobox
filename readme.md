@@ -41,7 +41,7 @@ I'm comfortable using it in my projects but use this library at you own risk!
 
 ## Demos
 
-- [Svelte Demo](https://headless-combobox-example-svelte.vercel.app/)
+- [Svelte Demo](https://headless-combobox-demo-svelte.vercel.app/)
 
 ## Links
 

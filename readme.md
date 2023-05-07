@@ -4,7 +4,7 @@
 
 ## ⚠️ WORK IN PROGRESS
 
-This is a work in progress but it's stable enough where I'm using it in some of my other projects.
+I'm comfortable using it in my projects but use this library at you own risk!
 
 ## Pros
 

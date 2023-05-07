@@ -442,7 +442,10 @@ export const update = <TItem>(
    Two events fire. input focused then input pressed. This causes the suggestion drop down to open and then close.
 
    */
-  if (isBlurred(model) && isFocused(output.model)) {
+  if (
+    (isBlurred(model) || model.type === "selection_focused") &&
+    isFocused(output.model)
+  ) {
     output.model = {
       ...output.model,
       skipOnce: [...output.model.skipOnce, "pressed-input"],
@@ -1210,6 +1213,14 @@ const updateModel = <T>(
           };
         }
 
+        case "focused-input": {
+          return {
+            ...model,
+            inputValue: "",
+            type: "selected__focused__opened",
+          };
+        }
+
         default: {
           return model;
         }
@@ -1745,41 +1756,6 @@ export const toState = <T>(config: Config<T>, model: Model<T>) => {
   } as const;
 };
 
-/** @module Debug **/
-
-/**
- * @memberof Debug
- * @description
- * This function logs the state of the model and the effects.
- **/
-export const debug = <TItem>({
-  log,
-  input,
-  output,
-}: {
-  log: (...args: unknown[]) => void;
-  input: {
-    model: Model<TItem>;
-    msg: Msg<TItem>;
-  };
-  output: {
-    model: Model<TItem>;
-    effects: Effect<TItem>[];
-  };
-}) => {
-  log("\n");
-  log("PREV ", input.model.type);
-  log("msg: ", input.msg.type);
-  log("NEXT ", output.model.type);
-  if (output.model.skipOnce.length > 0) {
-    log("skips: ", output.model.skipOnce.join(", "));
-  }
-  if (output.effects.length > 0) {
-    log("effects: ", output.effects.map((eff) => eff.type).join(", "));
-  }
-  log("\n");
-};
-
 /**
  *
  *
@@ -1804,6 +1780,14 @@ export const isSingle = <T>(arr: T[]): arr is [T] => {
   return arr.length === 1;
 };
 
+/**
+ *
+ * @param updateOutput
+ * @param handlers
+ *
+ * @description
+ * Helper function to run effects with less boilerplate.
+ */
 export const runEffects = <T>(
   { effects }: { effects: Effect<T>[] },
   handlers: {

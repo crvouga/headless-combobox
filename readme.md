@@ -1,6 +1,6 @@
 # headless-combobox
 
-# ⚠️ Currently a work in progress. ⚠️
+## ⚠️ WORK IN PROGRESS ⚠️
 
 But I (the author) am using in my personal and professional projects.
 
@@ -13,14 +13,21 @@ But I (the author) am using in my personal and professional projects.
 - 🧺 Multi Select supported
 - 💪 Written in TypeScript
 - 🌳 Simple pure functional [Elm](https://elm-lang.org/)-like API
-- 💼 Works anywhere JavaScript works. React Native, Vue, Node.js, Redux, Any legacy JS framework etc.
+- 💼 Works anywhere JavaScript works.
+  - React Native
+  - Vue
+  - Node.js
+  - Redux (Since the API is just pure functions)
+  - Any legacy JS framework
+  - etc.
 
 ## Cons
 
 - 🧠 Headless. You do have to write your own styles.
-- 🔌 Framework agnostic. You do have to write glue code.
+- 🔌 Framework agnostic. You do have to write glue code. Which could be error prone
 - 🌳 [Elm](https://elm-lang.org/)-like API. Some people may hate that.
-- 📭 Missing good documentation. (Only con that could change in the future).
+- 📚 Missing good documentation.
+- 🧪 Missing automated tests. (This is one is on the agenda)
 
 ## Good use cases are
 
@@ -68,16 +75,18 @@ pnpm install headless-combobox
 
 ```svelte
 <script lang="ts">
-  import * as Combobox from "headless-combobox";
+  import * as Combobox from "./src";
 
   /*
 
-  Step 0: Have some data to display
+
+  Step 0: Have some data
+
 
   */
 
   type Item = { id: number; label: string };
-  const fruits = [
+  const fruits: Item[] = [
     { id: 0, label: "pear" },
     { id: 1, label: "apple" },
     { id: 2, label: "banana" },
@@ -96,7 +105,9 @@ pnpm install headless-combobox
 
   /*
 
+
   Step 1: Init the config
+
 
   */
 
@@ -107,7 +118,9 @@ pnpm install headless-combobox
 
   /*
 
+
   Step 2: Init the state
+
 
   */
 
@@ -118,7 +131,9 @@ pnpm install headless-combobox
 
   /*
 
+
   Step 3: Write some glue code
+
 
   */
 
@@ -138,6 +153,8 @@ pnpm install headless-combobox
         items[item.id]?.scrollIntoView({ block: "nearest" });
       },
     });
+
+    console.log(msg.type, output.model.type);
   };
 
   const handleKeyDown = (event: KeyboardEvent) => {
@@ -153,7 +170,9 @@ pnpm install headless-combobox
 
   /*
 
+
   Step 3: Wire up to the UI
+
 
   */
 
@@ -333,15 +352,15 @@ pnpm install headless-combobox
     border-radius: 0.5rem;
     height: 1.5rem;
     cursor: default;
+    font-size: large;
   }
-
   .chip-highlighted {
     background: #333;
     color: white;
   }
 
-  .child-delete-btn {
-    font-size: small;
+  .chip-delete-btn {
+    font-size: medium;
     background: transparent;
     padding: 4px;
     border-radius: 100%;

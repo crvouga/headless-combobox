@@ -3,12 +3,14 @@
 
   /*
 
-  Step 0: Have some data to display
+
+  Step 0: Have some data
+
 
   */
 
   type Item = { id: number; label: string };
-  const fruits = [
+  const fruits: Item[] = [
     { id: 0, label: "pear" },
     { id: 1, label: "apple" },
     { id: 2, label: "banana" },
@@ -27,7 +29,9 @@
 
   /*
 
+
   Step 1: Init the config
+
 
   */
 
@@ -38,7 +42,9 @@
 
   /*
 
+
   Step 2: Init the state
+
 
   */
 
@@ -49,7 +55,9 @@
 
   /*
 
+
   Step 3: Write some glue code
+
 
   */
 
@@ -69,6 +77,8 @@
         items[item.id]?.scrollIntoView({ block: "nearest" });
       },
     });
+
+    console.log(msg.type, output.model.type);
   };
 
   const handleKeyDown = (event: KeyboardEvent) => {
@@ -84,7 +94,9 @@
 
   /*
 
+
   Step 3: Wire up to the UI
+
 
   */
 
@@ -264,15 +276,15 @@
     border-radius: 0.5rem;
     height: 1.5rem;
     cursor: default;
+    font-size: large;
   }
-
   .chip-highlighted {
     background: #333;
     color: white;
   }
 
-  .child-delete-btn {
-    font-size: small;
+  .chip-delete-btn {
+    font-size: medium;
     background: transparent;
     padding: 4px;
     border-radius: 100%;

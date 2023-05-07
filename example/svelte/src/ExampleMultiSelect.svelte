@@ -52,6 +52,7 @@
     allItems: fruits,
     mode: {
       type: "multi-select",
+      selectedItemsDirection: "left-to-right",
     },
   });
 
@@ -120,7 +121,12 @@
       Clear All Selections
     </button>
 
-    <ul class="chip-list" {...state.aria.selectedList}>
+    <ul
+      class="chip-list"
+      class:ltr={state.selectedItemDirection === "left-to-right"}
+      class:rtl={state.selectedItemDirection === "right-to-left"}
+      {...state.aria.selectedList}
+    >
       {#each state.selections as selectedItem}
         <li
           {...state.aria.selectedItem(selectedItem)}
@@ -267,9 +273,18 @@
 
   .chip-list {
     display: flex;
+  }
+
+  .ltr {
+    flex-wrap: wrap;
+    flex-direction: row;
+  }
+
+  .rtl {
     flex-direction: row-reverse;
     flex-wrap: wrap-reverse;
   }
+
   .chip {
     display: flex;
     align-items: center;
@@ -281,6 +296,7 @@
     height: 1.5rem;
     cursor: default;
     font-size: large;
+    user-select: none;
   }
   .chip-highlighted {
     background: #333;

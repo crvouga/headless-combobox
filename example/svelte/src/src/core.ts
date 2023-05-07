@@ -81,7 +81,10 @@ export type Mode =
     }
   | {
       type: "multi-select";
+      selectedItemsDirection: SelectedItemsDirection;
     };
+
+export type SelectedItemsDirection = "left-to-right" | "right-to-left";
 
 type UnselectedBlurred = {
   type: "unselected__blurred";
@@ -611,14 +614,7 @@ const updateModel = <T>(
         }
 
         case "pressed-horizontal-arrow-key": {
-          if (model.inputValue === "" && msg.key === "arrow-left") {
-            return {
-              ...model,
-              type: "selection_focused",
-              focusedIndex: 0,
-            };
-          }
-          return model;
+          return updatePressedHorizontalKey({ model, msg });
         }
 
         case "pressed-unselect-button": {
@@ -760,14 +756,7 @@ const updateModel = <T>(
         }
 
         case "pressed-horizontal-arrow-key": {
-          if (model.inputValue === "" && msg.key === "arrow-left") {
-            return {
-              ...model,
-              type: "selection_focused",
-              focusedIndex: 0,
-            };
-          }
-          return model;
+          return updatePressedHorizontalKey({ model, msg });
         }
 
         case "pressed-unselect-button": {
@@ -881,14 +870,7 @@ const updateModel = <T>(
         }
 
         case "pressed-horizontal-arrow-key": {
-          if (model.inputValue === "" && msg.key === "arrow-left") {
-            return {
-              ...model,
-              type: "selection_focused",
-              focusedIndex: 0,
-            };
-          }
-          return model;
+          return updatePressedHorizontalKey({ model, msg });
         }
 
         case "pressed-enter-key": {
@@ -1163,7 +1145,7 @@ const updateModel = <T>(
     case "selection_focused": {
       switch (msg.type) {
         case "pressed-horizontal-arrow-key": {
-          if (model.focusedIndex === 0 && msg.key === "arrow-right") {
+          if (model.mode.type !== "multi-select") {
             return {
               ...model,
               inputValue: "",
@@ -1171,7 +1153,43 @@ const updateModel = <T>(
             };
           }
 
-          const delta = msg.key === "arrow-right" ? -1 : 1;
+          if (
+            model.focusedIndex === 0 &&
+            model.mode.selectedItemsDirection === "right-to-left" &&
+            msg.key === "arrow-right"
+          ) {
+            return {
+              ...model,
+              inputValue: "",
+              type: "selected__focused__closed",
+            };
+          }
+
+          if (
+            model.focusedIndex === 0 &&
+            model.mode.selectedItemsDirection === "left-to-right" &&
+            msg.key === "arrow-left"
+          ) {
+            return {
+              ...model,
+              inputValue: "",
+              type: "selected__focused__closed",
+            };
+          }
+
+          const delta =
+            model.mode.selectedItemsDirection === "right-to-left"
+              ? msg.key === "arrow-right"
+                ? -1
+                : 1
+              : model.mode.selectedItemsDirection === "left-to-right"
+              ? msg.key === "arrow-left"
+                ? -1
+                : 1
+              : 0;
+
+          console.log(delta, msg.key, model.mode.selectedItemsDirection);
+
           const selectedItemHighlightIndexNew = clampIndex(
             model.focusedIndex + delta,
             model.selected.length
@@ -1359,6 +1377,50 @@ const addSelected = <TItem>(
     return selectedNew;
   }
   return selected;
+};
+
+const updatePressedHorizontalKey = <T>({
+  model,
+  msg,
+}: {
+  model: Model<T> & SelectedState<T> & FocusedState<T>;
+  msg: Msg<T>;
+}): Model<T> => {
+  if (msg.type !== "pressed-horizontal-arrow-key") {
+    return model;
+  }
+
+  if (model.mode.type !== "multi-select") {
+    return model;
+  }
+
+  if (model.inputValue !== "") {
+    return model;
+  }
+
+  if (
+    model.mode.selectedItemsDirection === "right-to-left" &&
+    msg.key === "arrow-left"
+  ) {
+    return {
+      ...model,
+      type: "selection_focused",
+      focusedIndex: 0,
+    };
+  }
+
+  if (
+    model.mode.selectedItemsDirection === "left-to-right" &&
+    msg.key === "arrow-right"
+  ) {
+    return {
+      ...model,
+      type: "selection_focused",
+      focusedIndex: 0,
+    };
+  }
+
+  return model;
 };
 
 const modelToInputValue = <TItem>(
@@ -1841,6 +1903,15 @@ export const browserKeyboardEventKeyToMsg = <T>(
   return { type: "pressed-key", key };
 };
 
+export const toSelectedItemDirection = <T>(
+  model: Model<T>
+): SelectedItemsDirection | null => {
+  if (model.mode.type === "multi-select") {
+    return model.mode.selectedItemsDirection;
+  }
+  return null;
+};
+
 /**
  * @group Selectors
  * @description
@@ -1858,6 +1929,7 @@ export const toState = <T>(config: Config<T>, model: Model<T>) => {
     isFocused: isFocused(model),
     selectedItem: toSelectedItem(model),
     highlightedItem: toHighlightedItem(config, model),
+    selectedItemDirection: toSelectedItemDirection(model),
     isItemHighlighted: (item: T) => isItemHighlighted<T>(config, model, item),
     isItemSelected: (item: T) => isItemSelected<T>(config, model, item),
     isItemIndexHighlighted: (index: number) =>

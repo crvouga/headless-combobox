@@ -39,9 +39,12 @@ I'm comfortable using it in my projects but use this library at you own risk!
 - You're working in a framework that always has breaking changes
 - You hate learning how to override styles in combobox libraries
 
+## Demos
+
+- [Svelte Demo](https://headless-combobox-example-svelte.vercel.app/)
+
 ## Links
 
-- [Svelte Example](https://headless-combobox-example-svelte.vercel.app/)
 - [API Reference](https://headless-combobox.vercel.app/)
 - [Github](https://github.com/crvouga/headless-combobox)
 - [NPM](https://www.npmjs.com/package/headless-combobox)

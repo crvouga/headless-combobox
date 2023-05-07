@@ -7,6 +7,8 @@
 
 I'm comfortable using it in my projects but use this library at you own risk!
 
+I'm mainly looking for feedback and issues rather than adoption right now.
+
 ## Pros
 
 - 🧠 Headless. Bring your own styles.
@@ -74,6 +76,13 @@ pnpm install headless-combobox
 
 - [match-sorter](https://github.com/kentcdodds/match-sorter) for filtering items
 - [floating-ui](https://floating-ui.com/) for rendering the drop down.
+
+## Credits
+
+This library was inspired by and borrows code from the following libraries:
+
+- [MUI's Autocomplete](https://mui.com/material-ui/react-autocomplete/#multiple-values)
+- [Headless UI's Comobox](https://headlessui.com/react/combobox)
 
 ## Usage
 

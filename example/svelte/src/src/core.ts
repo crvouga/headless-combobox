@@ -665,14 +665,15 @@ const updateModel = <T>(
         }
 
         case "pressed-item": {
-          const modelNew: Model<T> = {
-            ...model,
-            type: "selected__focused__closed",
-            selected: addSelected(model.mode, msg.item, model.selected),
-          };
+          const modelNew = toggleSelected({
+            config,
+            item: msg.item,
+            model,
+          });
+
           return {
             ...modelNew,
-            inputValue: modelToInputValue(config, modelNew),
+            // inputValue: modelToInputValue(config, modelNew),
           };
         }
 
@@ -1241,6 +1242,61 @@ const updateModel = <T>(
       return exhaustive;
     }
   }
+};
+
+const toggleSelected = <T>({
+  config,
+  model,
+  item,
+}: {
+  config: Config<T>;
+  model: Model<T> & SelectedState<T>;
+  item: T;
+}): Model<T> => {
+  if (model.mode.type === "single-select") {
+    const modelNew: Model<T> = {
+      ...model,
+      inputValue: "",
+      type: "selected__focused__closed",
+      selected: addSelected(model.mode, item, model.selected),
+    };
+    return {
+      ...modelNew,
+      inputValue: modelToInputValue(config, modelNew),
+    };
+  }
+
+  if (!isItemSelected(config, model, item)) {
+    const modelNew: Model<T> = {
+      ...model,
+      inputValue: "",
+      type: "selected__focused__closed",
+      selected: addSelected(model.mode, item, model.selected),
+    };
+    return {
+      ...modelNew,
+      inputValue: modelToInputValue(config, modelNew),
+    };
+  }
+
+  const removed = model.selected.filter(
+    (selection) => config.toItemId(selection) !== config.toItemId(item)
+  );
+
+  if (isNonEmpty(removed)) {
+    return {
+      ...model,
+      inputValue: modelToInputValue(config, model),
+      type: "selected__focused__closed",
+      selected: removed,
+    };
+  }
+
+  return {
+    ...model,
+    inputValue: modelToInputValue(config, model),
+    type: "unselected__focused__closed",
+  };
 };
 
 const addSelected = <TItem>(

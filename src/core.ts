@@ -1004,11 +1004,14 @@ const updateModel = <T>(
         }
 
         case "pressed-item": {
-          return {
+          const modelNew: Model<T> = {
             ...model,
             type: "selected__focused__closed",
             selected: [msg.item],
-            inputValue: toItemInputValue(msg.item),
+          };
+          return {
+            ...modelNew,
+            inputValue: modelToInputValue(config, modelNew),
           };
         }
 

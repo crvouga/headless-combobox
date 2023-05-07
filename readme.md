@@ -26,7 +26,7 @@ This is a work in progress but it's stable enough where I'm using it in some of 
 ## Cons
 
 - 🧠 Headless. You do have to write your own styles.
-- 🔌 Framework agnostic. You do have to write glue code. Which could be error prone
+- 🔌 Framework agnostic. You do have to write adapter code. Which could be error prone
 - 🌳 [Elm](https://elm-lang.org/)-like API. Some people may hate that.
 - 📚 Missing good documentation.
 - 🧪 Missing automated tests. (This is one is on the agenda)

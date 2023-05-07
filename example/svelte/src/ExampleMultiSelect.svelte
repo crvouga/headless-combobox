@@ -52,7 +52,7 @@
     allItems: fruits,
     mode: {
       type: "multi-select",
-      selectedItemsDirection: "left-to-right",
+      selectedItemsDirection: "right-to-left",
     },
   });
 
@@ -118,7 +118,7 @@
     </p>
 
     <button on:click={() => dispatch({ type: "pressed-unselect-all-button" })}>
-      Clear All Selections
+      Clear
     </button>
 
     <ul
@@ -136,6 +136,8 @@
           on:mousedown|preventDefault
           on:focus={() =>
             dispatch({ type: "focused-selected-item", item: selectedItem })}
+          on:blur={() =>
+            dispatch({ type: "blurred-selected-item", item: selectedItem })}
         >
           {selectedItem.label}
           <span

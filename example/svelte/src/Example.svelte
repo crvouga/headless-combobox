@@ -22,6 +22,7 @@
   ];
 
   let items: { [itemId: string]: HTMLElement } = {};
+  let input: HTMLInputElement | null = null;
 
   /*
 
@@ -60,7 +61,9 @@
     model = output.model;
 
     Combobox.runEffects(output, {
-      focusInput: () => {},
+      focusInput: () => {
+        input?.focus();
+      },
       focusSelectedItem: () => {},
       scrollItemIntoView: (item) => {
         items[item.id]?.scrollIntoView({ block: "nearest" });
@@ -86,11 +89,17 @@
     Fruit Single Select
   </label>
   <p {...state.aria.helperText}>{Combobox.ariaContentDefaults.helperText}</p>
+
+  <button on:click={() => dispatch({ type: "pressed-unselect-all-button" })}>
+    Clear
+  </button>
+
   <div class="input-container">
     <input
       {...state.aria.input}
       class="input"
       value={state.inputValue}
+      bind:this={input}
       on:input={(event) =>
         dispatch({
           type: "inputted-value",

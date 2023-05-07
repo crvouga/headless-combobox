@@ -228,6 +228,10 @@ export type Msg<TItem> =
       type: "focused-selected-item";
       item: TItem;
     }
+  | {
+      type: "blurred-selected-item";
+      item: TItem;
+    }
   //
   // Setters
   //
@@ -1188,8 +1192,6 @@ const updateModel = <T>(
                 : 1
               : 0;
 
-          console.log(delta, msg.key, model.mode.selectedItemsDirection);
-
           const selectedItemHighlightIndexNew = clampIndex(
             model.focusedIndex + delta,
             model.selected.length
@@ -1272,12 +1274,15 @@ const updateModel = <T>(
         case "focused-selected-item": {
           return {
             ...model,
-
             type: "selection_focused",
             focusedIndex: model.selected.findIndex(
               (item) => toItemId(item) === toItemId(msg.item)
             ),
           };
+        }
+
+        case "blurred-selected-item": {
+          return model;
         }
 
         case "focused-input": {

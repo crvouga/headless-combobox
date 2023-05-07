@@ -7,7 +7,7 @@
 
 I'm comfortable using it in my projects but use this library at you own risk!
 
-I'm mainly looking for feedback and issues right now rather than adoption right now.
+I'm mainly looking for feedback and issues rather than adoption right now.
 
 ## Pros
 

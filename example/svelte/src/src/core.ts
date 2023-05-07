@@ -190,6 +190,10 @@ export type Msg<TItem> =
       type: "pressed-enter-key";
     }
   | {
+      type: "pressed-key";
+      key: string;
+    }
+  | {
       type: "pressed-item";
       item: TItem;
     }
@@ -1154,6 +1158,8 @@ const updateModel = <T>(
           };
         }
 
+        case "pressed-key":
+        case "pressed-enter-key":
         case "pressed-escape-key": {
           return {
             ...model,
@@ -1681,7 +1687,7 @@ export const toVisibleItems = <T>(config: Config<T>, model: Model<T>): T[] => {
  **/
 export const browserKeyboardEventKeyToMsg = <T>(
   key: string
-): (Msg<T> & { shouldPreventDefault?: boolean }) | null => {
+): Msg<T> & { shouldPreventDefault?: boolean } => {
   const eq = (a: string, b: string) =>
     a.toLowerCase().trim() === b.toLowerCase().trim();
 
@@ -1729,7 +1735,7 @@ export const browserKeyboardEventKeyToMsg = <T>(
     return { type: "pressed-enter-key" };
   }
 
-  return null;
+  return { type: "pressed-key", key };
 };
 
 /**

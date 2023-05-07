@@ -83,9 +83,6 @@
 
   const handleKeyDown = (event: KeyboardEvent) => {
     const msg = Combobox.browserKeyboardEventKeyToMsg<Item>(event.key);
-    if (!msg) {
-      return;
-    }
     if (msg.shouldPreventDefault) {
       event.preventDefault();
     }

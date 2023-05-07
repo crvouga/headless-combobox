@@ -161,9 +161,6 @@ pnpm install headless-combobox
 
   const handleKeyDown = (event: KeyboardEvent) => {
     const msg = Combobox.browserKeyboardEventKeyToMsg<Item>(event.key);
-    if (!msg) {
-      return;
-    }
     if (msg.shouldPreventDefault) {
       event.preventDefault();
     }
@@ -375,5 +372,4 @@ pnpm install headless-combobox
     }
   }
 </style>
-
 ```

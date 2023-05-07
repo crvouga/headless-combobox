@@ -12,7 +12,7 @@ import {
 type State<T> = ReturnType<typeof toState<T>>;
 
 /**
- * @category Observable
+ * @group Observable
  * @description
  * This is a helper function that returns an object that can be glued into your app with less boilerplate.
  */

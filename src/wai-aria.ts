@@ -10,7 +10,7 @@ import {
 /** @module WAI-ARIA **/
 
 /**
- * @category WAI-ARIA
+ * @group WAI-ARIA
  * @description
  * This function returns WAI-ARIA attributes for html that describes the <input />.
  */
@@ -21,7 +21,7 @@ const ariaHelperText = <T>(config: Config<T>) => {
 };
 
 /**
- * @category WAI-ARIA
+ * @group WAI-ARIA
  * @description
  * This function returns WAI-ARIA attributes for the <label />.
  */
@@ -34,7 +34,7 @@ export const ariaInputLabel = <T>(config: Config<T>) => {
 };
 
 /**
- * @category WAI-ARIA
+ * @group WAI-ARIA
  * @description
  * This function returns WAI-ARIA attributes for the <input />.
  */
@@ -60,7 +60,7 @@ export const ariaInput = <T>(config: Config<T>, model: Model<T>) => {
 };
 
 /**
- * @category WAI-ARIA
+ * @group WAI-ARIA
  * @description
  * This function returns WAI-ARIA attributes for the "suggestion list" <ul />.
  */
@@ -75,7 +75,7 @@ export const ariaItemList = <T>(config: Config<T>, model: Model<T>) => {
 };
 
 /**
- * @category WAI-ARIA
+ * @group WAI-ARIA
  * @description
  * This function returns WAI-ARIA attributes for the "option" <li />.
  */
@@ -88,56 +88,56 @@ export const ariaItem = <T>(config: Config<T>, model: Model<T>, item: T) => {
 };
 
 /**
- * @category WAI-ARIA
+ * @group WAI-ARIA
  */
 const inputLabelHtmlId = <T>({ namespace }: Config<T>) => {
   return `${namespace}-input-label`;
 };
 
 /**
- * @category WAI-ARIA
+ * @group WAI-ARIA
  */
 const inputHtmlId = <T>({ namespace }: Config<T>) => {
   return `${namespace}-input`;
 };
 
 /**
- * @category WAI-ARIA
+ * @group WAI-ARIA
  */
 const itemListHtmlId = <T>({ namespace }: Config<T>) => {
   return `${namespace}-item-list`;
 };
 
 /**
- * @category WAI-ARIA
+ * @group WAI-ARIA
  */
 const itemHtmlId = <T>({ toItemId, namespace }: Config<T>, item: T) => {
   return `${namespace}-item-${toItemId(item)}`;
 };
 
 /**
- * @category WAI-ARIA
+ * @group WAI-ARIA
  */
 const helperTextHtmlId = <T>({ namespace }: Config<T>) => {
   return `${namespace}-helper-text`;
 };
 
 /**
- * @category WAI-ARIA
+ * @group WAI-ARIA
  */
 const selectedListId = <T>({ namespace }: Config<T>) => {
   return `${namespace}-selected-list`;
 };
 
 /**
- * @category WAI-ARIA
+ * @group WAI-ARIA
  */
 const selectedListItemId = <T>({ namespace, toItemId }: Config<T>, item: T) => {
   return `${namespace}-selected-list-item-${toItemId(item)}`;
 };
 
 /**
- * @category WAI-ARIA
+ * @group WAI-ARIA
  */
 const ariaSelectedList = <T>(config: Config<T>, model: Model<T>) => {
   const highlightedSelectedItem = isSelectionFocused(model)
@@ -167,7 +167,7 @@ const ariaSelectedItem = <T>(config: Config<T>, model: Model<T>, item: T) => {
 };
 
 /**
- * @category WAI-ARIA
+ * @group WAI-ARIA
  * @description
  * This function returns WAI-ARIA attributes for the "unselect" button.
  */
@@ -181,7 +181,7 @@ const ariaUnselectButton = () => {
 };
 
 /**
- * @category WAI-ARIA
+ * @group WAI-ARIA
  * @description
  * This function returns WAI-ARIA attributes for the all html elements.
  */

@@ -75,7 +75,9 @@ pnpm install headless-combobox
 - [match-sorter](https://github.com/kentcdodds/match-sorter) for filtering items
 - [floating-ui](https://floating-ui.com/) for rendering the drop down.
 
-## Prior Art
+## Credits
+
+This library was inspired by and borrows code from the following libraries:
 
 - [MUI's Autocomplete](https://mui.com/material-ui/react-autocomplete/#multiple-values)
 - [Headless UI's Comobox](https://headlessui.com/react/combobox)

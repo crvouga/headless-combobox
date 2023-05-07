@@ -1,6 +1,7 @@
 # headless-combobox
 
-![demo](./demo.gif)
+![demo](https://github.com/crvouga/headless-combobox/raw/main/demo.gif)
+
 
 ## ⚠️ WORK IN PROGRESS
 

@@ -50,7 +50,9 @@
 
   let model = Combobox.init({
     allItems: fruits,
-    mode: { type: "multi-select" },
+    mode: {
+      type: "multi-select",
+    },
   });
 
   /*
@@ -121,6 +123,7 @@
           bind:this={selectedItems[selectedItem.id]}
           class="chip"
           class:chip-highlighted={state.isSelectedItemFocused(selectedItem)}
+          on:mousedown|preventDefault
           on:focus={() =>
             dispatch({ type: "focused-selected-item", item: selectedItem })}
         >

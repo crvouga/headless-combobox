@@ -89,7 +89,7 @@ This library was inspired by and borrows code from the following libraries:
 
 ```svelte
 <script lang="ts">
-  import * as Combobox from "./src";
+  import * as Combobox from "headless-combobox";
 
   /*
 

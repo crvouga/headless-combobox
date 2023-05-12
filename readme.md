@@ -14,7 +14,7 @@ I'm mainly looking for feedback and issues rather than adoption right now.
 - 🔌 Framework agnostic. Bring your own framework.
 - ⚡️ Zero dependencies
 - ♿️ [WAI ARIA Combobox](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/) support
-- 🧺 Multi Select supported
+- 🧺 Multi Select supported, Select Only supported
 - 💪 Written in TypeScript
 - 🌳 Simple pure functional [Elm](https://elm-lang.org/)-like API
 - 💼 Works anywhere JavaScript works.

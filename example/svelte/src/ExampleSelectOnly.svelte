@@ -9,7 +9,7 @@
 
   type Item = { id: number; label: string; isEmptyValue?: boolean };
   const fruits = [
-    { id: 0, label: "Choose a fruit", isEmptyValue: true },
+    { id: -1, label: "Choose a fruit", isEmptyValue: true },
     { id: 0, label: "pear" },
     { id: 1, label: "apple" },
     { id: 2, label: "banana" },
@@ -34,6 +34,7 @@
   const config = Combobox.initConfig<Item>({
     toItemId: (item) => item.id,
     toItemInputValue: (item) => item.label,
+    isEmptyItem: (item) => item?.isEmptyValue ?? false,
   });
 
   /*

@@ -13,6 +13,7 @@ export type Config<TItem> = {
   toItemId: (item: TItem) => string | number;
   toItemInputValue: (item: TItem) => string;
   deterministicFilter: (model: Model<TItem>) => TItem[];
+  isEmptyItem: (value: TItem) => boolean;
   namespace: string;
 };
 
@@ -21,15 +22,18 @@ export type Config<TItem> = {
  */
 export const initConfig = <TItem>({
   namespace,
+  isEmptyItem = () => false,
   ...config
 }: {
   toItemId: (item: TItem) => string | number;
   toItemInputValue: (item: TItem) => string;
+  isEmptyItem?: (item: TItem) => boolean;
   deterministicFilter?: (model: Model<TItem>) => TItem[];
   namespace?: string;
 }): Config<TItem> => {
   const configFull: Config<TItem> = {
     ...config,
+    isEmptyItem,
     namespace: namespace ?? "combobox",
     deterministicFilter: (model) => model.allItems,
   };
@@ -701,9 +705,18 @@ const updateModel = <T>(
         }
 
         case "pressed-item": {
+          const pressedItem = msg.item;
+
+          if (config.isEmptyItem(pressedItem)) {
+            return {
+              ...model,
+              type: "unselected__focused__closed",
+            };
+          }
+
           const modelNew = toggleSelected({
             config,
-            item: msg.item,
+            item: pressedItem,
             model,
           });
 
@@ -829,6 +842,13 @@ const updateModel = <T>(
         case "pressed-item": {
           const pressedItem = msg.item;
 
+          if (config.isEmptyItem(pressedItem)) {
+            return {
+              ...model,
+              type: "unselected__focused__closed",
+            };
+          }
+
           if (model.mode.type === "single-select") {
             const modelNew: Model<T> = {
               ...model,
@@ -910,6 +930,13 @@ const updateModel = <T>(
 
           if (!enteredItem) {
             return { ...model, type: "selected__focused__closed" };
+          }
+
+          if (config.isEmptyItem(enteredItem)) {
+            return {
+              ...model,
+              type: "unselected__focused__closed",
+            };
           }
 
           if (model.mode.type === "single-select") {
@@ -1067,10 +1094,19 @@ const updateModel = <T>(
         }
 
         case "pressed-item": {
+          const pressedItem = msg.item;
+
+          if (config.isEmptyItem(pressedItem)) {
+            return {
+              ...model,
+              type: "unselected__focused__closed",
+            };
+          }
+
           const modelNew: Model<T> = {
             ...model,
             type: "selected__focused__closed",
-            selected: [msg.item],
+            selected: [pressedItem],
           };
           return {
             ...modelNew,
@@ -1122,10 +1158,19 @@ const updateModel = <T>(
         }
 
         case "pressed-item": {
+          const pressedItem = msg.item;
+
+          if (config.isEmptyItem(pressedItem)) {
+            return {
+              ...model,
+              type: "unselected__focused__closed",
+            };
+          }
+
           const modelNew: Model<T> = {
             ...model,
             type: "selected__focused__closed",
-            selected: [msg.item],
+            selected: [pressedItem],
           };
           return {
             ...modelNew,
@@ -1164,15 +1209,22 @@ const updateModel = <T>(
         case "pressed-enter-key": {
           const filtered = toVisibleItems(config, model);
 
-          const selectedNew = filtered[model.highlightIndex];
+          const enteredItem = filtered[model.highlightIndex];
 
-          if (!selectedNew) {
+          if (!enteredItem) {
             return { ...model, type: "unselected__focused__closed" };
+          }
+
+          if (config.isEmptyItem(enteredItem)) {
+            return {
+              ...model,
+              type: "unselected__focused__closed",
+            };
           }
 
           const modelNew: Model<T> = {
             ...model,
-            selected: [selectedNew],
+            selected: [enteredItem],
             type: "selected__focused__closed",
           };
           return {
@@ -1487,20 +1539,21 @@ const modelToInputValue = <TItem>(
   model: Model<TItem>
 ): string => {
   if (model.selectOnly) {
-    console.log("selectOnly", model.selectOnly);
+    const emptyItem = model.allItems.find((item) => config.isEmptyItem(item));
     if (isSelected(model)) {
-      console.log("isSelected", model.selected[0]);
       return config.toItemInputValue(model.selected[0]);
     }
     if (isHighlighted(model)) {
       const item = model.allItems[model.highlightIndex];
-      console.log("isHighlighted", item);
+
       if (!item) {
-        return "";
+        return emptyItem ? config.toItemInputValue(emptyItem) : "";
       }
-      console.log("toItemInputValue", item);
+
       return config.toItemInputValue(item);
     }
+
+    return emptyItem ? config.toItemInputValue(emptyItem) : "";
   }
 
   if (isSelected(model) && model.mode.type === "single-select") {

@@ -3,13 +3,15 @@
 
   /*
 
-  Step 0: Have some data to display
+
+  Step 0: Have some data
+
 
   */
 
-  type Item = { id: number; label: string; isEmptyValue?: boolean };
-  const fruits = [
-    { id: -1, label: "Choose a fruit", isEmptyValue: true },
+  type Item = { id: number; label: string; isEmptyItem?: boolean };
+  const fruits: Item[] = [
+    { id: 123, label: "Unselect all fruits", isEmptyItem: true },
     { id: 0, label: "pear" },
     { id: 1, label: "apple" },
     { id: 2, label: "banana" },
@@ -22,88 +24,140 @@
     { id: 9, label: "grape" },
   ];
 
+  let selectedItems: { [itemId: string]: HTMLElement } = {};
   let items: { [itemId: string]: HTMLElement } = {};
-  let input: HTMLDivElement | null = null;
+  let input: HTMLInputElement | null = null;
 
   /*
 
+
   Step 1: Init the config
+
 
   */
 
   const config = Combobox.initConfig<Item>({
     toItemId: (item) => item.id,
     toItemInputValue: (item) => item.label,
-    isEmptyItem: (item) => item?.isEmptyValue ?? false,
+    isEmptyItem: (item) => item?.isEmptyItem ?? false,
   });
 
   /*
 
+
   Step 2: Init the state
+
 
   */
 
   let model = Combobox.init({
     allItems: fruits,
+    mode: {
+      type: "multi-select",
+      selectedItemsDirection: "right-to-left",
+    },
     selectOnly: true,
   });
 
   /*
 
+
   Step 3: Write some glue code
+
 
   */
 
-  const dispatch = (msg: Combobox.Msg<Item> | null) => {
-    if (!msg) {
-      return;
-    }
-
+  const dispatch = (msg: Combobox.Msg<Item>) => {
     const output = Combobox.update(config, { msg, model });
-
-    console.log(model.type, msg.type, output.model);
 
     model = output.model;
 
     Combobox.runEffects(output, {
+      focusSelectedItem: (selectedItem) => {
+        selectedItems[selectedItem.id]?.focus();
+      },
       focusInput: () => {
         input?.focus();
       },
-      focusSelectedItem: () => {},
       scrollItemIntoView: (item) => {
         items[item.id]?.scrollIntoView({ block: "nearest" });
       },
     });
+
+    console.log(msg.type, output.model.type);
+  };
+
+  const handleKeyDown = (event: KeyboardEvent) => {
+    const msg = Combobox.keyToMsg<Item>(event.key);
+    if (msg.shouldPreventDefault) {
+      event.preventDefault();
+    }
+    dispatch(msg);
   };
 
   /*
 
+
   Step 3: Wire up to the UI
+
 
   */
 
   $: state = Combobox.toState(config, model);
 </script>
 
-<div class="container">
+<div>
   <label
     class="label"
     {...state.aria.inputLabel}
     for={state.aria.inputLabel.for}
   >
-    Fruit Select Only
+    Fruit Multi Select (Select Only)
   </label>
-  <p {...state.aria.helperText}>{Combobox.ariaContentDefaults.helperText}</p>
 
-  <button on:click={() => dispatch({ type: "pressed-unselect-all-button" })}>
-    Clear
-  </button>
+  <div class="input-container" on:keydown={handleKeyDown}>
+    <p {...state.aria.helperText}>
+      {Combobox.ariaContentDefaults.helperText}
+    </p>
 
-  <div class="input-container">
+    <button on:click={() => dispatch({ type: "pressed-unselect-all-button" })}>
+      Clear
+    </button>
+
+    <ul
+      class="chip-list"
+      class:ltr={state.selectedItemDirection === "left-to-right"}
+      class:rtl={state.selectedItemDirection === "right-to-left"}
+      {...state.aria.selectedList}
+    >
+      {#each state.selections as selectedItem}
+        <li
+          {...state.aria.selectedItem(selectedItem)}
+          bind:this={selectedItems[selectedItem.id]}
+          class="chip"
+          class:chip-highlighted={state.isSelectedItemFocused(selectedItem)}
+          on:mousedown|preventDefault
+          on:focus={() =>
+            dispatch({ type: "focused-selected-item", item: selectedItem })}
+          on:blur={() =>
+            dispatch({ type: "blurred-selected-item", item: selectedItem })}
+        >
+          {selectedItem.label}
+          <span
+            {...state.aria.unselectButton(selectedItem)}
+            class="chip-delete-btn"
+            on:mousedown|preventDefault={() =>
+              dispatch({ type: "pressed-unselect-button", item: selectedItem })}
+          >
+            &times;
+          </span>
+        </li>
+      {/each}
+    </ul>
+
     <div
       {...state.aria.input}
       class="input"
-      bind:this={input}
       on:focus={() => dispatch({ type: "focused-input" })}
       on:blur={() => dispatch({ type: "blurred-input" })}
       on:click={() => dispatch({ type: "pressed-input" })}
@@ -142,18 +196,17 @@
 </div>
 
 <style>
-  .container {
+  .input-container {
+    position: relative;
     width: 100%;
     max-width: 300px;
   }
 
-  .input-container {
-    position: relative;
-  }
   .label {
     position: relative;
     display: block;
     width: 100%;
+    margin: auto;
   }
 
   .hide {
@@ -161,9 +214,9 @@
   }
   .input {
     width: 100%;
-    padding: 0.5rem;
-    min-height: 2rem;
+
     font-size: large;
+    padding: 0.5rem;
     box-sizing: border-box;
     border: 1px solid #ccc;
   }
@@ -182,13 +235,27 @@
     margin: 0;
     padding: 0;
     background: #efefef;
-    font-size: large;
   }
 
   @media (prefers-color-scheme: dark) {
     .suggestions {
       background: #121212;
     }
+  }
+
+  .option {
+    display: block;
+    cursor: pointer;
+    list-style: none;
+    width: 100%;
+    font-size: large;
+    margin: 0;
+    padding: 0;
+  }
+
+  .highlighted {
+    background-color: #333;
+    color: white;
   }
 
   @media (prefers-color-scheme: dark) {
@@ -198,23 +265,57 @@
     }
   }
 
-  .option {
-    display: block;
-    cursor: pointer;
-    list-style: none;
-    width: 100%;
-    margin: 0;
-    padding: 0;
-  }
-  .highlighted {
-    background-color: #333;
-    color: white;
-  }
   .selected {
     background-color: blue;
-    color: #fff;
+    color: white;
   }
   .selected-and-highlighted {
     background-color: lightblue;
+  }
+
+  .chip-list {
+    display: flex;
+  }
+
+  .ltr {
+    flex-wrap: wrap;
+    flex-direction: row;
+  }
+
+  .rtl {
+    flex-direction: row-reverse;
+    flex-wrap: wrap-reverse;
+  }
+
+  .chip {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    margin: 0.5rem;
+    gap: 0.5rem;
+    background: #efefef;
+    border-radius: 0.5rem;
+    height: 1.5rem;
+    cursor: default;
+    font-size: large;
+    user-select: none;
+  }
+  .chip-highlighted {
+    background: #333;
+    color: white;
+  }
+
+  .chip-delete-btn {
+    font-size: medium;
+    background: transparent;
+    padding: 4px;
+    border-radius: 100%;
+    cursor: pointer;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .chip {
+      background: #121212;
+    }
   }
 </style>

@@ -539,7 +539,7 @@ const updateModel = <T>(
     msg: Msg<T>;
   }
 ): Model<T> => {
-  const { toItemInputValue, toItemId, deterministicFilter } = config;
+  const { toItemInputValue, toItemId } = config;
   switch (model.type) {
     case "selected__blurred": {
       switch (msg.type) {
@@ -1539,21 +1539,25 @@ const modelToInputValue = <TItem>(
   model: Model<TItem>
 ): string => {
   if (model.selectOnly) {
-    const emptyItem = model.allItems.find((item) => config.isEmptyItem(item));
-    if (isSelected(model)) {
+    if (isSelected(model) && model.mode.type === "single-select") {
       return config.toItemInputValue(model.selected[0]);
     }
-    if (isHighlighted(model)) {
+
+    if (isHighlighted(model) && model.mode.type === "single-select") {
       const item = model.allItems[model.highlightIndex];
 
       if (!item) {
-        return emptyItem ? config.toItemInputValue(emptyItem) : "";
+        return toEmptyItemValue(config, model) ?? "";
       }
 
       return config.toItemInputValue(item);
     }
 
-    return emptyItem ? config.toItemInputValue(emptyItem) : "";
+    if (isUnselected(model) && model.mode.type === "multi-select") {
+      return toEmptyItemValue(config, model) ?? "";
+    }
+
+    return toEmptyItemValue(config, model) ?? "";
   }
 
   if (isSelected(model) && model.mode.type === "single-select") {
@@ -1561,6 +1565,19 @@ const modelToInputValue = <TItem>(
   }
 
   return "";
+};
+
+const toEmptyItemValue = <T>(
+  config: Config<T>,
+  model: Model<T>
+): string | null => {
+  const emptyItem = model.allItems.find((item) => config.isEmptyItem(item));
+  const emptyItemValue =
+    model.mode.type === "multi-select" || !emptyItem
+      ? null
+      : config.toItemInputValue(emptyItem);
+
+  return emptyItemValue;
 };
 
 const circularIndex = (index: number, length: number) => {

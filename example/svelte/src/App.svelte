@@ -1,13 +1,15 @@
 <script lang="ts">
-  import ExampleSingleSelect from "./ExampleSingleSelect.svelte";
   import ExampleMultiSelect from "./ExampleMultiSelect.svelte";
-  import ExampleSelectOnly from "./ExampleSelectOnly.svelte";
+  import ExampleMultiSelectSelectOnly from "./ExampleMultiSelectSelectOnly.svelte";
+  import ExampleSingleSelect from "./ExampleSingleSelect.svelte";
+  import ExampleSingleSelectSelectOnly from "./ExampleSingleSelectSelectOnly.svelte";
 </script>
 
 <main>
   <ExampleSingleSelect />
-  <ExampleSelectOnly />
+  <ExampleSingleSelectSelectOnly />
   <ExampleMultiSelect />
+  <ExampleMultiSelectSelectOnly />
 </main>
 
 <style>
@@ -16,6 +18,8 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 4rem;
+    gap: 5rem;
+    padding-top: 10rem;
+    padding-bottom: 15rem;
   }
 </style>

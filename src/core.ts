@@ -13,6 +13,7 @@ export type Config<TItem> = {
   toItemId: (item: TItem) => string | number;
   toItemInputValue: (item: TItem) => string;
   deterministicFilter: (model: Model<TItem>) => TItem[];
+  isEmptyItem: (value: TItem) => boolean;
   namespace: string;
 };
 
@@ -21,15 +22,18 @@ export type Config<TItem> = {
  */
 export const initConfig = <TItem>({
   namespace,
+  isEmptyItem = () => false,
   ...config
 }: {
   toItemId: (item: TItem) => string | number;
   toItemInputValue: (item: TItem) => string;
+  isEmptyItem?: (item: TItem) => boolean;
   deterministicFilter?: (model: Model<TItem>) => TItem[];
   namespace?: string;
 }): Config<TItem> => {
   const configFull: Config<TItem> = {
     ...config,
+    isEmptyItem,
     namespace: namespace ?? "combobox",
     deterministicFilter: (model) => model.allItems,
   };
@@ -67,6 +71,7 @@ export type Model<TItem> = ModelState<TItem> & {
   allItems: TItem[];
   skipOnce: Msg<TItem>["type"][];
   mode: Mode;
+  selectOnly: boolean;
 };
 
 /**
@@ -155,14 +160,17 @@ type ModelState<TItem> =
 export const init = <TItem>({
   allItems,
   mode,
+  selectOnly,
 }: {
   allItems: TItem[];
   mode?: Mode;
+  selectOnly?: boolean;
 }): Model<TItem> => {
   return {
     type: "unselected__blurred",
     allItems,
     skipOnce: [],
+    selectOnly: selectOnly ?? false,
     mode: mode ? mode : { type: "single-select" },
   };
 };
@@ -359,7 +367,7 @@ export const update = <TItem>(
     isHighlighted(output.model) &&
     msg.type === "pressed-vertical-arrow-key"
   ) {
-    const filtered = config.deterministicFilter(output.model);
+    const filtered = toVisibleItems(config, output.model);
 
     const highlightedItem = filtered[output.model.highlightIndex];
 
@@ -587,6 +595,13 @@ const updateModel = <T>(
         }
 
         case "inputted-value": {
+          if (model.selectOnly) {
+            return {
+              ...model,
+              inputValue: modelToInputValue(config, model),
+              type: "selected__focused__opened",
+            };
+          }
           if (msg.inputValue === "" && model.mode.type === "single-select") {
             return {
               ...model,
@@ -690,9 +705,18 @@ const updateModel = <T>(
         }
 
         case "pressed-item": {
+          const pressedItem = msg.item;
+
+          if (config.isEmptyItem(pressedItem)) {
+            return {
+              ...model,
+              type: "unselected__focused__closed",
+            };
+          }
+
           const modelNew = toggleSelected({
             config,
-            item: msg.item,
+            item: pressedItem,
             model,
           });
 
@@ -703,6 +727,14 @@ const updateModel = <T>(
         }
 
         case "inputted-value": {
+          if (model.selectOnly) {
+            return {
+              ...model,
+              inputValue: modelToInputValue(config, model),
+              type: "selected__focused__opened",
+            };
+          }
+
           if (msg.inputValue === "" && model.mode.type === "single-select") {
             return {
               ...model,
@@ -722,7 +754,7 @@ const updateModel = <T>(
         }
 
         case "pressed-vertical-arrow-key": {
-          const filtered = deterministicFilter(model);
+          const filtered = toVisibleItems(config, model);
 
           const selectedIndex = filtered.findIndex((item) =>
             model.selected.some(
@@ -810,6 +842,13 @@ const updateModel = <T>(
         case "pressed-item": {
           const pressedItem = msg.item;
 
+          if (config.isEmptyItem(pressedItem)) {
+            return {
+              ...model,
+              type: "unselected__focused__closed",
+            };
+          }
+
           if (model.mode.type === "single-select") {
             const modelNew: Model<T> = {
               ...model,
@@ -853,6 +892,13 @@ const updateModel = <T>(
         }
 
         case "inputted-value": {
+          if (model.selectOnly) {
+            return {
+              ...model,
+              inputValue: modelToInputValue(config, model),
+              type: "selected__focused__opened",
+            };
+          }
           if (msg.inputValue === "" && model.mode.type === "single-select") {
             return {
               ...model,
@@ -864,7 +910,7 @@ const updateModel = <T>(
         }
 
         case "pressed-vertical-arrow-key": {
-          const filtered = deterministicFilter(model);
+          const filtered = toVisibleItems(config, model);
           const delta = msg.key === "arrow-down" ? 1 : -1;
           const highlightIndex = circularIndex(
             model.highlightIndex + delta,
@@ -878,12 +924,19 @@ const updateModel = <T>(
         }
 
         case "pressed-enter-key": {
-          const filtered = deterministicFilter(model);
+          const filtered = toVisibleItems(config, model);
 
           const enteredItem = filtered[model.highlightIndex];
 
           if (!enteredItem) {
             return { ...model, type: "selected__focused__closed" };
+          }
+
+          if (config.isEmptyItem(enteredItem)) {
+            return {
+              ...model,
+              type: "unselected__focused__closed",
+            };
           }
 
           if (model.mode.type === "single-select") {
@@ -998,6 +1051,13 @@ const updateModel = <T>(
         }
 
         case "inputted-value": {
+          if (model.selectOnly) {
+            return {
+              ...model,
+              inputValue: modelToInputValue(config, model),
+              type: "unselected__focused__opened",
+            };
+          }
           return {
             ...model,
             type: "unselected__focused__opened",
@@ -1034,10 +1094,19 @@ const updateModel = <T>(
         }
 
         case "pressed-item": {
+          const pressedItem = msg.item;
+
+          if (config.isEmptyItem(pressedItem)) {
+            return {
+              ...model,
+              type: "unselected__focused__closed",
+            };
+          }
+
           const modelNew: Model<T> = {
             ...model,
             type: "selected__focused__closed",
-            selected: [msg.item],
+            selected: [pressedItem],
           };
           return {
             ...modelNew,
@@ -1046,11 +1115,18 @@ const updateModel = <T>(
         }
 
         case "inputted-value": {
+          if (model.selectOnly) {
+            return {
+              ...model,
+              inputValue: modelToInputValue(config, model),
+              type: "unselected__focused__opened",
+            };
+          }
           return { ...model, inputValue: msg.inputValue };
         }
 
         case "pressed-vertical-arrow-key": {
-          const filtered = deterministicFilter(model);
+          const filtered = toVisibleItems(config, model);
           const highlightIndex =
             msg.key === "arrow-up" ? filtered.length - 1 : 0;
 
@@ -1082,10 +1158,19 @@ const updateModel = <T>(
         }
 
         case "pressed-item": {
+          const pressedItem = msg.item;
+
+          if (config.isEmptyItem(pressedItem)) {
+            return {
+              ...model,
+              type: "unselected__focused__closed",
+            };
+          }
+
           const modelNew: Model<T> = {
             ...model,
             type: "selected__focused__closed",
-            selected: [msg.item],
+            selected: [pressedItem],
           };
           return {
             ...modelNew,
@@ -1094,6 +1179,13 @@ const updateModel = <T>(
         }
 
         case "inputted-value": {
+          if (model.selectOnly) {
+            return {
+              ...model,
+              inputValue: modelToInputValue(config, model),
+              type: "unselected__focused__opened",
+            };
+          }
           return {
             ...model,
             type: "unselected__focused__opened",
@@ -1102,7 +1194,7 @@ const updateModel = <T>(
         }
 
         case "pressed-vertical-arrow-key": {
-          const filtered = deterministicFilter(model);
+          const filtered = toVisibleItems(config, model);
           const delta = msg.key === "arrow-down" ? 1 : -1;
           const highlightIndex = circularIndex(
             model.highlightIndex + delta,
@@ -1115,17 +1207,24 @@ const updateModel = <T>(
         }
 
         case "pressed-enter-key": {
-          const filtered = deterministicFilter(model);
+          const filtered = toVisibleItems(config, model);
 
-          const selectedNew = filtered[model.highlightIndex];
+          const enteredItem = filtered[model.highlightIndex];
 
-          if (!selectedNew) {
+          if (!enteredItem) {
             return { ...model, type: "unselected__focused__closed" };
+          }
+
+          if (config.isEmptyItem(enteredItem)) {
+            return {
+              ...model,
+              type: "unselected__focused__closed",
+            };
           }
 
           const modelNew: Model<T> = {
             ...model,
-            selected: [selectedNew],
+            selected: [enteredItem],
             type: "selected__focused__closed",
           };
           return {
@@ -1211,6 +1310,13 @@ const updateModel = <T>(
         }
 
         case "inputted-value": {
+          if (model.selectOnly) {
+            return {
+              ...model,
+              inputValue: modelToInputValue(config, model),
+              type: "unselected__focused__opened",
+            };
+          }
           return {
             ...model,
             inputValue: msg.inputValue,
@@ -1432,9 +1538,28 @@ const modelToInputValue = <TItem>(
   config: Config<TItem>,
   model: Model<TItem>
 ): string => {
+  if (model.selectOnly) {
+    const emptyItem = model.allItems.find((item) => config.isEmptyItem(item));
+    if (isSelected(model)) {
+      return config.toItemInputValue(model.selected[0]);
+    }
+    if (isHighlighted(model)) {
+      const item = model.allItems[model.highlightIndex];
+
+      if (!item) {
+        return emptyItem ? config.toItemInputValue(emptyItem) : "";
+      }
+
+      return config.toItemInputValue(item);
+    }
+
+    return emptyItem ? config.toItemInputValue(emptyItem) : "";
+  }
+
   if (isSelected(model) && model.mode.type === "single-select") {
     return config.toItemInputValue(model.selected[0]);
   }
+
   return "";
 };
 
@@ -1594,6 +1719,10 @@ export const toCurrentInputValue = <TItem>(
   config: Config<TItem>,
   model: Model<TItem>
 ): string => {
+  if (model.selectOnly) {
+    return modelToInputValue(config, model);
+  }
+
   switch (model.type) {
     case "unselected__blurred": {
       return "";
@@ -1624,7 +1753,7 @@ export const toCurrentInputValue = <TItem>(
  * This function returns the highlighted item.
  */
 export const toHighlightedItem = <TItem>(
-  { deterministicFilter }: Pick<Config<TItem>, "deterministicFilter">,
+  config: Config<TItem>,
   model: Model<TItem>
 ): TItem | null => {
   switch (model.type) {
@@ -1640,7 +1769,7 @@ export const toHighlightedItem = <TItem>(
 
     case "unselected__focused__opened__highlighted":
     case "selected__focused__opened__highlighted": {
-      const item = deterministicFilter(model)[model.highlightIndex];
+      const item = toVisibleItems(config, model)[model.highlightIndex];
 
       return item ?? null;
     }
@@ -1653,7 +1782,7 @@ export const toHighlightedItem = <TItem>(
  * Utility function to determine if an item is highlighted.
  */
 export const isItemHighlighted = <TItem>(
-  config: Pick<Config<TItem>, "toItemId" | "deterministicFilter">,
+  config: Config<TItem>,
   model: Model<TItem>,
   item: TItem
 ): boolean => {
@@ -1774,7 +1903,7 @@ export const isItemIndexHighlighted = <TItem>(
  * Selector function to determine if an item is selected and highlighted.
  */
 export const isItemSelectedAndHighlighted = <TItem>(
-  config: Pick<Config<TItem>, "toItemId" | "deterministicFilter">,
+  config: Config<TItem>,
   model: Model<TItem>,
   item: TItem
 ): boolean => {
@@ -1819,7 +1948,7 @@ export type ItemStatus =
  * This utility function returns the status of an item.
  */
 export const toItemStatus = <TItem>(
-  config: Pick<Config<TItem>, "toItemId" | "deterministicFilter">,
+  config: Config<TItem>,
   model: Model<TItem>,
   item: TItem
 ): ItemStatus => {
@@ -1845,6 +1974,9 @@ export const toItemStatus = <TItem>(
  * This function really isn't necessary, but it's here for a more consistent API.
  */
 export const toVisibleItems = <T>(config: Config<T>, model: Model<T>): T[] => {
+  if (model.selectOnly) {
+    return model.allItems;
+  }
   return config.deterministicFilter(model);
 };
 

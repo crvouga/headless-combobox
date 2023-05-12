@@ -1,11 +1,13 @@
 <script lang="ts">
-  import Example from "./Example.svelte";
+  import ExampleSingleSelect from "./ExampleSingleSelect.svelte";
   import ExampleMultiSelect from "./ExampleMultiSelect.svelte";
+  import ExampleSelectOnly from "./ExampleSelectOnly.svelte";
 </script>
 
 <main>
+  <ExampleSingleSelect />
+  <ExampleSelectOnly />
   <ExampleMultiSelect />
-  <Example />
 </main>
 
 <style>

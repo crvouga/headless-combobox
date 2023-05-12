@@ -84,6 +84,7 @@ export const ariaItem = <T>(config: Config<T>, model: Model<T>, item: T) => {
     id: itemHtmlId(config, item),
     role: "option",
     "aria-selected": isItemSelected(config, model, item),
+    "aria-disabled": false,
   } as const;
 };
 

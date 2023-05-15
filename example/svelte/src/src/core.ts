@@ -252,6 +252,9 @@ export type Msg<TItem> =
       selected: NonEmpty<TItem>;
     }
   | {
+      type: "set-unselected";
+    }
+  | {
       type: "set-input-value";
       inputValue: string;
     }
@@ -498,25 +501,48 @@ const updateSetters = <TItem>({
     };
   }
 
-  if (msg.type === "set-selected" && isSelected(model)) {
+  if (msg.type === "set-selected") {
+    if (isSelected(model)) {
+      return {
+        ...model,
+        selected: msg.selected,
+      };
+    }
     return {
       ...model,
+      type: "selected__blurred",
       selected: msg.selected,
     };
   }
 
-  if (msg.type === "set-input-value" && isOpened(model)) {
-    return {
-      ...model,
-      inputValue: msg.inputValue,
-    };
+  if (msg.type === "set-unselected") {
+    if (isSelected(model)) {
+      return {
+        ...model,
+        type: "unselected__blurred",
+      };
+    }
+    return model;
   }
 
-  if (msg.type === "set-highlight-index" && isHighlighted(model)) {
-    return {
-      ...model,
-      highlightIndex: msg.highlightIndex,
-    };
+  if (msg.type === "set-input-value") {
+    if (isOpened(model)) {
+      return {
+        ...model,
+        inputValue: msg.inputValue,
+      };
+    }
+    return { ...model };
+  }
+
+  if (msg.type === "set-highlight-index") {
+    if (isHighlighted(model)) {
+      return {
+        ...model,
+        highlightIndex: msg.highlightIndex,
+      };
+    }
+    return model;
   }
 
   if (msg.type === "set-mode") {
@@ -539,7 +565,7 @@ const updateModel = <T>(
     msg: Msg<T>;
   }
 ): Model<T> => {
-  const { toItemInputValue, toItemId } = config;
+  const { toItemInputValue, toItemId, deterministicFilter } = config;
   switch (model.type) {
     case "selected__blurred": {
       switch (msg.type) {
@@ -1539,25 +1565,21 @@ const modelToInputValue = <TItem>(
   model: Model<TItem>
 ): string => {
   if (model.selectOnly) {
-    if (isSelected(model) && model.mode.type === "single-select") {
+    const emptyItem = model.allItems.find((item) => config.isEmptyItem(item));
+    if (isSelected(model)) {
       return config.toItemInputValue(model.selected[0]);
     }
-
-    if (isHighlighted(model) && model.mode.type === "single-select") {
+    if (isHighlighted(model)) {
       const item = model.allItems[model.highlightIndex];
 
       if (!item) {
-        return toEmptyItemValue(config, model) ?? "";
+        return emptyItem ? config.toItemInputValue(emptyItem) : "";
       }
 
       return config.toItemInputValue(item);
     }
 
-    if (isUnselected(model) && model.mode.type === "multi-select") {
-      return toEmptyItemValue(config, model) ?? "";
-    }
-
-    return toEmptyItemValue(config, model) ?? "";
+    return emptyItem ? config.toItemInputValue(emptyItem) : "";
   }
 
   if (isSelected(model) && model.mode.type === "single-select") {
@@ -1565,19 +1587,6 @@ const modelToInputValue = <TItem>(
   }
 
   return "";
-};
-
-const toEmptyItemValue = <T>(
-  config: Config<T>,
-  model: Model<T>
-): string | null => {
-  const emptyItem = model.allItems.find((item) => config.isEmptyItem(item));
-  const emptyItemValue =
-    model.mode.type === "multi-select" || !emptyItem
-      ? null
-      : config.toItemInputValue(emptyItem);
-
-  return emptyItemValue;
 };
 
 const circularIndex = (index: number, length: number) => {

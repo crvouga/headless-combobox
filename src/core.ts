@@ -252,6 +252,9 @@ export type Msg<TItem> =
       selected: NonEmpty<TItem>;
     }
   | {
+      type: "set-unselected";
+    }
+  | {
       type: "set-input-value";
       inputValue: string;
     }
@@ -498,25 +501,48 @@ const updateSetters = <TItem>({
     };
   }
 
-  if (msg.type === "set-selected" && isSelected(model)) {
+  if (msg.type === "set-selected") {
+    if (isSelected(model)) {
+      return {
+        ...model,
+        selected: msg.selected,
+      };
+    }
     return {
       ...model,
+      type: "selected__blurred",
       selected: msg.selected,
     };
   }
 
-  if (msg.type === "set-input-value" && isOpened(model)) {
-    return {
-      ...model,
-      inputValue: msg.inputValue,
-    };
+  if (msg.type === "set-unselected") {
+    if (isSelected(model)) {
+      return {
+        ...model,
+        type: "unselected__blurred",
+      };
+    }
+    return model;
   }
 
-  if (msg.type === "set-highlight-index" && isHighlighted(model)) {
-    return {
-      ...model,
-      highlightIndex: msg.highlightIndex,
-    };
+  if (msg.type === "set-input-value") {
+    if (isOpened(model)) {
+      return {
+        ...model,
+        inputValue: msg.inputValue,
+      };
+    }
+    return { ...model };
+  }
+
+  if (msg.type === "set-highlight-index") {
+    if (isHighlighted(model)) {
+      return {
+        ...model,
+        highlightIndex: msg.highlightIndex,
+      };
+    }
+    return model;
   }
 
   if (msg.type === "set-mode") {

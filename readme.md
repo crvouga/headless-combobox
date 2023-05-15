@@ -4,9 +4,9 @@
 
 ## ⚠️ WORK IN PROGRESS
 
-I'm comfortable using it in my projects but use this library at you own risk!
+I'm comfortable using this in my projects but use at your own risk!
 
-I'm mainly looking for feedback and issues rather than adoption right now.
+Let me know if you find any issues.
 
 ## Pros
 

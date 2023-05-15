@@ -85,22 +85,20 @@ This library is inspired by the following libraries:
 
 ## Usage
 
-### Svelte Multi Select
+### Svelte Single Select Example
 
 ```svelte
 <script lang="ts">
-  import * as Combobox from "headless-combobox";
+  import * as Combobox from "./src";
 
   /*
 
-
-  Step 0: Have some data
-
+  Step 0: Have some data to display
 
   */
 
   type Item = { id: number; label: string };
-  const fruits: Item[] = [
+  const fruits = [
     { id: 0, label: "pear" },
     { id: 1, label: "apple" },
     { id: 2, label: "banana" },
@@ -113,15 +111,12 @@ This library is inspired by the following libraries:
     { id: 9, label: "grape" },
   ];
 
-  let selectedItems: { [itemId: string]: HTMLElement } = {};
   let items: { [itemId: string]: HTMLElement } = {};
   let input: HTMLInputElement | null = null;
 
   /*
 
-
   Step 1: Init the config
-
 
   */
 
@@ -132,116 +127,64 @@ This library is inspired by the following libraries:
 
   /*
 
-
   Step 2: Init the state
-
 
   */
 
-  let model = Combobox.init({
-    allItems: fruits,
-    mode: {
-      type: "multi-select",
-      selectedItemsDirection: "right-to-left",
-    },
-  });
+  let model = Combobox.init({ allItems: fruits });
 
   /*
 
-
   Step 3: Write some glue code
-
 
   */
 
-  const dispatch = (msg: Combobox.Msg<Item>) => {
+  const dispatch = (msg: Combobox.Msg<Item> | null) => {
+    if (!msg) {
+      return;
+    }
+
     const output = Combobox.update(config, { msg, model });
+
+    console.log(model.type, msg.type, output.model);
 
     model = output.model;
 
     Combobox.runEffects(output, {
-      focusSelectedItem: (selectedItem) => {
-        selectedItems[selectedItem.id]?.focus();
-      },
       focusInput: () => {
         input?.focus();
       },
+      focusSelectedItem: () => {},
       scrollItemIntoView: (item) => {
         items[item.id]?.scrollIntoView({ block: "nearest" });
       },
     });
-
-    console.log(msg.type, output.model.type);
-  };
-
-  const handleKeyDown = (event: KeyboardEvent) => {
-    const msg = Combobox.keyToMsg<Item>(event.key);
-    if (msg.shouldPreventDefault) {
-      event.preventDefault();
-    }
-    dispatch(msg);
   };
 
   /*
 
-
   Step 3: Wire up to the UI
-
 
   */
 
   $: state = Combobox.toState(config, model);
 </script>
 
-<div>
+<div class="container">
   <label
     class="label"
     {...state.aria.inputLabel}
     for={state.aria.inputLabel.for}
   >
-    Fruit Multi Select
+    Fruit Single Select
   </label>
+  <p {...state.aria.helperText}>{Combobox.ariaContentDefaults.helperText}</p>
 
-  <div class="input-container" on:keydown={handleKeyDown}>
-    <p {...state.aria.helperText}>
-      {Combobox.ariaContentDefaults.helperText}
-    </p>
+  <button on:click={() => dispatch({ type: "pressed-unselect-all-button" })}>
+    Clear
+  </button>
 
-    <button on:click={() => dispatch({ type: "pressed-unselect-all-button" })}>
-      Clear
-    </button>
-
-    <ul
-      class="chip-list"
-      class:ltr={state.selectedItemDirection === "left-to-right"}
-      class:rtl={state.selectedItemDirection === "right-to-left"}
-      {...state.aria.selectedList}
-    >
-      {#each state.selections as selectedItem}
-        <li
-          {...state.aria.selectedItem(selectedItem)}
-          bind:this={selectedItems[selectedItem.id]}
-          class="chip"
-          class:chip-highlighted={state.isSelectedItemFocused(selectedItem)}
-          on:mousedown|preventDefault
-          on:focus={() =>
-            dispatch({ type: "focused-selected-item", item: selectedItem })}
-          on:blur={() =>
-            dispatch({ type: "blurred-selected-item", item: selectedItem })}
-        >
-          {selectedItem.label}
-          <span
-            {...state.aria.unselectButton(selectedItem)}
-            class="chip-delete-btn"
-            on:mousedown|preventDefault={() =>
-              dispatch({ type: "pressed-unselect-button", item: selectedItem })}
-          >
-            &times;
-          </span>
-        </li>
-      {/each}
-    </ul>
-
+  <div class="input-container">
     <input
       {...state.aria.input}
       class="input"
@@ -252,9 +195,10 @@ This library is inspired by the following libraries:
           type: "inputted-value",
           inputValue: event.currentTarget.value,
         })}
-      on:click={() => dispatch({ type: "pressed-input" })}
       on:focus={() => dispatch({ type: "focused-input" })}
       on:blur={() => dispatch({ type: "blurred-input" })}
+      on:click={() => dispatch({ type: "pressed-input" })}
+      on:keydown={(event) => dispatch(Combobox.keyToMsg(event.key))}
     />
     <ul
       {...state.aria.itemList}
@@ -286,17 +230,18 @@ This library is inspired by the following libraries:
 </div>
 
 <style>
-  .input-container {
-    position: relative;
+  .container {
     width: 100%;
     max-width: 300px;
   }
 
+  .input-container {
+    position: relative;
+  }
   .label {
     position: relative;
     display: block;
     width: 100%;
-    margin: auto;
   }
 
   .hide {
@@ -304,9 +249,8 @@ This library is inspired by the following libraries:
   }
   .input {
     width: 100%;
-
-    font-size: large;
     padding: 0.5rem;
+    font-size: large;
     box-sizing: border-box;
     border: 1px solid #ccc;
   }
@@ -325,27 +269,13 @@ This library is inspired by the following libraries:
     margin: 0;
     padding: 0;
     background: #efefef;
+    font-size: large;
   }
 
   @media (prefers-color-scheme: dark) {
     .suggestions {
       background: #121212;
     }
-  }
-
-  .option {
-    display: block;
-    cursor: pointer;
-    list-style: none;
-    width: 100%;
-    font-size: large;
-    margin: 0;
-    padding: 0;
-  }
-
-  .highlighted {
-    background-color: #333;
-    color: white;
   }
 
   @media (prefers-color-scheme: dark) {
@@ -355,59 +285,24 @@ This library is inspired by the following libraries:
     }
   }
 
+  .option {
+    display: block;
+    cursor: pointer;
+    list-style: none;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  .highlighted {
+    background-color: #333;
+    color: white;
+  }
   .selected {
     background-color: blue;
-    color: white;
+    color: #fff;
   }
   .selected-and-highlighted {
     background-color: lightblue;
   }
-
-  .chip-list {
-    display: flex;
-  }
-
-  .ltr {
-    flex-wrap: wrap;
-    flex-direction: row;
-  }
-
-  .rtl {
-    flex-direction: row-reverse;
-    flex-wrap: wrap-reverse;
-  }
-
-  .chip {
-    display: flex;
-    align-items: center;
-    padding: 0.5rem;
-    margin: 0.5rem;
-    gap: 0.5rem;
-    background: #efefef;
-    border-radius: 0.5rem;
-    height: 1.5rem;
-    cursor: default;
-    font-size: large;
-    user-select: none;
-  }
-  .chip-highlighted {
-    background: #333;
-    color: white;
-  }
-
-  .chip-delete-btn {
-    font-size: medium;
-    background: transparent;
-    padding: 4px;
-    border-radius: 100%;
-    cursor: pointer;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .chip {
-      background: #121212;
-    }
-  }
 </style>
-
 ```

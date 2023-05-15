@@ -78,10 +78,10 @@ pnpm install headless-combobox
 
 ## Credits
 
-This library was inspired by and borrows code from the following libraries:
+This library is inspired by the following libraries:
 
 - [MUI's Autocomplete](https://mui.com/material-ui/react-autocomplete/#multiple-values)
-- [Headless UI's Comobox](https://headlessui.com/react/combobox)
+- [Headless UI's Combobox](https://headlessui.com/react/combobox)
 
 ## Usage
 

@@ -14,7 +14,8 @@ I'm mainly looking for feedback and issues rather than adoption right now.
 - 🔌 Framework agnostic. Bring your own framework.
 - ⚡️ Zero dependencies
 - ♿️ [WAI ARIA Combobox](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/) support
-- 🧺 Multi Select supported, Select Only supported
+- 🧺 Multi Select supported
+- 🥚 Select Only supported
 - 💪 Written in TypeScript
 - 🌳 Simple pure functional [Elm](https://elm-lang.org/)-like API
 - 💼 Works anywhere JavaScript works.
@@ -28,7 +29,7 @@ I'm mainly looking for feedback and issues rather than adoption right now.
 ## Cons
 
 - 🧠 Headless. You do have to write your own styles.
-- 🔌 Framework agnostic. You do have to write adapter code. Which could be error prone
+- 🔌 Framework agnostic. You do have to write error prone adapter code.
 - 🌳 [Elm](https://elm-lang.org/)-like API. Some people may hate that.
 - 📚 Missing good documentation.
 - 🧪 Missing automated tests. (This is one is on the agenda)

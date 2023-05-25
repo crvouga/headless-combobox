@@ -881,6 +881,7 @@ const updateModel = <T>(
           if (config.isEmptyItem(pressedItem)) {
             return {
               ...model,
+              selectedItems: [],
               type: "focused__closed",
             };
           }

@@ -1,6 +1,6 @@
 import { aria } from "./combobox-wai-aria";
 import { isNonEmpty, type NonEmpty } from "./non-empty";
-import { circularIndex, clampIndex, removeFirst } from "./utils";
+import { uniqueBy, circularIndex, clampIndex, removeFirst } from "./utils";
 
 /** @module Config **/
 
@@ -744,16 +744,11 @@ const updateModel = <T>(
             };
           }
 
-          const modelNew = toggleSelected({
+          return toggleSelected({
             config,
             item: pressedItem,
             model,
           });
-
-          return {
-            ...modelNew,
-            // inputValue: modelToInputValue(config, modelNew),
-          };
         }
 
         case "inputted-value": {
@@ -886,43 +881,30 @@ const updateModel = <T>(
             };
           }
 
-          if (model.selectMode.type === "single-select") {
-            const modelNew: Model<T> = {
-              ...model,
-              type: "focused__closed",
-              selectedItems: addSelected(
-                model.selectMode,
-                pressedItem,
-                model.selectedItems
-              ),
-            };
+          if (model.selectMode.type === "multi-select") {
+            const modelNew = toggleSelected({
+              config,
+              model: {
+                ...model,
+                type: "focused__closed",
+              },
+              item: msg.item,
+            });
+
             return resetInputValue(config, modelNew);
           }
 
           if (!isItemSelected(config, model, pressedItem)) {
-            const modelNew: Model<T> = {
-              ...model,
-              type: "focused__closed",
-              selectedItems: addSelected(
-                model.selectMode,
-                pressedItem,
-                model.selectedItems
-              ),
-            };
+            const modelNew = addSelected({
+              model: {
+                ...model,
+                type: "focused__closed",
+              },
+              item: pressedItem,
+              config,
+            });
 
             return resetInputValue(config, modelNew);
-          }
-
-          const removed = model.selectedItems.filter(
-            (x) => toItemId(x) !== toItemId(pressedItem)
-          );
-
-          if (isNonEmpty(removed)) {
-            return {
-              ...model,
-              type: "focused__closed",
-              selectedItems: removed,
-            };
           }
 
           return {
@@ -982,28 +964,26 @@ const updateModel = <T>(
           }
 
           if (model.selectMode.type === "single-select") {
-            const modelNew: Model<T> = {
-              ...model,
-              selectedItems: addSelected(
-                model.selectMode,
-                enteredItem,
-                model.selectedItems
-              ),
-              type: "focused__closed",
-            };
+            const modelNew = addSelected({
+              model,
+              item: enteredItem,
+              config,
+            });
+
             return resetInputValue(config, modelNew);
           }
 
           if (!isItemSelected(config, model, enteredItem)) {
-            return clearInputValue({
-              ...model,
-              selectedItems: addSelected(
-                model.selectMode,
-                enteredItem,
-                model.selectedItems
-              ),
-              type: "focused__closed",
-            });
+            return clearInputValue(
+              addSelected({
+                model: {
+                  ...model,
+                  type: "focused__closed",
+                },
+                item: enteredItem,
+                config,
+              })
+            );
           }
 
           const removed = model.selectedItems.filter(
@@ -1266,52 +1246,27 @@ const toggleSelected = <T>({
   model: Model<T>;
   item: T;
 }): Model<T> => {
-  if (!isSelected(model)) {
-    return model;
-  }
-
-  if (model.selectMode.type === "single-select") {
-    const modelNew: Model<T> = {
-      ...model,
-      type: "focused__closed",
-      selectedItems: addSelected(model.selectMode, item, model.selectedItems),
-    };
-    return setInputValue(modelNew, modelToInputValue(config, modelNew));
-  }
-
   if (!isItemSelected(config, model, item)) {
-    const modelNew: Model<T> = {
-      ...model,
-      type: "focused__closed",
-      selectedItems: addSelected(model.selectMode, item, model.selectedItems),
-    };
-    return setInputValue(modelNew, modelToInputValue(config, modelNew));
-  }
-
-  const removed = model.selectedItems.filter(
-    (x) => config.toItemId(x) !== config.toItemId(item)
-  );
-
-  if (isNonEmpty(removed)) {
-    return setInputValue(
-      {
+    const modelNew = addSelected({
+      config,
+      item,
+      model: {
         ...model,
-
         type: "focused__closed",
-        selectedItems: removed,
       },
-      modelToInputValue(config, model)
-    );
+    });
+    return resetInputValue(config, modelNew);
   }
 
-  return setInputValue(
-    {
-      ...model,
+  const modelNew: Model<T> = {
+    ...model,
+    type: "focused__closed",
+    selectedItems: model.selectedItems.filter(
+      (x) => config.toItemId(x) !== config.toItemId(item)
+    ),
+  };
 
-      type: "focused__closed",
-    },
-    modelToInputValue(config, model)
-  );
+  return resetInputValue(config, modelNew);
 };
 
 const toSelectedItemIndex = <T>(
@@ -1349,19 +1304,26 @@ const toSearchValue = <T>(model: Model<T>): string => {
     : "";
 };
 
-const addSelected = <TItem>(
-  mode: SelectMode,
-  item: TItem,
-  selectedItems: TItem[]
-): NonEmpty<TItem> => {
-  if (mode.type === "single-select") {
-    return [item];
+const addSelected = <T>({
+  config,
+  model,
+  item,
+}: {
+  config: Config<T>;
+  model: Model<T>;
+  item: T;
+}): Model<T> => {
+  if (model.selectMode.type === "single-select") {
+    return { ...model, selectedItems: [item] };
   }
-  const selectedItemsNew = [...selectedItems, item];
+  const selectedItemsNew = uniqueBy(
+    [...model.selectedItems, item],
+    config.toItemId
+  );
   if (isNonEmpty(selectedItemsNew)) {
-    return selectedItemsNew;
+    return { ...model, selectedItems: selectedItemsNew };
   }
-  return [item];
+  return { ...model, selectedItems: [item] };
 };
 
 const updateKeyboardNavigationForSelections = <T>({

@@ -1,4 +1,4 @@
-import * as Combobox from "./combobox";
+import * as Combobox from "../combobox";
 import { top100Films } from "./test-data";
 
 const test = (description: string, fn: Function) => {

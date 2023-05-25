@@ -1,6 +1,6 @@
 import { aria } from "./combobox-wai-aria";
-import { circularIndex, clampIndex, removeFirst } from "./helpers";
 import { isNonEmpty, type NonEmpty } from "./non-empty";
+import { circularIndex, clampIndex, removeFirst } from "./utils";
 
 /** @module Config **/
 
@@ -1423,22 +1423,35 @@ const modelToInputValue = <T>(config: Config<T>, model: Model<T>): string => {
     model.inputMode.type === "select-only" &&
     model.selectMode.type === "multi-select"
   ) {
+    if (isHighlighted(model)) {
+      const highlightedItem = model.allItems[model.highlightIndex];
+
+      if (!highlightedItem) {
+        return "";
+      }
+
+      return config.toItemInputValue(highlightedItem);
+    }
     return "";
   }
 
-  if (model.inputMode.type === "select-only") {
+  if (
+    model.inputMode.type === "select-only" &&
+    model.selectMode.type === "single-select"
+  ) {
     const emptyItem = model.allItems.find((item) => config.isEmptyItem(item));
     if (isSelected(model)) {
       return config.toItemInputValue(model.selectedItems[0]);
     }
-    if (isHighlighted(model)) {
-      const item = model.allItems[model.highlightIndex];
 
-      if (!item) {
+    if (isHighlighted(model)) {
+      const highlightedItem = model.allItems[model.highlightIndex];
+
+      if (!highlightedItem) {
         return emptyItem ? config.toItemInputValue(emptyItem) : "";
       }
 
-      return config.toItemInputValue(item);
+      return config.toItemInputValue(highlightedItem);
     }
 
     return emptyItem ? config.toItemInputValue(emptyItem) : "";

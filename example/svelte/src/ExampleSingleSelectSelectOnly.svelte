@@ -157,8 +157,8 @@
 
   .input-container {
     position: relative;
-    background-color: #343434;
   }
+
   .label {
     position: relative;
     display: block;
@@ -198,9 +198,12 @@
     .suggestions {
       background: #121212;
     }
-  }
 
-  @media (prefers-color-scheme: dark) {
+    .input-container {
+      position: relative;
+      background-color: #343434;
+    }
+
     .highlighted {
       background-color: #eee;
       color: black;

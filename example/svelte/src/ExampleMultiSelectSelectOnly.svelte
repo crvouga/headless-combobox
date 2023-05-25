@@ -213,11 +213,20 @@
   .input {
     width: 100%;
     font-size: large;
-    padding: 1rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     box-sizing: border-box;
-    background-color: #343434;
     border: 1px solid #ccc;
   }
+
+  @media (prefers-color-scheme: dark) {
+    .input {
+      background-color: #343434;
+    }
+  }
+
   .suggestions {
     position: absolute;
     top: 100%;

@@ -76,6 +76,14 @@
     });
   };
 
+  const handleKeyDown = (event: KeyboardEvent) => {
+    const msg = Combobox.keyToMsg<Item>(event.key);
+    if (msg.shouldPreventDefault) {
+      event.preventDefault();
+    }
+    dispatch(msg);
+  };
+
   /*
 
   Step 3: Wire up to the UI
@@ -107,7 +115,7 @@
       on:focus={() => dispatch({ type: "focused-input" })}
       on:blur={() => dispatch({ type: "blurred-input" })}
       on:click={() => dispatch({ type: "pressed-input" })}
-      on:keydown={(event) => dispatch(Combobox.keyToMsg(event.key))}
+      on:keydown={handleKeyDown}
     >
       {state.inputValue}
     </div>
@@ -149,6 +157,7 @@
 
   .input-container {
     position: relative;
+    background-color: #343434;
   }
   .label {
     position: relative;

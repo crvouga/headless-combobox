@@ -1,10 +1,12 @@
-/** @module Config **/
-
+import { isSingleton, removeFirst } from "./helpers";
+import { isNonEmpty, type NonEmpty } from "./non-empty";
 import { aria } from "./wai-aria";
+
+/** @module Config **/
 
 /**
  * @group Config
- * @description
+ *
  * The Config<TItem> represents the configuration needed for the combobox to work with generic items.
  * @remark
  * ⚠️ All these functions should be deterministic!
@@ -45,7 +47,7 @@ export const initConfig = <TItem>({
 
 /**
  * @group Config
- * @description
+ *
  * The simpleFilter function is a default implementation of the deterministicFilter function.
  */
 export const simpleFilter = <TItem>(
@@ -64,23 +66,22 @@ export const simpleFilter = <TItem>(
 
 /**
  * @group Model
- * @description
  * The Model<TItem> represents the state of the combobox.
+ * This is the data you will be saving in your app.
  */
 export type Model<TItem> = ModelState<TItem> & {
   allItems: TItem[];
   skipOnce: Msg<TItem>["type"][];
-  mode: Mode;
-  selectOnly: boolean;
+  selectMode: SelectMode;
+  inputMode: InputMode;
 };
 
 /**
  * @group Model
- * @description
- * The Mode represents the mode of the combobox.
- * "You don't say? 😑" - probably you
+ *
+ * The SelectMode represents what kind of selection the combobox is doing.
  */
-export type Mode =
+export type SelectMode =
   | {
       type: "single-select";
     }
@@ -90,6 +91,18 @@ export type Mode =
     };
 
 export type SelectedItemsDirection = "left-to-right" | "right-to-left";
+
+/**
+ * @group Model
+ *
+ */
+export type InputMode =
+  | {
+      type: "select-only";
+    }
+  | {
+      type: "search-mode";
+    };
 
 type UnselectedBlurred = {
   type: "unselected__blurred";
@@ -154,7 +167,7 @@ type ModelState<TItem> =
 
 /**
  * @group Model
- * @description
+ *
  * The init function returns the initial state of the combobox.
  */
 export const init = <TItem>({
@@ -163,15 +176,15 @@ export const init = <TItem>({
   selectOnly,
 }: {
   allItems: TItem[];
-  mode?: Mode;
+  mode?: SelectMode;
   selectOnly?: boolean;
 }): Model<TItem> => {
   return {
     type: "unselected__blurred",
     allItems,
     skipOnce: [],
-    selectOnly: selectOnly ?? false,
-    mode: mode ? mode : { type: "single-select" },
+    inputMode: selectOnly ? { type: "select-only" } : { type: "search-mode" },
+    selectMode: mode ? mode : { type: "single-select" },
   };
 };
 
@@ -179,7 +192,7 @@ export const init = <TItem>({
 
 /**
  * @group Update
- * @description
+ *
  * The Msg<TItem> represents all the possible state transitions that can happen to the combobox.
  */
 export type Msg<TItem> =
@@ -264,12 +277,12 @@ export type Msg<TItem> =
     }
   | {
       type: "set-mode";
-      mode: Mode;
+      mode: SelectMode;
     };
 
 /**
  * @group Update
- * @description
+ *
  * The Effect<TItem> represents all the possible effects that can happen to the combobox.
  * You as the user of the library has to implement the side effects
  **/
@@ -288,7 +301,7 @@ export type Effect<TItem> =
 
 /**
  * @group Update
- * @description
+ *
  * The update function is the main function.
  * The update function takes the current state of the combobox and a message and returns the new state of the
  * combobox and effects that need to be run.
@@ -548,7 +561,7 @@ const updateSetters = <TItem>({
   if (msg.type === "set-mode") {
     return {
       ...model,
-      mode: msg.mode,
+      selectMode: msg.mode,
     };
   }
 
@@ -621,14 +634,17 @@ const updateModel = <T>(
         }
 
         case "inputted-value": {
-          if (model.selectOnly) {
+          if (model.inputMode.type === "select-only") {
             return {
               ...model,
               inputValue: modelToInputValue(config, model),
               type: "selected__focused__opened",
             };
           }
-          if (msg.inputValue === "" && model.mode.type === "single-select") {
+          if (
+            msg.inputValue === "" &&
+            model.selectMode.type === "single-select"
+          ) {
             return {
               ...model,
               inputValue: msg.inputValue,
@@ -753,7 +769,7 @@ const updateModel = <T>(
         }
 
         case "inputted-value": {
-          if (model.selectOnly) {
+          if (model.inputMode.type === "select-only") {
             return {
               ...model,
               inputValue: modelToInputValue(config, model),
@@ -761,7 +777,10 @@ const updateModel = <T>(
             };
           }
 
-          if (msg.inputValue === "" && model.mode.type === "single-select") {
+          if (
+            msg.inputValue === "" &&
+            model.selectMode.type === "single-select"
+          ) {
             return {
               ...model,
               inputValue: "",
@@ -875,11 +894,15 @@ const updateModel = <T>(
             };
           }
 
-          if (model.mode.type === "single-select") {
+          if (model.selectMode.type === "single-select") {
             const modelNew: Model<T> = {
               ...model,
               type: "selected__focused__closed",
-              selected: addSelected(model.mode, pressedItem, model.selected),
+              selected: addSelected(
+                model.selectMode,
+                pressedItem,
+                model.selected
+              ),
             };
             return {
               ...modelNew,
@@ -891,7 +914,11 @@ const updateModel = <T>(
             const modelNew: Model<T> = {
               ...model,
               type: "selected__focused__closed",
-              selected: addSelected(model.mode, pressedItem, model.selected),
+              selected: addSelected(
+                model.selectMode,
+                pressedItem,
+                model.selected
+              ),
             };
             return {
               ...modelNew,
@@ -918,14 +945,17 @@ const updateModel = <T>(
         }
 
         case "inputted-value": {
-          if (model.selectOnly) {
+          if (model.inputMode.type === "select-only") {
             return {
               ...model,
               inputValue: modelToInputValue(config, model),
               type: "selected__focused__opened",
             };
           }
-          if (msg.inputValue === "" && model.mode.type === "single-select") {
+          if (
+            msg.inputValue === "" &&
+            model.selectMode.type === "single-select"
+          ) {
             return {
               ...model,
               inputValue: "",
@@ -965,11 +995,15 @@ const updateModel = <T>(
             };
           }
 
-          if (model.mode.type === "single-select") {
+          if (model.selectMode.type === "single-select") {
             return {
               ...model,
               inputValue: toItemInputValue(enteredItem),
-              selected: addSelected(model.mode, enteredItem, model.selected),
+              selected: addSelected(
+                model.selectMode,
+                enteredItem,
+                model.selected
+              ),
               type: "selected__focused__closed",
             };
           }
@@ -978,7 +1012,11 @@ const updateModel = <T>(
             return {
               ...model,
               inputValue: "",
-              selected: addSelected(model.mode, enteredItem, model.selected),
+              selected: addSelected(
+                model.selectMode,
+                enteredItem,
+                model.selected
+              ),
               type: "selected__focused__closed",
             };
           }
@@ -1077,7 +1115,7 @@ const updateModel = <T>(
         }
 
         case "inputted-value": {
-          if (model.selectOnly) {
+          if (model.inputMode.type === "select-only") {
             return {
               ...model,
               inputValue: modelToInputValue(config, model),
@@ -1141,7 +1179,7 @@ const updateModel = <T>(
         }
 
         case "inputted-value": {
-          if (model.selectOnly) {
+          if (model.inputMode.type === "select-only") {
             return {
               ...model,
               inputValue: modelToInputValue(config, model),
@@ -1205,7 +1243,7 @@ const updateModel = <T>(
         }
 
         case "inputted-value": {
-          if (model.selectOnly) {
+          if (model.inputMode.type === "select-only") {
             return {
               ...model,
               inputValue: modelToInputValue(config, model),
@@ -1274,7 +1312,7 @@ const updateModel = <T>(
     case "selection_focused": {
       switch (msg.type) {
         case "pressed-horizontal-arrow-key": {
-          if (model.mode.type !== "multi-select") {
+          if (model.selectMode.type !== "multi-select") {
             return {
               ...model,
               inputValue: "",
@@ -1284,7 +1322,7 @@ const updateModel = <T>(
 
           if (
             model.focusedIndex === 0 &&
-            model.mode.selectedItemsDirection === "right-to-left" &&
+            model.selectMode.selectedItemsDirection === "right-to-left" &&
             msg.key === "arrow-right"
           ) {
             return {
@@ -1296,7 +1334,7 @@ const updateModel = <T>(
 
           if (
             model.focusedIndex === 0 &&
-            model.mode.selectedItemsDirection === "left-to-right" &&
+            model.selectMode.selectedItemsDirection === "left-to-right" &&
             msg.key === "arrow-left"
           ) {
             return {
@@ -1307,11 +1345,11 @@ const updateModel = <T>(
           }
 
           const delta =
-            model.mode.selectedItemsDirection === "right-to-left"
+            model.selectMode.selectedItemsDirection === "right-to-left"
               ? msg.key === "arrow-right"
                 ? -1
                 : 1
-              : model.mode.selectedItemsDirection === "left-to-right"
+              : model.selectMode.selectedItemsDirection === "left-to-right"
               ? msg.key === "arrow-left"
                 ? -1
                 : 1
@@ -1336,7 +1374,7 @@ const updateModel = <T>(
         }
 
         case "inputted-value": {
-          if (model.selectOnly) {
+          if (model.inputMode.type === "select-only") {
             return {
               ...model,
               inputValue: modelToInputValue(config, model),
@@ -1455,12 +1493,12 @@ const toggleSelected = <T>({
   model: Model<T> & SelectedState<T>;
   item: T;
 }): Model<T> => {
-  if (model.mode.type === "single-select") {
+  if (model.selectMode.type === "single-select") {
     const modelNew: Model<T> = {
       ...model,
       inputValue: "",
       type: "selected__focused__closed",
-      selected: addSelected(model.mode, item, model.selected),
+      selected: addSelected(model.selectMode, item, model.selected),
     };
     return {
       ...modelNew,
@@ -1473,7 +1511,7 @@ const toggleSelected = <T>({
       ...model,
       inputValue: "",
       type: "selected__focused__closed",
-      selected: addSelected(model.mode, item, model.selected),
+      selected: addSelected(model.selectMode, item, model.selected),
     };
     return {
       ...modelNew,
@@ -1502,7 +1540,7 @@ const toggleSelected = <T>({
 };
 
 const addSelected = <TItem>(
-  mode: Mode,
+  mode: SelectMode,
   item: TItem,
   selected: NonEmpty<TItem>
 ): NonEmpty<TItem> => {
@@ -1527,7 +1565,7 @@ const updatePressedHorizontalKey = <T>({
     return model;
   }
 
-  if (model.mode.type !== "multi-select") {
+  if (model.selectMode.type !== "multi-select") {
     return model;
   }
 
@@ -1536,7 +1574,7 @@ const updatePressedHorizontalKey = <T>({
   }
 
   if (
-    model.mode.selectedItemsDirection === "right-to-left" &&
+    model.selectMode.selectedItemsDirection === "right-to-left" &&
     msg.key === "arrow-left"
   ) {
     return {
@@ -1547,7 +1585,7 @@ const updatePressedHorizontalKey = <T>({
   }
 
   if (
-    model.mode.selectedItemsDirection === "left-to-right" &&
+    model.selectMode.selectedItemsDirection === "left-to-right" &&
     msg.key === "arrow-right"
   ) {
     return {
@@ -1564,7 +1602,7 @@ const modelToInputValue = <TItem>(
   config: Config<TItem>,
   model: Model<TItem>
 ): string => {
-  if (model.selectOnly) {
+  if (model.inputMode.type === "select-only") {
     const emptyItem = model.allItems.find((item) => config.isEmptyItem(item));
     if (isSelected(model)) {
       return config.toItemInputValue(model.selected[0]);
@@ -1582,7 +1620,7 @@ const modelToInputValue = <TItem>(
     return emptyItem ? config.toItemInputValue(emptyItem) : "";
   }
 
-  if (isSelected(model) && model.mode.type === "single-select") {
+  if (isSelected(model) && model.selectMode.type === "single-select") {
     return config.toItemInputValue(model.selected[0]);
   }
 
@@ -1607,7 +1645,7 @@ const clampIndex = (index: number, length: number) => {
 
 /**
  * @group Selectors
- * @description
+ *
  * Utility function to determine if any item is selected.
  */
 export const isSelected = <TItem>(
@@ -1628,7 +1666,7 @@ export type SelectedState<TItem> =
 
 /**
  * @group Selectors
- * @description
+ *
  * Utility function to determine if in unselected state
  */
 export const isUnselected = <TItem>(
@@ -1648,7 +1686,7 @@ export type UnselectedState<TItem> = Exclude<
 
 /**
  * @group Selectors
- * @description
+ *
  * Utility function to determine if the dropdown is opened.
  */
 export const isOpened = <TItem>(
@@ -1669,7 +1707,7 @@ export type OpenedState<TItem> =
 
 /**
  * @group Selectors
- * @description
+ *
  * Utility function to determine if the dropdown is closed.
  */
 export const isClosed = <TItem>(
@@ -1681,7 +1719,7 @@ export type ClosedState<TItem> = Exclude<ModelState<TItem>, OpenedState<TItem>>;
 
 /**
  * @group Selectors
- * @description
+ *
  * Utility function to determine if any item is highlighted.
  */
 export const isHighlighted = <TItem>(
@@ -1699,7 +1737,7 @@ export type HighlightedState<TItem> =
 
 /**
  * @group Selectors
- * @description
+ *
  * Utility function to determine if input is blurred.
  */
 export const isBlurred = <TItem>(
@@ -1713,7 +1751,7 @@ export type BlurredState<TItem> = UnselectedBlurred | SelectedBlurred<TItem>;
 
 /**
  * @group Selectors
- * @description
+ *
  */
 export const isSelectionFocused = <T>(
   model: ModelState<T>
@@ -1723,7 +1761,7 @@ export const isSelectionFocused = <T>(
 
 /**
  * @group Selectors
- * @description
+ *
  * Utility function to determine if input is focused.
  */
 export const isFocused = <TItem>(
@@ -1738,14 +1776,14 @@ export type FocusedState<TItem> = Exclude<
 
 /**
  * @group Selectors
- * @description
+ *
  * This function returns the value that the input element should have.
  */
 export const toCurrentInputValue = <TItem>(
   config: Config<TItem>,
   model: Model<TItem>
 ): string => {
-  if (model.selectOnly) {
+  if (model.inputMode.type === "select-only") {
     return modelToInputValue(config, model);
   }
 
@@ -1775,7 +1813,7 @@ export const toCurrentInputValue = <TItem>(
 
 /**
  * @group Selectors
- * @description
+ *
  * This function returns the highlighted item.
  */
 export const toHighlightedItem = <TItem>(
@@ -1804,7 +1842,7 @@ export const toHighlightedItem = <TItem>(
 
 /**
  * @group Selectors
- * @description
+ *
  * Utility function to determine if an item is highlighted.
  */
 export const isItemHighlighted = <TItem>(
@@ -1821,7 +1859,7 @@ export const isItemHighlighted = <TItem>(
 
 /**
  * @group Selectors
- * @description
+ *
  * This function returns the selected item
  */
 export const toSelections = <TItem>(model: Model<TItem>): TItem[] => {
@@ -1843,7 +1881,7 @@ export const toSelections = <TItem>(model: Model<TItem>): TItem[] => {
 
 /**
  * @group Selectors
- * @description
+ *
  * This function returns the selected item
  */
 export const toSelectedItem = <TItem>(model: Model<TItem>): TItem | null => {
@@ -1853,7 +1891,7 @@ export const toSelectedItem = <TItem>(model: Model<TItem>): TItem | null => {
     case "selected__focused__closed":
     case "selected__focused__opened__highlighted":
     case "selection_focused":
-      if (isSingle(model.selected)) {
+      if (isSingleton(model.selected)) {
         return model.selected[0];
       }
       return null;
@@ -1868,7 +1906,7 @@ export const toSelectedItem = <TItem>(model: Model<TItem>): TItem | null => {
 
 /**
  * @group Selectors
- * @description
+ *
  * Utility function to determine if an item is selected.
  */
 export const isItemSelected = <TItem>(
@@ -1898,7 +1936,7 @@ export const isItemSelected = <TItem>(
 
 /**
  * @group Selectors
- * @description
+ *
  * Selector function to determine if an index is selected.
  */
 export const isItemIndexHighlighted = <TItem>(
@@ -1925,7 +1963,7 @@ export const isItemIndexHighlighted = <TItem>(
 
 /**
  * @group Selectors
- * @description
+ *
  * Selector function to determine if an item is selected and highlighted.
  */
 export const isItemSelectedAndHighlighted = <TItem>(
@@ -1959,7 +1997,7 @@ export const isSelectedItemFocused = <T>(
 
 /**
  * @group Selectors
- * @description
+ *
  * This type represents all the possible states of an item
  */
 export type ItemStatus =
@@ -1970,7 +2008,7 @@ export type ItemStatus =
 
 /**
  * @group Selectors
- * @description
+ *
  * This utility function returns the status of an item.
  */
 export const toItemStatus = <TItem>(
@@ -1995,12 +2033,12 @@ export const toItemStatus = <TItem>(
 
 /**
  * @group Selectors
- * @description
+ *
  * This function returns the all the visible items.
  * This function really isn't necessary, but it's here for a more consistent API.
  */
 export const toVisibleItems = <T>(config: Config<T>, model: Model<T>): T[] => {
-  if (model.selectOnly) {
+  if (model.inputMode.type === "select-only") {
     return model.allItems;
   }
   return config.deterministicFilter(model);
@@ -2010,7 +2048,7 @@ export const toVisibleItems = <T>(config: Config<T>, model: Model<T>): T[] => {
 
 /**
  * @group Helpers
- * @description
+ *
  * This helper function converts a keyboard event key property to a message.
  **/
 export const keyToMsg = <T>(
@@ -2069,15 +2107,15 @@ export const keyToMsg = <T>(
 export const toSelectedItemDirection = <T>(
   model: Model<T>
 ): SelectedItemsDirection | null => {
-  if (model.mode.type === "multi-select") {
-    return model.mode.selectedItemsDirection;
+  if (model.selectMode.type === "multi-select") {
+    return model.selectMode.selectedItemsDirection;
   }
   return null;
 };
 
 /**
  * @group Selectors
- * @description
+ *
  * This function returns an object of all the returns of all the selectors.
  */
 export const toState = <T>(config: Config<T>, model: Model<T>) => {
@@ -2105,34 +2143,10 @@ export const toState = <T>(config: Config<T>, model: Model<T>) => {
 
 /**
  *
- *
- * Helpers
- *
- *
- */
-
-const removeFirst = <T>(predicate: (x: T) => boolean, arr: T[]): T[] => {
-  const index = arr.findIndex(predicate);
-  if (index === -1) return arr;
-  return [...arr.slice(0, index), ...arr.slice(index + 1)];
-};
-
-type NonEmpty<T> = [T, ...T[]];
-
-const isNonEmpty = <T>(arr: T[]): arr is NonEmpty<T> => {
-  return arr.length > 0;
-};
-
-export const isSingle = <T>(arr: T[]): arr is [T] => {
-  return arr.length === 1;
-};
-
-/**
- *
  * @param updateOutput
  * @param handlers
  *
- * @description
+ *
  * Helper function to run effects with less boilerplate.
  */
 export const runEffects = <T>(

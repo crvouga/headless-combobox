@@ -70,7 +70,7 @@ export const ariaItemList = <T>(config: Config<T>, model: Model<T>) => {
     role: "listbox",
     "aria-labelledby": inputLabelHtmlId(config),
     tabindex: -1,
-    "aria-multiselectable": model.mode.type === "multi-select",
+    "aria-multiselectable": model.selectMode.type === "multi-select",
   } as const;
 };
 

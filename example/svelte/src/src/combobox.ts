@@ -260,7 +260,7 @@ export type Effect<TItem> =
       item: TItem;
     }
   | {
-      type: "focus-selected-item";
+      type: "focus-selection";
       item: TItem;
     }
   | {
@@ -364,7 +364,7 @@ export const update = <TItem>(
       output.model.selections[output.model.focusedIndex];
     if (selectedHighlightedItem) {
       output.effects.push({
-        type: "focus-selected-item",
+        type: "focus-selection",
         item: selectedHighlightedItem,
       });
     }
@@ -1839,7 +1839,7 @@ export const runEffects = <T>(
         handlers.scrollItemIntoView(effect.item);
         break;
       }
-      case "focus-selected-item": {
+      case "focus-selection": {
         handlers.focusSelectedItem(effect.item);
         break;
       }

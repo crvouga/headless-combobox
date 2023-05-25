@@ -23,7 +23,7 @@
     { id: 9, label: "grape" },
   ];
 
-  let selectedItems: { [itemId: string]: HTMLElement } = {};
+  let selectionRefs: { [itemId: string]: HTMLElement } = {};
   let items: { [itemId: string]: HTMLElement } = {};
   let input: HTMLInputElement | null = null;
 
@@ -71,7 +71,7 @@
 
     Combobox.runEffects(output, {
       focusSelectedItem: (selectedItem) => {
-        selectedItems[selectedItem.id]?.focus();
+        selectionRefs[selectedItem.id]?.focus();
       },
       focusInput: () => {
         input?.focus();
@@ -127,24 +127,24 @@
       class:rtl={state.selectedItemDirection === "right-to-left"}
       {...state.aria.selectedList}
     >
-      {#each state.selections as selectedItem}
+      {#each state.selections as selection}
         <li
-          {...state.aria.selectedItem(selectedItem)}
-          bind:this={selectedItems[selectedItem.id]}
+          {...state.aria.selectedItem(selection)}
+          bind:this={selectionRefs[selection.id]}
           class="chip"
-          class:chip-highlighted={state.isSelectedItemFocused(selectedItem)}
+          class:chip-highlighted={state.isSelectedItemFocused(selection)}
           on:mousedown|preventDefault
           on:focus={() =>
-            dispatch({ type: "focused-selected-item", item: selectedItem })}
+            dispatch({ type: "focused-selected-item", item: selection })}
           on:blur={() =>
-            dispatch({ type: "blurred-selected-item", item: selectedItem })}
+            dispatch({ type: "blurred-selected-item", item: selection })}
         >
-          {selectedItem.label}
+          {selection.label}
           <span
-            {...state.aria.unselectButton(selectedItem)}
+            {...state.aria.unselectButton(selection)}
             class="chip-delete-btn"
             on:mousedown|preventDefault={() =>
-              dispatch({ type: "pressed-unselect-button", item: selectedItem })}
+              dispatch({ type: "pressed-unselect-button", item: selection })}
           >
             &times;
           </span>

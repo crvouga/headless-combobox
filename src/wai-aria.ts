@@ -142,7 +142,7 @@ const selectedListItemId = <T>({ namespace, toItemId }: Config<T>, item: T) => {
  */
 const ariaSelectedList = <T>(config: Config<T>, model: Model<T>) => {
   const highlightedSelectedItem = isSelectionFocused(model)
-    ? model.selected[model.focusedIndex] ?? null
+    ? model.selections[model.focusedIndex] ?? null
     : null;
   return {
     id: selectedListId(config),

@@ -340,6 +340,13 @@ export const update = <TItem>(
     });
   }
 
+  // focus on input when user presses it
+  if (msg.type === "pressed-input") {
+    output.effects.push({
+      type: "focus-input",
+    });
+  }
+
   // scroll highlighted item into view when navigating with keyboard
   if (
     isHighlighted(output.model) &&
@@ -536,7 +543,7 @@ const updateModel = <T>(
     msg: Msg<T>;
   }
 ): Model<T> => {
-  const { toItemInputValue, toItemId } = config;
+  const { toItemId } = config;
   switch (model.type) {
     case "blurred": {
       switch (msg.type) {
@@ -574,6 +581,7 @@ const updateModel = <T>(
             ),
           };
         }
+
         default: {
           return model;
         }
@@ -626,9 +634,19 @@ const updateModel = <T>(
         }
 
         case "pressed-vertical-arrow-key": {
+          if (model.selectMode.type === "single-select") {
+            return resetInputValue(config, {
+              ...model,
+              type: "focused__opened",
+            });
+          }
+
+          const selectedItemIndex = toSelectedItemIndex(config, model);
+
           return resetInputValue(config, {
             ...model,
-            type: "focused__opened",
+            highlightIndex: selectedItemIndex ? selectedItemIndex : 0,
+            type: "focused__opened__highlighted",
           });
         }
 
@@ -752,9 +770,11 @@ const updateModel = <T>(
           ) {
             return clearInputValue({
               ...model,
+              selectedItems: [],
               type: "focused__opened",
             });
           }
+
           return setInputValue(model, msg.inputValue);
         }
 
@@ -780,12 +800,7 @@ const updateModel = <T>(
             };
           }
 
-          const delta =
-            model.selectMode.type === "multi-select"
-              ? 0
-              : msg.key === "arrow-down"
-              ? 1
-              : -1;
+          const delta = msg.key === "arrow-down" ? 1 : -1;
 
           const highlightIndex = circularIndex(
             selectedIndex + delta,
@@ -828,12 +843,11 @@ const updateModel = <T>(
             return { ...model, selectedItems: [] };
           }
 
-          if (toInputValue(model) === "") {
-            const removed = model.selectedItems.slice(1);
-            if (isNonEmpty(removed)) {
-              return { ...model, selectedItems: removed };
-            }
-            return { ...model, type: "focused__opened" };
+          if (toSearchValue(model) === "") {
+            return {
+              ...model,
+              selectedItems: model.selectedItems.slice(1),
+            };
           }
           return model;
         }
@@ -1034,7 +1048,7 @@ const updateModel = <T>(
         }
 
         case "pressed-backspace-key": {
-          if (toInputValue(model) === "") {
+          if (toSearchValue(model) === "") {
             const removed = model.selectedItems.slice(1);
             if (isNonEmpty(removed)) {
               return { ...model, selectedItems: removed };
@@ -1111,9 +1125,19 @@ const updateModel = <T>(
         }
 
         case "pressed-vertical-arrow-key": {
-          return clearInputValue({
+          if (model.selectMode.type === "single-select") {
+            return resetInputValue(config, {
+              ...model,
+              type: "focused__opened",
+            });
+          }
+
+          const selectedItemIndex = toSelectedItemIndex(config, model);
+
+          return resetInputValue(config, {
             ...model,
-            type: "focused__opened",
+            highlightIndex: selectedItemIndex ? selectedItemIndex : 0,
+            type: "focused__opened__highlighted",
           });
         }
 
@@ -1128,7 +1152,7 @@ const updateModel = <T>(
               modelToInputValue(config, model)
             );
           }
-          if (toInputValue(model) === "") {
+          if (toSearchValue(model) === "") {
             return setInputValue(
               {
                 ...model,
@@ -1163,16 +1187,9 @@ const updateModel = <T>(
             (_, index) => index !== model.focusedIndex
           );
 
-          if (isNonEmpty(removedHighlightedIndex)) {
-            return clearInputValue({
-              ...model,
-              selectedItems: removedHighlightedIndex,
-              type: "focused__closed",
-            });
-          }
-
           return clearInputValue({
             ...model,
+            selectedItems: removedHighlightedIndex,
             type: "focused__closed",
           });
         }
@@ -1296,6 +1313,18 @@ const toggleSelected = <T>({
   );
 };
 
+const toSelectedItemIndex = <T>(
+  config: Config<T>,
+  model: Model<T>
+): number | null => {
+  const selectedIndex = toVisibleItems(config, model).findIndex((item) =>
+    model.selectedItems.some(
+      (x) => config.toItemId(item) === config.toItemId(x)
+    )
+  );
+  return selectedIndex === -1 ? null : selectedIndex;
+};
+
 const setInputValue = <T>(model: Model<T>, inputValue: string): Model<T> => {
   if (model.inputMode.type === "search-mode") {
     return {
@@ -1313,7 +1342,7 @@ const clearInputValue = <T>(model: Model<T>): Model<T> => {
   return setInputValue(model, "");
 };
 
-const toInputValue = <T>(model: Model<T>): string => {
+const toSearchValue = <T>(model: Model<T>): string => {
   return model.inputMode.type === "search-mode"
     ? model.inputMode.inputValue
     : "";
@@ -1353,7 +1382,7 @@ const updateKeyboardNavigationForSelections = <T>({
     return model;
   }
 
-  if ("inputValue" in model && toInputValue(model) !== "") {
+  if ("inputValue" in model && toSearchValue(model) !== "") {
     return model;
   }
 
@@ -1547,7 +1576,7 @@ export const toCurrentInputValue = <TItem>(
     return modelToInputValue(config, model);
   }
 
-  return toInputValue(model);
+  return toSearchValue(model);
 };
 
 /**

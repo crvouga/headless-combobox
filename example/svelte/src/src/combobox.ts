@@ -87,10 +87,10 @@ export type SelectMode =
     }
   | {
       type: "multi-select";
-      selectedItemsDirection: SelectedItemsDirection;
+      selectionsDirection: selectionsDirection;
     };
 
-export type SelectedItemsDirection = "left-to-right" | "right-to-left";
+export type selectionsDirection = "left-to-right" | "right-to-left";
 
 /**
  * @group Model
@@ -172,19 +172,19 @@ type ModelState<TItem> =
  */
 export const init = <TItem>({
   allItems,
-  mode,
-  selectOnly,
+  selectMode,
+  inputMode,
 }: {
   allItems: TItem[];
-  mode?: SelectMode;
-  selectOnly?: boolean;
+  selectMode?: SelectMode;
+  inputMode?: InputMode;
 }): Model<TItem> => {
   return {
     type: "unselected__blurred",
     allItems,
     skipOnce: [],
-    inputMode: selectOnly ? { type: "select-only" } : { type: "search-mode" },
-    selectMode: mode ? mode : { type: "single-select" },
+    inputMode: inputMode ? inputMode : { type: "search-mode" },
+    selectMode: selectMode ? selectMode : { type: "single-select" },
   };
 };
 
@@ -1322,7 +1322,7 @@ const updateModel = <T>(
 
           if (
             model.focusedIndex === 0 &&
-            model.selectMode.selectedItemsDirection === "right-to-left" &&
+            model.selectMode.selectionsDirection === "right-to-left" &&
             msg.key === "arrow-right"
           ) {
             return {
@@ -1334,7 +1334,7 @@ const updateModel = <T>(
 
           if (
             model.focusedIndex === 0 &&
-            model.selectMode.selectedItemsDirection === "left-to-right" &&
+            model.selectMode.selectionsDirection === "left-to-right" &&
             msg.key === "arrow-left"
           ) {
             return {
@@ -1345,11 +1345,11 @@ const updateModel = <T>(
           }
 
           const delta =
-            model.selectMode.selectedItemsDirection === "right-to-left"
+            model.selectMode.selectionsDirection === "right-to-left"
               ? msg.key === "arrow-right"
                 ? -1
                 : 1
-              : model.selectMode.selectedItemsDirection === "left-to-right"
+              : model.selectMode.selectionsDirection === "left-to-right"
               ? msg.key === "arrow-left"
                 ? -1
                 : 1
@@ -1574,7 +1574,7 @@ const updatePressedHorizontalKey = <T>({
   }
 
   if (
-    model.selectMode.selectedItemsDirection === "right-to-left" &&
+    model.selectMode.selectionsDirection === "right-to-left" &&
     msg.key === "arrow-left"
   ) {
     return {
@@ -1585,7 +1585,7 @@ const updatePressedHorizontalKey = <T>({
   }
 
   if (
-    model.selectMode.selectedItemsDirection === "left-to-right" &&
+    model.selectMode.selectionsDirection === "left-to-right" &&
     msg.key === "arrow-right"
   ) {
     return {
@@ -1602,6 +1602,13 @@ const modelToInputValue = <TItem>(
   config: Config<TItem>,
   model: Model<TItem>
 ): string => {
+  if (
+    model.inputMode.type === "select-only" &&
+    model.selectMode.type === "multi-select"
+  ) {
+    return "";
+  }
+
   if (model.inputMode.type === "select-only") {
     const emptyItem = model.allItems.find((item) => config.isEmptyItem(item));
     if (isSelected(model)) {
@@ -2035,7 +2042,6 @@ export const toItemStatus = <TItem>(
  * @group Selectors
  *
  * This function returns the all the visible items.
- * This function really isn't necessary, but it's here for a more consistent API.
  */
 export const toVisibleItems = <T>(config: Config<T>, model: Model<T>): T[] => {
   if (model.inputMode.type === "select-only") {
@@ -2106,9 +2112,9 @@ export const keyToMsg = <T>(
 
 export const toSelectedItemDirection = <T>(
   model: Model<T>
-): SelectedItemsDirection | null => {
+): selectionsDirection | null => {
   if (model.selectMode.type === "multi-select") {
-    return model.selectMode.selectedItemsDirection;
+    return model.selectMode.selectionsDirection;
   }
   return null;
 };
@@ -2122,7 +2128,7 @@ export const toState = <T>(config: Config<T>, model: Model<T>) => {
   return {
     aria: aria(config, model),
     allItems: model.allItems,
-    items: toVisibleItems(config, model),
+    visibleItems: toVisibleItems(config, model),
     isOpened: isOpened(model),
     selections: toSelections(model),
     inputValue: toCurrentInputValue(config, model),

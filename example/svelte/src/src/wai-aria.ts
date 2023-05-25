@@ -5,7 +5,7 @@ import {
   toHighlightedItem,
   type Config,
   type Model,
-} from "./core";
+} from "./combobox";
 
 /** @module WAI-ARIA **/
 

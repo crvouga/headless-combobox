@@ -50,9 +50,9 @@
 
   let model = Combobox.init({
     allItems: fruits,
-    mode: {
+    selectMode: {
       type: "multi-select",
-      selectedItemsDirection: "right-to-left",
+      selectionsDirection: "right-to-left",
     },
   });
 
@@ -171,10 +171,10 @@
       class="suggestions"
       class:hide={!state.isOpened}
     >
-      {#if state.items.length === 0}
+      {#if state.visibleItems.length === 0}
         <li>No results</li>
       {/if}
-      {#each state.items as item, index}
+      {#each state.visibleItems as item, index}
         <li
           {...state.aria.item(item)}
           bind:this={items[item.id]}

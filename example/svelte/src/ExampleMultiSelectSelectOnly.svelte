@@ -11,7 +11,6 @@
 
   type Item = { id: number; label: string; isEmptyItem?: boolean };
   const fruits: Item[] = [
-    { id: 123, label: "Unselect all fruits", isEmptyItem: true },
     { id: 0, label: "pear" },
     { id: 1, label: "apple" },
     { id: 2, label: "banana" },
@@ -39,7 +38,6 @@
   const config = Combobox.initConfig<Item>({
     toItemId: (item) => item.id,
     toItemInputValue: (item) => item.label,
-    isEmptyItem: (item) => item?.isEmptyItem ?? false,
   });
 
   /*
@@ -52,11 +50,11 @@
 
   let model = Combobox.init({
     allItems: fruits,
-    mode: {
+    selectMode: {
       type: "multi-select",
-      selectedItemsDirection: "right-to-left",
+      selectionsDirection: "right-to-left",
     },
-    selectOnly: true,
+    inputMode: { type: "select-only" },
   });
 
   /*
@@ -161,7 +159,6 @@
       on:focus={() => dispatch({ type: "focused-input" })}
       on:blur={() => dispatch({ type: "blurred-input" })}
       on:click={() => dispatch({ type: "pressed-input" })}
-      on:keydown={(event) => dispatch(Combobox.keyToMsg(event.key))}
     >
       {state.inputValue}
     </div>
@@ -171,10 +168,10 @@
       class="suggestions"
       class:hide={!state.isOpened}
     >
-      {#if state.items.length === 0}
+      {#if state.visibleItems.length === 0}
         <li>No results</li>
       {/if}
-      {#each state.items as item, index}
+      {#each state.visibleItems as item, index}
         <li
           {...state.aria.item(item)}
           bind:this={items[item.id]}
@@ -214,10 +211,10 @@
   }
   .input {
     width: 100%;
-
     font-size: large;
-    padding: 0.5rem;
+    padding: 1rem;
     box-sizing: border-box;
+    background-color: #343434;
     border: 1px solid #ccc;
   }
   .suggestions {

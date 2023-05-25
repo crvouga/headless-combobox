@@ -7,7 +7,7 @@ import {
   type Config,
   type Model,
   type Msg,
-} from "./core";
+} from "./combobox";
 
 type State<T> = ReturnType<typeof toState<T>>;
 

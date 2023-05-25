@@ -1,6 +1,6 @@
-import { removeFirst } from "./helpers";
+import { aria } from "./combobox-wai-aria";
 import { isNonEmpty, type NonEmpty } from "./non-empty";
-import { aria } from "./wai-aria";
+import { circularIndex, clampIndex, removeFirst } from "./utils";
 
 /** @module Config **/
 
@@ -1449,20 +1449,6 @@ const modelToInputValue = <T>(config: Config<T>, model: Model<T>): string => {
   }
 
   return "";
-};
-
-const circularIndex = (index: number, length: number) => {
-  if (length === 0) {
-    return 0;
-  }
-  return ((index % length) + length) % length;
-};
-
-const clampIndex = (index: number, length: number) => {
-  if (length === 0) {
-    return 0;
-  }
-  return Math.min(Math.max(0, index), length - 1);
 };
 
 /** @module Selectors **/

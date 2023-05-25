@@ -780,7 +780,12 @@ const updateModel = <T>(
             };
           }
 
-          const delta = msg.key === "arrow-down" ? 1 : -1;
+          const delta =
+            model.selectMode.type === "multi-select"
+              ? 0
+              : msg.key === "arrow-down"
+              ? 1
+              : -1;
 
           const highlightIndex = circularIndex(
             selectedIndex + delta,

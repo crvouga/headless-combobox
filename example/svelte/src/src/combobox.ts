@@ -907,10 +907,7 @@ const updateModel = <T>(
           const removed = model.selectedItems.filter(
             (x) => toItemId(x) !== toItemId(msg.item)
           );
-          if (isNonEmpty(removed)) {
-            return { ...model, selectedItems: removed };
-          }
-          return { ...model, type: "focused__opened" };
+          return { ...model, selectedItems: removed };
         }
 
         case "pressed-backspace-key": {
@@ -1098,10 +1095,8 @@ const updateModel = <T>(
           const removed = model.selectedItems.filter(
             (x) => toItemId(x) !== toItemId(msg.item)
           );
-          if (isNonEmpty(removed)) {
-            return { ...model, selectedItems: removed };
-          }
-          return { ...model, type: "focused__opened__highlighted" };
+
+          return { ...model, selectedItems: removed };
         }
 
         case "focused-selected-item": {

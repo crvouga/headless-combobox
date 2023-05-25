@@ -52,7 +52,7 @@
     allItems: fruits,
     selectMode: {
       type: "multi-select",
-      selectionsDirection: "right-to-left",
+      selectedItemListDirection: "right-to-left",
     },
     inputMode: { type: "select-only" },
   });
@@ -128,7 +128,7 @@
       class:rtl={state.selectedItemDirection === "right-to-left"}
       {...state.aria.selectedList}
     >
-      {#each state.selections as selectedItem}
+      {#each state.selectedItems as selectedItem}
         <li
           {...state.aria.selectedItem(selectedItem)}
           bind:this={selectedItems[selectedItem.id]}

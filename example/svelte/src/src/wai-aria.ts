@@ -1,7 +1,7 @@
 import {
   isItemSelected,
   isOpened,
-  isSelectionFocused,
+  isSelectedItemHighlighted,
   toHighlightedItem,
   type Config,
   type Model,
@@ -141,8 +141,8 @@ const selectedListItemId = <T>({ namespace, toItemId }: Config<T>, item: T) => {
  * @group WAI-ARIA
  */
 const ariaSelectedList = <T>(config: Config<T>, model: Model<T>) => {
-  const highlightedSelectedItem = isSelectionFocused(model)
-    ? model.selections[model.focusedIndex] ?? null
+  const highlightedSelectedItem = isSelectedItemHighlighted(model)
+    ? model.selectedItems[model.focusedIndex] ?? null
     : null;
   return {
     id: selectedListId(config),

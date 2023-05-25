@@ -69,7 +69,7 @@ export const simpleFilter = <TItem>(
  * The Model<TItem> represents the state of the combobox.
  * This is the data you will be saving in your app.
  */
-export type Model<TItem> = ModelState<TItem> & {
+export type Model<TItem> = ModelState & {
   allItems: TItem[];
   selections: TItem[];
   skipOnce: Msg<TItem>["type"][];
@@ -105,37 +105,37 @@ export type InputMode =
       type: "search-mode";
     };
 
-type Blurred<TItem> = {
+type Blurred = {
   type: "blurred";
 };
 
-type FocusedClosed<TItem> = {
+type FocusedClosed = {
   type: "focused__closed";
   inputValue: string;
 };
 
-type FocusedOpened<TItem> = {
+type FocusedOpened = {
   type: "focused__opened";
   inputValue: string;
 };
 
-type FocusedOpenedHighlighted<TItem> = {
+type FocusedOpenedHighlighted = {
   type: "focused__opened__highlighted";
   inputValue: string;
   highlightIndex: number;
 };
 
-type SelectionHighlighted<TItem> = {
+type SelectionHighlighted = {
   type: "selection_highlighted";
   focusedIndex: number;
 };
 
-type ModelState<TItem> =
-  | Blurred<TItem>
-  | FocusedClosed<TItem>
-  | FocusedOpened<TItem>
-  | FocusedOpenedHighlighted<TItem>
-  | SelectionHighlighted<TItem>;
+type ModelState =
+  | Blurred
+  | FocusedClosed
+  | FocusedOpened
+  | FocusedOpenedHighlighted
+  | SelectionHighlighted;
 
 /**
  * @group Model
@@ -1321,7 +1321,7 @@ const updateKeyboardNavigationForSelections = <T>({
   model,
   msg,
 }: {
-  model: Model<T> & FocusedState<T>;
+  model: Model<T> & FocusedState;
   msg: Msg<T>;
 }): Model<T> => {
   if (!isSelected(model)) {
@@ -1435,7 +1435,7 @@ export type SelectedState<T> = Model<T> & { selections: NonEmpty<T> };
  * Utility function to determine if in unselected state
  */
 export const isUnselected = <TItem>(
-  model: ModelState<TItem>
+  model: ModelState
 ): model is UnselectedState<TItem> => {
   return (
     model.type === "focused__opened" ||
@@ -1444,72 +1444,58 @@ export const isUnselected = <TItem>(
     model.type === "focused__closed"
   );
 };
-export type UnselectedState<TItem> = Exclude<
-  ModelState<TItem>,
-  SelectedState<TItem>
->;
+export type UnselectedState<TItem> = Exclude<ModelState, SelectedState<TItem>>;
 
 /**
  * @group Selectors
  *
  * Utility function to determine if the dropdown is opened.
  */
-export const isOpened = <TItem>(
-  model: ModelState<TItem>
-): model is OpenedState<TItem> => {
+export const isOpened = (model: ModelState): model is OpenedState => {
   return (
     model.type === "focused__opened" ||
     model.type === "focused__opened__highlighted"
   );
 };
-export type OpenedState<TItem> =
-  | FocusedOpened<TItem>
-  | FocusedOpenedHighlighted<TItem>;
+export type OpenedState = FocusedOpened | FocusedOpenedHighlighted;
 
 /**
  * @group Selectors
  *
  * Utility function to determine if the dropdown is closed.
  */
-export const isClosed = <TItem>(
-  model: ModelState<TItem>
-): model is ClosedState<TItem> => {
+export const isClosed = (model: ModelState): model is ClosedState => {
   return !isOpened(model);
 };
-export type ClosedState<TItem> = Exclude<ModelState<TItem>, OpenedState<TItem>>;
+export type ClosedState = Exclude<ModelState, OpenedState>;
 
 /**
  * @group Selectors
  *
  * Utility function to determine if any item is highlighted.
  */
-export const isHighlighted = <TItem>(
-  model: ModelState<TItem>
-): model is HighlightedState<TItem> => {
+export const isHighlighted = (
+  model: ModelState
+): model is FocusedOpenedHighlighted => {
   return model.type === "focused__opened__highlighted";
 };
-
-export type HighlightedState<TItem> = FocusedOpenedHighlighted<TItem>;
 
 /**
  * @group Selectors
  *
  * Utility function to determine if input is blurred.
  */
-export const isBlurred = <TItem>(
-  model: ModelState<TItem>
-): model is Blurred<TItem> => {
+export const isBlurred = (model: ModelState): model is Blurred => {
   return model.type === "blurred";
 };
-export type BlurredState<TItem> = Blurred<TItem>;
 
 /**
  * @group Selectors
  *
  */
-export const isSelectionFocused = <T>(
-  model: ModelState<T>
-): model is SelectionHighlighted<T> => {
+export const isSelectionFocused = (
+  model: ModelState
+): model is SelectionHighlighted => {
   return model.type === "selection_highlighted";
 };
 
@@ -1518,15 +1504,10 @@ export const isSelectionFocused = <T>(
  *
  * Utility function to determine if input is focused.
  */
-export const isFocused = <TItem>(
-  model: ModelState<TItem>
-): model is FocusedState<TItem> => {
+export const isFocused = (model: ModelState): model is FocusedState => {
   return !isBlurred(model);
 };
-export type FocusedState<TItem> = Exclude<
-  ModelState<TItem>,
-  BlurredState<TItem>
->;
+export type FocusedState = Exclude<ModelState, Blurred>;
 
 /**
  * @group Selectors

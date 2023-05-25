@@ -6,6 +6,8 @@
 
 I'm comfortable using this in my projects but use at your own risk!
 
+The public API may be unstable.
+
 Let me know if you find any issues.
 
 ## Pros
@@ -20,18 +22,18 @@ Let me know if you find any issues.
 - 🌳 Simple pure functional [Elm](https://elm-lang.org/)-like API
 - 💼 Works anywhere JavaScript works.
   - React Native
+  - Vanilla JS & HTML
   - Vue
   - Node.js
   - Redux (Since the API is just pure functions)
-  - Any legacy JS framework
-  - etc.
+  - Any JS framework
 
 ## Cons
 
 - 🧠 Headless. You do have to write your own styles.
 - 🔌 Framework agnostic. You do have to write error prone adapter code.
-- 🌳 [Elm](https://elm-lang.org/)-like API. Some people may hate that.
-- 📚 Missing good documentation.
+- 🌳 [Elm](https://elm-lang.org/)-like API. People may hate that.
+- 📚 Missing good documentation. The only way to learn this library is through the examples.
 - 🧪 Missing automated tests. (This is one is on the agenda)
 
 ## Good use cases are
@@ -77,9 +79,9 @@ pnpm install headless-combobox
 - [match-sorter](https://github.com/kentcdodds/match-sorter) for filtering items
 - [floating-ui](https://floating-ui.com/) for rendering the drop down.
 
-## Credits
+## Credit
 
-This library is inspired by the following libraries:
+This library is steals from these following libraries:
 
 - [MUI's Autocomplete](https://mui.com/material-ui/react-autocomplete/#multiple-values)
 - [Headless UI's Combobox](https://headlessui.com/react/combobox)
@@ -90,7 +92,7 @@ This library is inspired by the following libraries:
 
 ```svelte
 <script lang="ts">
-  import * as Combobox from "headless-combobox";
+  import * as Combobox from "./src";
 
   /*
 
@@ -206,10 +208,10 @@ This library is inspired by the following libraries:
       class="suggestions"
       class:hide={!state.isOpened}
     >
-      {#if state.items.length === 0}
+      {#if state.visibleItems.length === 0}
         <li>No results</li>
       {/if}
-      {#each state.items as item, index}
+      {#each state.visibleItems as item, index}
         <li
           {...state.aria.item(item)}
           bind:this={items[item.id]}
@@ -306,4 +308,5 @@ This library is inspired by the following libraries:
     background-color: lightblue;
   }
 </style>
+
 ```

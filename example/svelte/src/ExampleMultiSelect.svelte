@@ -69,7 +69,7 @@
 
     model = output.model;
 
-    Combobox.runEffects(output, {
+    Combobox.handleEffects(output, {
       focusSelectedItem: (selectedItem) => {
         selectionRefs[selectedItem.id]?.focus();
       },

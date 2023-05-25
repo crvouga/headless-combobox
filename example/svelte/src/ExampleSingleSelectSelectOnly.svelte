@@ -65,7 +65,7 @@
 
     model = output.model;
 
-    Combobox.runEffects(output, {
+    Combobox.handleEffects(output, {
       focusInput: () => {
         input?.focus();
       },

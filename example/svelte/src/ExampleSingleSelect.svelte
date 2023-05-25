@@ -3,7 +3,9 @@
 
   /*
 
+
   Step 0: Have some data to display
+
 
   */
 
@@ -26,7 +28,9 @@
 
   /*
 
+
   Step 1: Init the config
+
 
   */
 
@@ -37,15 +41,28 @@
 
   /*
 
+
   Step 2: Init the state
+
 
   */
 
-  let model = Combobox.init({ allItems: fruits });
+  let model = Combobox.init({
+    allItems: fruits,
+    inputMode: {
+      type: "search-mode",
+      inputValue: "",
+    },
+    selectMode: {
+      type: "single-select",
+    },
+  });
 
   /*
 
+
   Step 3: Write some glue code
+
 
   */
 
@@ -60,7 +77,7 @@
 
     model = output.model;
 
-    Combobox.runEffects(output, {
+    Combobox.handleEffects(output, {
       focusInput: () => {
         input?.focus();
       },
@@ -69,11 +86,24 @@
         items[item.id]?.scrollIntoView({ block: "nearest" });
       },
     });
+
+    // useful for emitting changed events to parent components
+    Combobox.handleEvents(output, {
+      onInputValueChanged() {
+        console.log("onInputValueChanged");
+      },
+      onSelectedItemsChanged() {
+        console.log("onSelectedItemsChanged");
+      },
+    });
   };
 
   /*
 
-  Step 3: Wire up to the UI
+
+  Step 4: Wire up to the UI
+
+  ⚠️ This is the error prone part
 
   */
 
@@ -124,6 +154,7 @@
           bind:this={items[item.id]}
           on:mousemove={() => dispatch({ type: "hovered-over-item", index })}
           on:mousedown|preventDefault={() =>
+            /* Make sure it's a mousedown event instead of click event */
             dispatch({ type: "pressed-item", item })}
           on:focus={() => dispatch({ type: "hovered-over-item", index })}
           class="option"
@@ -139,6 +170,13 @@
   </div>
 </div>
 
+<!--
+
+
+  We get to use our own styles 🎉
+
+
+ -->
 <style>
   .container {
     width: 100%;

@@ -269,35 +269,51 @@ export type Effect<TItem> =
 /**
  * @group Update
  *
+ * The Effect<TItem> represents all the possible effects that can happen to the combobox.
+ * You as the user of the library has to implement the side effects
+ **/
+export type Event =
+  | {
+      type: "input-value-changed";
+    }
+  | {
+      type: "selected-items-changed";
+    };
+
+/**
+ * @group Update
+ *
  * The update function is the main function.
  * The update function takes the current state of the combobox and a message and returns the new state of the
  * combobox and effects that need to be run.
  */
 export const update = <TItem>(
   config: Config<TItem>,
-  {
-    msg,
-    model,
-  }: {
+  input: {
     model: Model<TItem>;
     msg: Msg<TItem>;
   }
 ): {
   model: Model<TItem>;
   effects: Effect<TItem>[];
+  events: Event[];
 } => {
   /**
    *
    *
    *
    */
-  if (model.skipOnce.includes(msg.type)) {
+  if (input.model.skipOnce.includes(input.msg.type)) {
     return {
       model: {
-        ...model,
-        skipOnce: removeFirst((m) => m === msg.type, model.skipOnce),
+        ...input.model,
+        skipOnce: removeFirst(
+          (m) => m === input.msg.type,
+          input.model.skipOnce
+        ),
       },
       effects: [],
+      events: [],
     };
   }
 
@@ -310,9 +326,11 @@ export const update = <TItem>(
   let output: {
     model: Model<TItem>;
     effects: Effect<TItem>[];
+    events: Event[];
   } = {
-    model,
+    model: input.model,
     effects: [],
+    events: [],
   };
 
   /**
@@ -322,8 +340,8 @@ export const update = <TItem>(
    */
 
   output.model = updateSetters({
-    msg,
-    model: updateModel(config, { msg, model }),
+    msg: input.msg,
+    model: updateModel(config, input),
   });
 
   /**
@@ -333,7 +351,11 @@ export const update = <TItem>(
    */
 
   // scroll to selected item into view when state changes from closed to opened
-  if (isClosed(model) && isOpened(output.model) && isSelected(output.model)) {
+  if (
+    isClosed(input.model) &&
+    isOpened(output.model) &&
+    isSelected(output.model)
+  ) {
     output.effects.push({
       type: "scroll-item-into-view",
       item: output.model.selectedItems[0],
@@ -341,7 +363,7 @@ export const update = <TItem>(
   }
 
   // focus on input when user presses it
-  if (msg.type === "pressed-input") {
+  if (input.msg.type === "pressed-input") {
     output.effects.push({
       type: "focus-input",
     });
@@ -350,7 +372,7 @@ export const update = <TItem>(
   // scroll highlighted item into view when navigating with keyboard
   if (
     isHighlighted(output.model) &&
-    msg.type === "pressed-vertical-arrow-key"
+    input.msg.type === "pressed-vertical-arrow-key"
   ) {
     const visible = toVisibleItems(config, output.model);
 
@@ -378,7 +400,7 @@ export const update = <TItem>(
 
   // focus on input when navigating selected items with keyboard
   if (
-    isSelectedItemHighlighted(model) &&
+    isSelectedItemHighlighted(input.model) &&
     !isSelectedItemHighlighted(output.model)
   ) {
     output.effects.push({
@@ -387,7 +409,7 @@ export const update = <TItem>(
   }
 
   // focus on input after clearing selectedItems
-  if (msg.type === "pressed-unselect-all-button") {
+  if (input.msg.type === "pressed-unselect-all-button") {
     output.effects.push({
       type: "focus-input",
     });
@@ -408,7 +430,7 @@ export const update = <TItem>(
 
    */
   if (
-    isClosed(model) &&
+    isClosed(input.model) &&
     isOpened(output.model) &&
     output.effects.some((effect) => effect.type === "scroll-item-into-view")
   ) {
@@ -418,7 +440,7 @@ export const update = <TItem>(
     };
   }
 
-  if (isClosed(model) && isOpened(output.model)) {
+  if (isClosed(input.model) && isOpened(output.model)) {
     output.model = {
       ...output.model,
       skipOnce: [...output.model.skipOnce, "hovered-over-item"],
@@ -460,7 +482,8 @@ export const update = <TItem>(
 
    */
   if (
-    (isBlurred(model) || model.type === "selected-item-highlighted") &&
+    (isBlurred(input.model) ||
+      input.model.type === "selected-item-highlighted") &&
     isFocused(output.model)
   ) {
     output.model = {
@@ -469,7 +492,53 @@ export const update = <TItem>(
     };
   }
 
+  /**
+   *
+   *
+   * Add events
+   *
+   *
+   */
+
+  if (
+    input.model.inputMode.type === "search-mode" &&
+    output.model.inputMode.type === "search-mode" &&
+    input.model.inputMode.inputValue !== output.model.inputMode.inputValue
+  ) {
+    output.events.push({ type: "input-value-changed" });
+  }
+
+  if (!isSelectedItemsEqual(config, input.model, output.model)) {
+    output.events.push({ type: "selected-items-changed" });
+  }
+
   return output;
+};
+
+const isSelectedItemsEqual = <T>(
+  config: Config<T>,
+  a: Model<T>,
+  b: Model<T>
+): boolean => {
+  if (a.selectedItems.length !== b.selectedItems.length) {
+    return false;
+  }
+
+  for (let i = 0; i < a.selectedItems.length; i++) {
+    const itemA = a.selectedItems[i];
+    if (!itemA) {
+      return false;
+    }
+    const itemB = b.selectedItems[i];
+    if (!itemB) {
+      return false;
+    }
+    if (config.toItemId(itemA) !== config.toItemId(itemB)) {
+      return false;
+    }
+  }
+
+  return true;
 };
 
 const updateSetters = <TItem>({
@@ -979,7 +1048,10 @@ const updateModel = <T>(
 
           if (model.selectMode.type === "single-select") {
             const modelNew = addSelected({
-              model,
+              model: {
+                ...model,
+                type: "focused__closed",
+              },
               item: enteredItem,
               config,
             });
@@ -1826,14 +1898,9 @@ export const toState = <T>(config: Config<T>, model: Model<T>) => {
 };
 
 /**
- *
- * @param updateOutput
- * @param handlers
- *
- *
- * Helper function to run effects with less boilerplate.
+ * Run effects on the output of the update function
  */
-export const runEffects = <T>(
+export const handleEffects = <T>(
   { effects }: { effects: Effect<T>[] },
   handlers: {
     scrollItemIntoView: (item: T) => void;
@@ -1854,6 +1921,37 @@ export const runEffects = <T>(
       case "focus-input": {
         handlers.focusInput();
         break;
+      }
+      default: {
+        const check: never = effect;
+        return check;
+      }
+    }
+  }
+};
+
+export const handleEvents = <T>(
+  { events }: { events: Event[] },
+  handlers: {
+    onInputValueChanged?: () => void;
+    onSelectedItemsChanged?: () => void;
+  }
+) => {
+  for (const event of events) {
+    switch (event.type) {
+      case "input-value-changed": {
+        handlers.onInputValueChanged?.();
+        break;
+      }
+
+      case "selected-items-changed": {
+        handlers.onSelectedItemsChanged?.();
+        break;
+      }
+
+      default: {
+        const check: never = event;
+        return check;
       }
     }
   }

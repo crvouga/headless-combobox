@@ -17,3 +17,19 @@ export const clampIndex = (index: number, length: number) => {
   }
   return Math.min(Math.max(0, index), length - 1);
 };
+
+export const uniqueBy = <TItem>(
+  items: TItem[],
+  toKey: (item: TItem) => string | number
+): TItem[] => {
+  const seen = new Set<string | number>();
+  const result: TItem[] = [];
+  for (const item of items) {
+    const key = toKey(item);
+    if (!seen.has(key)) {
+      seen.add(key);
+      result.push(item);
+    }
+  }
+  return result;
+};

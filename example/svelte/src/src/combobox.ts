@@ -686,11 +686,20 @@ const updateModel = <T>(
             model.inputMode.type === "search-mode" &&
             model.inputMode.inputValue === ""
           ) {
-            const removed = model.selectedItems.slice(1);
-            if (isNonEmpty(removed)) {
-              return { ...model, selectedItems: removed };
-            }
-            return { ...model, type: "focused__opened" };
+            return {
+              ...model,
+              selectedItems: model.selectedItems.slice(1),
+            };
+          }
+
+          if (
+            model.inputMode.type === "select-only" &&
+            model.selectMode.type === "multi-select"
+          ) {
+            return {
+              ...model,
+              selectedItems: model.selectedItems.slice(1),
+            };
           }
 
           return model;
@@ -795,7 +804,12 @@ const updateModel = <T>(
             };
           }
 
-          const delta = msg.key === "arrow-down" ? 1 : -1;
+          const delta =
+            model.selectMode.type === "multi-select"
+              ? 0
+              : msg.key === "arrow-down"
+              ? 1
+              : -1;
 
           const highlightIndex = circularIndex(
             selectedIndex + delta,

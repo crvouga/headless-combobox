@@ -25,7 +25,7 @@
 
   let selectedItems: { [itemId: string]: HTMLElement } = {};
   let items: { [itemId: string]: HTMLElement } = {};
-  let input: HTMLInputElement | null = null;
+  let input: HTMLDivElement | null = null;
 
   /*
 
@@ -156,6 +156,7 @@
     <div
       {...state.aria.input}
       class="input"
+      bind:this={input}
       on:focus={() => dispatch({ type: "focused-input" })}
       on:blur={() => dispatch({ type: "blurred-input" })}
       on:click={() => dispatch({ type: "pressed-input" })}

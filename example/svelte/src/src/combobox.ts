@@ -352,9 +352,9 @@ export const update = <TItem>(
     isHighlighted(output.model) &&
     msg.type === "pressed-vertical-arrow-key"
   ) {
-    const filtered = toVisibleItems(config, output.model);
+    const visible = toVisibleItems(config, output.model);
 
-    const highlightedItem = filtered[output.model.highlightIndex];
+    const highlightedItem = visible[output.model.highlightIndex];
 
     if (highlightedItem) {
       output.effects.push({
@@ -786,9 +786,9 @@ const updateModel = <T>(
         }
 
         case "pressed-vertical-arrow-key": {
-          const filtered = toVisibleItems(config, model);
+          const visible = toVisibleItems(config, model);
 
-          const selectedIndex = filtered.findIndex((item) =>
+          const selectedIndex = visible.findIndex((item) =>
             model.selectedItems.some((x) => toItemId(item) === toItemId(x))
           );
 
@@ -804,7 +804,7 @@ const updateModel = <T>(
 
           const highlightIndex = circularIndex(
             selectedIndex + delta,
-            filtered.length
+            visible.length
           );
 
           return {
@@ -951,11 +951,11 @@ const updateModel = <T>(
         }
 
         case "pressed-vertical-arrow-key": {
-          const filtered = toVisibleItems(config, model);
+          const visible = toVisibleItems(config, model);
           const delta = msg.key === "arrow-down" ? 1 : -1;
           const highlightIndex = circularIndex(
             model.highlightIndex + delta,
-            filtered.length
+            visible.length
           );
           return { ...model, highlightIndex: highlightIndex };
         }
@@ -965,9 +965,9 @@ const updateModel = <T>(
         }
 
         case "pressed-enter-key": {
-          const filtered = toVisibleItems(config, model);
+          const visible = toVisibleItems(config, model);
 
-          const enteredItem = filtered[model.highlightIndex];
+          const enteredItem = visible[model.highlightIndex];
 
           if (!enteredItem) {
             return { ...model, type: "focused__closed" };

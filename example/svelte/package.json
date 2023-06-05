@@ -19,6 +19,6 @@
     "vite": "^4.3.0"
   },
   "dependencies": {
-    "headless-combobox": "^4.7.1"
+    "headless-combobox": "^4.8.0"
   }
 }

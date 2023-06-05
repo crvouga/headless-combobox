@@ -241,22 +241,22 @@ This library is steals from these following libraries:
       {#if state.visibleItems.length === 0}
         <li>No results</li>
       {/if}
-      {#each state.visibleItems as item, index}
+      {#each state.renderItems as item, index}
         <li
-          {...state.aria.item(item)}
-          bind:this={items[item.id]}
+          {...item.aria}
+          bind:this={items[item.item.id]}
           on:mousemove={() => dispatch({ type: "hovered-over-item", index })}
           on:mousedown|preventDefault={() =>
             /* Make sure it's a mousedown event instead of click event */
-            dispatch({ type: "pressed-item", item })}
+            dispatch({ type: "pressed-item", item: item.item })}
           on:focus={() => dispatch({ type: "hovered-over-item", index })}
           class="option"
-          class:highlighted={state.itemStatus(item) === "highlighted"}
-          class:selected={state.itemStatus(item) === "selected"}
-          class:selected-and-highlighted={state.itemStatus(item) ===
+          class:highlighted={item.status === "highlighted"}
+          class:selected={item.status === "selected"}
+          class:selected-and-highlighted={item.status ===
             "selected-and-highlighted"}
         >
-          {config.toItemInputValue(item)}
+          {item.inputValue}
         </li>
       {/each}
     </ul>
@@ -302,7 +302,7 @@ This library is steals from these following libraries:
     right: 0;
     z-index: 1;
     width: 100%;
-    max-height: 200px;
+    max-height: 300px;
     overflow: scroll;
     border: 1px solid #ccc;
     width: 100%;

@@ -10,21 +10,14 @@
   */
 
   type Item = { id: number; label: string };
-  const fruits: Item[] = [
-    { id: 0, label: "pear" },
-    { id: 1, label: "apple" },
-    { id: 2, label: "banana" },
-    { id: 3, label: "orange" },
-    { id: 4, label: "strawberry" },
-    { id: 5, label: "kiwi" },
-    { id: 6, label: "mango" },
-    { id: 7, label: "pineapple" },
-    { id: 8, label: "watermelon" },
-    { id: 9, label: "grape" },
-  ];
+
+  const fruits: Item[] = [];
+  for (let i = 0; i < 1_000; i++) {
+    fruits.push({ id: i, label: `item ${i}` });
+  }
 
   let selectionRefs: { [itemId: string]: HTMLElement } = {};
-  let items: { [itemId: string]: HTMLElement } = {};
+  let itemEls: { [itemId: string]: HTMLElement } = {};
   let input: HTMLInputElement | null = null;
 
   /*
@@ -77,7 +70,7 @@
         input?.focus();
       },
       scrollItemIntoView: (item) => {
-        items[item.id]?.scrollIntoView({ block: "nearest" });
+        itemEls[item.id]?.scrollIntoView({ block: "nearest" });
       },
     });
 
@@ -177,7 +170,7 @@
       {#each state.visibleItems as item, index}
         <li
           {...state.aria.item(item)}
-          bind:this={items[item.id]}
+          bind:this={itemEls[item.id]}
           on:mousemove={() => dispatch({ type: "hovered-over-item", index })}
           on:mousedown|preventDefault={() =>
             dispatch({ type: "pressed-item", item })}

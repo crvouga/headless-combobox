@@ -1,4 +1,4 @@
-import { aria } from "./combobox-wai-aria";
+import { aria, ariaItem } from "./combobox-wai-aria";
 import { isNonEmpty, type NonEmpty } from "./non-empty";
 import { uniqueBy, circularIndex, clampIndex, removeFirst } from "./utils";
 
@@ -14,7 +14,7 @@ import { uniqueBy, circularIndex, clampIndex, removeFirst } from "./utils";
 export type Config<TItem> = {
   toItemId: (item: TItem) => string | number;
   toItemInputValue: (item: TItem) => string;
-  deterministicFilter: (model: Model<TItem>) => TItem[];
+  deterministicFilter: (model: Model<TItem>) => Generator<TItem, void, unknown>;
   isEmptyItem: (value: TItem) => boolean;
   namespace: string;
 };
@@ -37,7 +37,11 @@ export const initConfig = <TItem>({
     ...config,
     isEmptyItem,
     namespace: namespace ?? "combobox",
-    deterministicFilter: (model) => model.allItems,
+    deterministicFilter: function* (model) {
+      for (const item of model.allItems) {
+        yield item;
+      }
+    },
   };
   return {
     ...configFull,
@@ -50,16 +54,23 @@ export const initConfig = <TItem>({
  *
  * The simpleFilter function is a default implementation of the deterministicFilter function.
  */
-export const simpleFilter = <TItem>(
-  config: Config<TItem>,
-  model: Model<TItem>
-) => {
-  return model.allItems.filter((item) =>
-    config
-      .toItemInputValue(item)
-      .toLowerCase()
-      .includes(toCurrentInputValue(config, model).toLowerCase())
-  );
+export const simpleFilter = function* <T>(config: Config<T>, model: Model<T>) {
+  for (let i = 0; i < model.allItems.length; i++) {
+    const item = model.allItems[i];
+
+    if (!item) {
+      continue;
+    }
+
+    if (
+      config
+        .toItemInputValue(item)
+        .toLowerCase()
+        .includes(toCurrentInputValue(config, model).toLowerCase())
+    ) {
+      yield item;
+    }
+  }
 };
 
 /** @module Model **/
@@ -1792,7 +1803,38 @@ export const toVisibleItems = <T>(config: Config<T>, model: Model<T>): T[] => {
   if (model.inputMode.type === "select-only") {
     return model.allItems;
   }
-  return config.deterministicFilter(model);
+  return Array.from(config.deterministicFilter(model));
+};
+
+/**
+ * @group Selectors
+ *
+ * This function returns the all the visible items with their status.
+ */
+type RenderItem<T> = {
+  item: T;
+  status: ItemStatus;
+  inputValue: string;
+  aria: ReturnType<typeof ariaItem>;
+};
+export const yieldRenderItems = function* <T>(
+  config: Config<T>,
+  model: Model<T>
+): Generator<RenderItem<T>> {
+  for (const item of config.deterministicFilter(model)) {
+    yield {
+      item,
+      status: toItemStatus(config, model, item),
+      inputValue: config.toItemInputValue(item),
+      aria: ariaItem(config, model, item),
+    };
+  }
+};
+export const toRenderItems = <T>(
+  config: Config<T>,
+  model: Model<T>
+): RenderItem<T>[] => {
+  return Array.from(yieldRenderItems(config, model));
 };
 
 /** @module Helpers **/
@@ -1874,6 +1916,7 @@ export const toState = <T>(config: Config<T>, model: Model<T>) => {
     aria: aria(config, model),
     allItems: model.allItems,
     visibleItems: toVisibleItems(config, model),
+    renderItems: toRenderItems(config, model),
     isOpened: isOpened(model),
     selectedItems: toSelections(model),
     inputValue: toCurrentInputValue(config, model),

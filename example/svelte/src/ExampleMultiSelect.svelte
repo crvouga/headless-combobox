@@ -12,7 +12,7 @@
   type Item = { id: number; label: string };
 
   const fruits: Item[] = [];
-  for (let i = 0; i < 1_000; i++) {
+  for (let i = 0; i < 500; i++) {
     fruits.push({ id: i, label: `item ${i}` });
   }
 
@@ -167,21 +167,21 @@
       {#if state.visibleItems.length === 0}
         <li>No results</li>
       {/if}
-      {#each state.visibleItems as item, index}
+      {#each state.renderItems as item, index}
         <li
-          {...state.aria.item(item)}
-          bind:this={itemEls[item.id]}
+          {...item.aria}
+          bind:this={itemEls[item.item.id]}
           on:mousemove={() => dispatch({ type: "hovered-over-item", index })}
           on:mousedown|preventDefault={() =>
-            dispatch({ type: "pressed-item", item })}
+            dispatch({ type: "pressed-item", item: item.item })}
           on:focus={() => dispatch({ type: "hovered-over-item", index })}
           class="option"
-          class:highlighted={state.itemStatus(item) === "highlighted"}
-          class:selected={state.itemStatus(item) === "selected"}
-          class:selected-and-highlighted={state.itemStatus(item) ===
+          class:highlighted={item.status === "highlighted"}
+          class:selected={item.status === "selected"}
+          class:selected-and-highlighted={item.status ===
             "selected-and-highlighted"}
         >
-          {config.toItemInputValue(item)}
+          {item.inputValue}
         </li>
       {/each}
     </ul>

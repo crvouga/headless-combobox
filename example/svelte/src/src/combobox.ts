@@ -1050,6 +1050,7 @@ const updateModel = <T>(
           if (config.isEmptyItem(enteredItem)) {
             return {
               ...model,
+              selectedItems: [],
               type: "focused__closed",
             };
           }
@@ -1794,16 +1795,26 @@ export const toItemStatus = <TItem>(
   return "unselected";
 };
 
+export const yieldVisibleItems = function* <T>(
+  config: Config<T>,
+  model: Model<T>
+): Generator<T> {
+  if (model.inputMode.type === "select-only") {
+    for (const item of model.allItems) {
+      yield item;
+    }
+    return;
+  }
+  yield* config.deterministicFilter(model);
+};
+
 /**
  * @group Selectors
  *
  * This function returns the all the visible items.
  */
 export const toVisibleItems = <T>(config: Config<T>, model: Model<T>): T[] => {
-  if (model.inputMode.type === "select-only") {
-    return model.allItems;
-  }
-  return Array.from(config.deterministicFilter(model));
+  return Array.from(yieldVisibleItems(config, model));
 };
 
 /**
@@ -1821,7 +1832,7 @@ export const yieldRenderItems = function* <T>(
   config: Config<T>,
   model: Model<T>
 ): Generator<RenderItem<T>> {
-  for (const item of config.deterministicFilter(model)) {
+  for (const item of yieldVisibleItems(config, model)) {
     yield {
       item,
       status: toItemStatus(config, model, item),

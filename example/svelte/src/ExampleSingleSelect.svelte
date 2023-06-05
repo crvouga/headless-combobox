@@ -209,7 +209,7 @@
     right: 0;
     z-index: 1;
     width: 100%;
-    max-height: 200px;
+    max-height: 300px;
     overflow: scroll;
     border: 1px solid #ccc;
     width: 100%;

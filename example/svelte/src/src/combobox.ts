@@ -638,6 +638,7 @@ const updateModel = <T>(
         case "pressed-unselect-all-button": {
           return {
             ...model,
+            selectedItems: [],
             type: "blurred",
           };
         }
@@ -788,6 +789,7 @@ const updateModel = <T>(
         case "pressed-unselect-all-button": {
           return {
             ...model,
+            selectedItems: [],
             type: "focused__closed",
           };
         }
@@ -941,6 +943,7 @@ const updateModel = <T>(
         case "pressed-unselect-all-button": {
           return {
             ...model,
+            selectedItems: [],
             type: "focused__opened",
           };
         }
@@ -1135,6 +1138,7 @@ const updateModel = <T>(
         case "pressed-unselect-all-button": {
           return {
             ...model,
+            selectedItems: [],
             type: "focused__opened",
           };
         }
@@ -1313,6 +1317,7 @@ const updateModel = <T>(
         case "pressed-unselect-all-button": {
           return clearInputValue({
             ...model,
+            selectedItems: [],
             type: "focused__opened",
           });
         }

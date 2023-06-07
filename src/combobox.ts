@@ -697,9 +697,10 @@ const updateModel = <T>(
             return setInputValue(
               {
                 ...model,
+                selectedItems: [],
                 type: "focused__opened",
               },
-              msg.inputValue
+              ""
             );
           }
           return setInputValue(
@@ -1393,6 +1394,7 @@ const setInputValue = <T>(model: Model<T>, inputValue: string): Model<T> => {
       },
     };
   }
+
   return model;
 };
 

@@ -571,15 +571,8 @@ const updateSetters = <TItem>({
   }
 
   if (msg.type === "set-selected-items") {
-    if (isSelected(model)) {
-      return {
-        ...model,
-        selectedItems: msg.selectedItems,
-      };
-    }
     return {
       ...model,
-      type: "blurred",
       selectedItems: msg.selectedItems,
     };
   }

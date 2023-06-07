@@ -499,7 +499,11 @@ export const update = <TItem>(
   ) {
     output.model = {
       ...output.model,
-      skipOnce: [...output.model.skipOnce, "pressed-input"],
+      skipOnce: [
+        // ...output.model.skipOnce.filter((x) => x !== "pressed-input"),
+        ...output.model.skipOnce,
+        "pressed-input",
+      ],
     };
   }
 
@@ -739,10 +743,8 @@ const updateModel = <T>(
           const removed = model.selectedItems.filter(
             (x) => toItemId(x) !== toItemId(msg.item)
           );
-          if (isNonEmpty(removed)) {
-            return { ...model, selectedItems: removed };
-          }
-          return { ...model, type: "focused__closed" };
+
+          return { ...model, selectedItems: removed };
         }
 
         case "focused-selected-item": {
@@ -920,6 +922,7 @@ const updateModel = <T>(
           const removed = model.selectedItems.filter(
             (x) => toItemId(x) !== toItemId(msg.item)
           );
+
           return { ...model, selectedItems: removed };
         }
 
@@ -1001,6 +1004,13 @@ const updateModel = <T>(
             return resetInputValue(config, modelNew);
           }
 
+          return {
+            ...model,
+            type: "focused__closed",
+          };
+        }
+
+        case "pressed-input": {
           return {
             ...model,
             type: "focused__closed",
@@ -1289,6 +1299,7 @@ const updateModel = <T>(
           }
           return clearInputValue({
             ...model,
+            selectedItems: removed,
             type: "focused__closed",
           });
         }

@@ -1098,16 +1098,9 @@ const updateModel = <T>(
             (x) => toItemId(x) !== toItemId(enteredItem)
           );
 
-          if (isNonEmpty(removed)) {
-            return clearInputValue({
-              ...model,
-              selectedItems: removed,
-              type: "focused__closed",
-            });
-          }
-
           return clearInputValue({
             ...model,
+            selectedItems: removed,
             type: "focused__closed",
           });
         }

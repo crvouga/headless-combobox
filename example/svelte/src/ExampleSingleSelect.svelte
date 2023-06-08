@@ -52,6 +52,7 @@
     inputMode: {
       type: "search-mode",
       inputValue: "",
+      hasSearched: false,
     },
     selectMode: {
       type: "single-select",
@@ -98,6 +99,14 @@
     });
   };
 
+  const onKeydown = (event: KeyboardEvent) => {
+    const msg = Combobox.keyToMsg<Item>(event.key);
+    if (msg.shouldPreventDefault) {
+      event.preventDefault();
+    }
+    dispatch(msg);
+  };
+
   /*
 
 
@@ -138,7 +147,7 @@
       on:focus={() => dispatch({ type: "focused-input" })}
       on:blur={() => dispatch({ type: "blurred-input" })}
       on:click={() => dispatch({ type: "pressed-input" })}
-      on:keydown={(event) => dispatch(Combobox.keyToMsg(event.key))}
+      on:keydown={onKeydown}
     />
     <ul
       {...state.aria.itemList}

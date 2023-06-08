@@ -1,6 +1,6 @@
 {
   "name": "headless-combobox",
-  "version": "4.9.8",
+  "version": "4.9.9",
   "description": "",
   "types": "dist/index.d.ts",
   "main": "dist/index.js",

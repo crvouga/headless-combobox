@@ -33,3 +33,29 @@ export const uniqueBy = <TItem>(
   }
   return result;
 };
+
+export const intersect = <T>(
+  toKey: (x: T) => string | number,
+  a: T[],
+  b: T[]
+): T[] => {
+  const bKeys = new Set<string | number>();
+
+  for (let i = 0; i < b.length; i++) {
+    const bi = b[i];
+    if (bi) {
+      bKeys.add(toKey(bi));
+    }
+  }
+
+  const output: T[] = [];
+
+  for (let i = 0; i < a.length; i++) {
+    const ai = a[i];
+    if (ai && bKeys.has(toKey(ai))) {
+      output.push(ai);
+    }
+  }
+
+  return output;
+};

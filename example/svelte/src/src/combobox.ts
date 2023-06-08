@@ -1,6 +1,12 @@
 import { aria, ariaItem } from "./combobox-wai-aria";
 import { isNonEmpty, type NonEmpty } from "./non-empty";
-import { uniqueBy, circularIndex, clampIndex, removeFirst } from "./utils";
+import {
+  uniqueBy,
+  circularIndex,
+  clampIndex,
+  removeFirst,
+  intersect,
+} from "./utils";
 
 /** @module Config **/
 
@@ -356,6 +362,7 @@ export const update = <TItem>(
   output.model = updateSetters({
     msg: input.msg,
     model: updateModel(config, input),
+    config,
   });
 
   /**
@@ -526,43 +533,65 @@ export const update = <TItem>(
     output.events.push({ type: "input-value-changed" });
   }
 
-  if (!isSelectedItemsEqual(config, input.model, output.model)) {
+  if (didSelectedItemsChange(config, input.model, output.model)) {
     output.events.push({ type: "selected-items-changed" });
   }
 
   return output;
 };
 
-const isSelectedItemsEqual = <T>(
+const didSelectedItemsChange = <T>(
   config: Config<T>,
-  a: Model<T>,
-  b: Model<T>
+  prev: Model<T>,
+  next: Model<T>
 ): boolean => {
-  if (a.selectedItems.length !== b.selectedItems.length) {
+  //
+  // NOTE:
+  // Right now I don't trust selectedItems is always a subset of allItems
+  // If selected items is not a subset of all items this can cause infinite loop for consumers of this library!
+  //
+  const prevSelectedItems = intersect(
+    config.toItemId,
+    prev.selectedItems,
+    prev.allItems
+  );
+  const nextSelectedItems = intersect(
+    config.toItemId,
+    next.selectedItems,
+    next.allItems
+  );
+
+  if (prevSelectedItems.length !== nextSelectedItems.length) {
     return false;
   }
 
-  for (let i = 0; i < a.selectedItems.length; i++) {
-    const itemA = a.selectedItems[i];
+  for (let i = 0; i < prevSelectedItems.length; i++) {
+    const itemA = prevSelectedItems[i];
+
     if (!itemA) {
       return false;
     }
-    const itemB = b.selectedItems[i];
+
+    const itemB = nextSelectedItems[i];
+
     if (!itemB) {
-      return false;
+      return true;
     }
+
     if (config.toItemId(itemA) !== config.toItemId(itemB)) {
-      return false;
+      return true;
     }
   }
 
-  return true;
+  return false;
 };
 
 const updateSetters = <TItem>({
+  config,
   model,
   msg,
 }: {
+  config: Config<TItem>;
   model: Model<TItem>;
   msg: Msg<TItem>;
 }): Model<TItem> => {
@@ -576,7 +605,14 @@ const updateSetters = <TItem>({
   if (msg.type === "set-selected-items") {
     return {
       ...model,
-      selectedItems: msg.selectedItems,
+      //
+      // Important that selectedItems is a subset of allItems! Else it will cause infinite loop for consumers of the library!
+      //
+      selectedItems: intersect(
+        config.toItemId,
+        msg.selectedItems,
+        model.allItems
+      ),
     };
   }
 
@@ -632,7 +668,6 @@ const updateModel = <T>(
           return resetInputValue(config, {
             ...model,
             type: "focused__opened",
-            selectedItems: model.selectedItems,
           });
         }
 

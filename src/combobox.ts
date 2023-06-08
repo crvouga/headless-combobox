@@ -550,16 +550,19 @@ const didSelectedItemsChange = <T>(
   // Right now I don't trust selectedItems is always a subset of allItems
   // If selected items is not a subset of all items this can cause infinite loop for consumers of this library!
   //
-  const prevSelectedItems = intersect(
-    config.toItemId,
-    prev.selectedItems,
-    prev.allItems
-  );
-  const nextSelectedItems = intersect(
-    config.toItemId,
-    next.selectedItems,
-    next.allItems
-  );
+  // const prevSelectedItems = intersect(
+  //   config.toItemId,
+  //   prev.selectedItems,
+  //   prev.allItems
+  // );
+  // const nextSelectedItems = intersect(
+  //   config.toItemId,
+  //   next.selectedItems,
+  //   next.allItems
+  // );
+
+  const prevSelectedItems = prev.selectedItems;
+  const nextSelectedItems = next.selectedItems;
 
   if (prevSelectedItems.length !== nextSelectedItems.length) {
     return false;

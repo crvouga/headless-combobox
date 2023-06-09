@@ -842,16 +842,7 @@ const updateModel = <T>(
         }
 
         case "pressed-input": {
-          if (
-            model.inputMode.type === "search-mode" &&
-            model.inputMode.inputValue === ""
-          ) {
-            return {
-              ...model,
-              type: "focused__closed",
-            };
-          }
-          return model;
+          return handlePressedInputWhenOpened(model);
         }
 
         case "pressed-item": {
@@ -1035,16 +1026,7 @@ const updateModel = <T>(
         }
 
         case "pressed-input": {
-          if (
-            model.inputMode.type === "search-mode" &&
-            model.inputMode.inputValue === ""
-          ) {
-            return {
-              ...model,
-              type: "focused__closed",
-            };
-          }
-          return model;
+          return handlePressedInputWhenOpened(model);
         }
 
         case "inputted-value": {
@@ -1383,6 +1365,27 @@ const closedToOpened = <T>(model: Model<T>): Model<T> => {
     );
   }
   return { ...model, type: "focused__opened" };
+};
+
+const handlePressedInputWhenOpened = <T>(model: Model<T>): Model<T> => {
+  if (
+    model.inputMode.type === "search-mode" &&
+    model.inputMode.inputValue === ""
+  ) {
+    return {
+      ...model,
+      type: "focused__closed",
+    };
+  }
+
+  if (model.inputMode.type === "select-only") {
+    return {
+      ...model,
+      type: "focused__closed",
+    };
+  }
+
+  return model;
 };
 
 const toggleSelected = <T>({

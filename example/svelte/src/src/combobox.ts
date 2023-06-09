@@ -842,10 +842,16 @@ const updateModel = <T>(
         }
 
         case "pressed-input": {
-          return {
-            ...model,
-            type: "focused__closed",
-          };
+          if (
+            model.inputMode.type === "search-mode" &&
+            model.inputMode.inputValue === ""
+          ) {
+            return {
+              ...model,
+              type: "focused__closed",
+            };
+          }
+          return model;
         }
 
         case "pressed-item": {
@@ -1029,10 +1035,16 @@ const updateModel = <T>(
         }
 
         case "pressed-input": {
-          return {
-            ...model,
-            type: "focused__closed",
-          };
+          if (
+            model.inputMode.type === "search-mode" &&
+            model.inputMode.inputValue === ""
+          ) {
+            return {
+              ...model,
+              type: "focused__closed",
+            };
+          }
+          return model;
         }
 
         case "inputted-value": {

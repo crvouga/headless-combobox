@@ -81,3 +81,17 @@ export const yieldReverse = function* <T>(xs: T[]): Generator<T> {
     }
   }
 };
+
+export const findIndex = <T>(
+  predicate: (x: T) => boolean,
+  xs: Iterable<T>
+): number | null => {
+  let i = 0;
+  for (const x of xs) {
+    if (predicate(x)) {
+      return i;
+    }
+    i++;
+  }
+  return null;
+};

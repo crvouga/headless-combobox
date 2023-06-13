@@ -74,7 +74,7 @@
       },
     });
 
-    console.log(msg.type, output.model.type, output.model);
+    // console.log(msg.type, output.model.type, output.model);
   };
 
   const handleKeyDown = (event: KeyboardEvent) => {
@@ -180,7 +180,7 @@
         <li
           {...item.aria}
           bind:this={itemEls[item.item.id]}
-          on:mousemove={() => dispatch({ type: "hovered-over-item", index })}
+          on:mouseover={() => dispatch({ type: "hovered-over-item", index })}
           on:mousedown|preventDefault={() =>
             dispatch({ type: "pressed-item", item: item.item })}
           on:focus={() => dispatch({ type: "hovered-over-item", index })}

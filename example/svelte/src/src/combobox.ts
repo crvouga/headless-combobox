@@ -2133,23 +2133,26 @@ export const handleEffects = <T>(
     focusSelectedItem: (selectedIem: T) => void;
   }
 ) => {
-  for (const effect of effects) {
-    switch (effect.type) {
-      case "scroll-item-into-view": {
-        handlers.scrollItemIntoView(effect.item);
-        break;
-      }
-      case "focus-selected-item": {
-        handlers.focusSelectedItem(effect.item);
-        break;
-      }
-      case "focus-input": {
-        handlers.focusInput();
-        break;
-      }
-      default: {
-        const check: never = effect;
-        return check;
+  for (let i = 0; i < effects.length; i++) {
+    const effect = effects[i];
+    if (effect) {
+      switch (effect.type) {
+        case "scroll-item-into-view": {
+          handlers.scrollItemIntoView(effect.item);
+          break;
+        }
+        case "focus-selected-item": {
+          handlers.focusSelectedItem(effect.item);
+          break;
+        }
+        case "focus-input": {
+          handlers.focusInput();
+          break;
+        }
+        default: {
+          const check: never = effect;
+          return check;
+        }
       }
     }
   }

@@ -1,4 +1,9 @@
-import { aria, ariaItem } from "./combobox-wai-aria";
+import {
+  aria,
+  ariaItem,
+  ariaSelectedItem,
+  ariaUnselectButton,
+} from "./combobox-wai-aria";
 import { isNonEmpty, type NonEmpty } from "./non-empty";
 import {
   uniqueBy,
@@ -8,6 +13,7 @@ import {
   intersect,
   reverse,
   yieldReverse,
+  findIndex,
 } from "./utils";
 
 /** @module Config **/
@@ -1525,7 +1531,7 @@ const updateKeyboardNavigationForSelections = <T>({
     return model;
   }
 
-  if ("inputValue" in model && toSearchValue(model) !== "") {
+  if (toSearchValue(model) !== "") {
     return model;
   }
 
@@ -1764,13 +1770,7 @@ export const isItemHighlighted = <T>(
  * This function returns the selected item
  */
 export const toSelectedItems = <T>(model: Model<T>): T[] => {
-  if (
-    model.selectMode.type === "multi-select" &&
-    model.selectMode.selectedItemListDirection === "right-to-left"
-  ) {
-    return reverse(model.selectedItems);
-  }
-  return model.selectedItems;
+  return Array.from(yieldSelectedItems(model));
 };
 
 export const yieldSelectedItems = function* <T>(model: Model<T>): Generator<T> {
@@ -1781,6 +1781,7 @@ export const yieldSelectedItems = function* <T>(model: Model<T>): Generator<T> {
     for (const x of yieldReverse(model.selectedItems)) {
       yield x;
     }
+    return;
   }
 
   for (const x of model.selectedItems) {
@@ -1861,10 +1862,35 @@ export const isSelectedItemFocused = <T>(
 ) => {
   return (
     isSelectedItemHighlighted(model) &&
-    toSelectedItems(model).findIndex(
-      (item) => config.toItemId(item) === config.toItemId(selectedItem)
+    findIndex(
+      (item) => config.toItemId(item) === config.toItemId(selectedItem),
+      yieldSelectedItems(model)
     ) === model.focusedIndex
   );
+};
+
+/**
+ * @group Selectors
+ *
+ * This type represents all the possible states of an item
+ */
+export type SelectedItemStatus = "focused" | "blurred";
+
+/**
+ * @group Selectors
+ *
+ * This utility function returns the status of an item.
+ */
+export const toSelectedItemStatus = <T>(
+  config: Config<T>,
+  model: Model<T>,
+  item: T
+): SelectedItemStatus => {
+  if (isSelectedItemFocused(config, model, item)) {
+    return "focused";
+  }
+
+  return "blurred";
 };
 
 /**
@@ -1964,6 +1990,39 @@ export const toRenderItems = <T>(
   return Array.from(yieldRenderItems(config, model));
 };
 
+/**
+ * @group Selectors
+ *
+ * This function returns the all the visible items with their status.
+ */
+type RenderSelectedItem<T> = {
+  item: T;
+  status: SelectedItemStatus;
+  inputValue: string;
+  aria: ReturnType<typeof ariaSelectedItem>;
+  ariaUnselectButton: ReturnType<typeof ariaUnselectButton>;
+};
+export const yieldRenderSelectedItems = function* <T>(
+  config: Config<T>,
+  model: Model<T>
+): Generator<RenderSelectedItem<T>> {
+  for (const item of yieldSelectedItems(model)) {
+    yield {
+      item,
+      status: toSelectedItemStatus(config, model, item),
+      inputValue: config.toItemInputValue(item),
+      aria: ariaSelectedItem(config, model, item),
+      ariaUnselectButton: ariaUnselectButton(),
+    };
+  }
+};
+export const toRenderSelectedItems = <T>(
+  config: Config<T>,
+  model: Model<T>
+): RenderSelectedItem<T>[] => {
+  return Array.from(yieldRenderSelectedItems(config, model));
+};
+
 /** @module Helpers **/
 
 /**
@@ -2044,6 +2103,7 @@ export const toState = <T>(config: Config<T>, model: Model<T>) => {
     allItems: model.allItems,
     visibleItems: toVisibleItems(config, model),
     renderItems: toRenderItems(config, model),
+    renderSelectedItems: toRenderSelectedItems(config, model),
     isOpened: isOpened(model),
     selectedItems: toSelectedItems(model),
     inputValue: toCurrentInputValue(config, model),
@@ -2073,23 +2133,26 @@ export const handleEffects = <T>(
     focusSelectedItem: (selectedIem: T) => void;
   }
 ) => {
-  for (const effect of effects) {
-    switch (effect.type) {
-      case "scroll-item-into-view": {
-        handlers.scrollItemIntoView(effect.item);
-        break;
-      }
-      case "focus-selected-item": {
-        handlers.focusSelectedItem(effect.item);
-        break;
-      }
-      case "focus-input": {
-        handlers.focusInput();
-        break;
-      }
-      default: {
-        const check: never = effect;
-        return check;
+  for (let i = 0; i < effects.length; i++) {
+    const effect = effects[i];
+    if (effect) {
+      switch (effect.type) {
+        case "scroll-item-into-view": {
+          handlers.scrollItemIntoView(effect.item);
+          break;
+        }
+        case "focus-selected-item": {
+          handlers.focusSelectedItem(effect.item);
+          break;
+        }
+        case "focus-input": {
+          handlers.focusInput();
+          break;
+        }
+        default: {
+          const check: never = effect;
+          return check;
+        }
       }
     }
   }

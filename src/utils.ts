@@ -18,46 +18,66 @@ export const clampIndex = (index: number, length: number) => {
   return Math.min(Math.max(0, index), length - 1);
 };
 
-export const uniqueBy = <TItem>(
-  toKey: (item: TItem) => string | number,
-  items: TItem[]
-): TItem[] => {
+//
+//
+//
+//
+//
+
+export const uniqueBy = <T>(
+  toKey: (item: T) => string | number,
+  items: T[]
+): T[] => {
+  return Array.from(yieldUnique(toKey, items));
+};
+
+export const yieldUnique = function* <T>(
+  toKey: (item: T) => string | number,
+  items: Iterable<T>
+): Generator<T> {
   const seen = new Set<string | number>();
-  const result: TItem[] = [];
+
   for (const item of items) {
     const key = toKey(item);
     if (!seen.has(key)) {
       seen.add(key);
-      result.push(item);
+      yield item;
     }
   }
-  return result;
 };
 
-export const intersect = <T>(
+/**
+ * @description
+ * Set intersection, but preserves the order of the left array.
+ */
+export const intersectionLeft = <T>(
   toKey: (x: T) => string | number,
-  a: T[],
-  b: T[]
+  a: Iterable<T>,
+  b: Iterable<T>
 ): T[] => {
+  return Array.from(yieldIntersectionLeft(toKey, a, b));
+};
+
+/**
+ * @description
+ * Set intersection, but preserves the order of the left array.
+ */
+export const yieldIntersectionLeft = function* <T>(
+  toKey: (x: T) => string | number,
+  a: Iterable<T>,
+  b: Iterable<T>
+): Generator<T> {
   const bKeys = new Set<string | number>();
 
-  for (let i = 0; i < b.length; i++) {
-    const bi = b[i];
-    if (bi) {
-      bKeys.add(toKey(bi));
-    }
+  for (const bi of b) {
+    bKeys.add(toKey(bi));
   }
 
-  const output: T[] = [];
-
-  for (let i = 0; i < a.length; i++) {
-    const ai = a[i];
-    if (ai && bKeys.has(toKey(ai))) {
-      output.push(ai);
+  for (const ai of a) {
+    if (bKeys.has(toKey(ai))) {
+      yield ai;
     }
   }
-
-  return output;
 };
 
 export const reverse = <T>(xs: T[]): T[] => {
@@ -94,4 +114,22 @@ export const findIndex = <T>(
     i++;
   }
   return null;
+};
+
+//
+//
+//
+//
+//
+//
+
+export const keepIf = function* <T>(
+  predicate: (x: T) => boolean,
+  xs: Iterable<T>
+): Generator<T> {
+  for (const x of xs) {
+    if (predicate(x)) {
+      yield x;
+    }
+  }
 };

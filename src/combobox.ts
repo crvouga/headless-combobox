@@ -6,14 +6,15 @@ import {
 } from "./combobox-wai-aria";
 import { isNonEmpty, type NonEmpty } from "./non-empty";
 import {
-  uniqueBy,
   circularIndex,
   clampIndex,
-  removeFirst,
-  intersect,
-  reverse,
-  yieldReverse,
   findIndex,
+  intersectionLeft,
+  keepIf,
+  removeFirst,
+  yieldIntersectionLeft,
+  yieldReverse,
+  yieldUnique,
 } from "./utils";
 
 /** @module Config **/
@@ -557,12 +558,12 @@ const didSelectedItemsChange = <T>(
   // If selected items is not a subset of all items this can cause infinite loop for consumers of this library!
   //
 
-  const prevSelectedItems = intersect(
+  const prevSelectedItems = intersectionLeft(
     config.toItemId,
     prev.selectedItems,
     prev.allItems
   );
-  const nextSelectedItems = intersect(
+  const nextSelectedItems = intersectionLeft(
     config.toItemId,
     next.selectedItems,
     next.allItems
@@ -615,7 +616,7 @@ const updateSetters = <T>({
       //
       // Important that selectedItems is a subset of allItems! Else it will cause infinite loop for consumers of the library!
       //
-      selectedItems: intersect(
+      selectedItems: intersectionLeft(
         config.toItemId,
         msg.selectedItems,
         model.allItems
@@ -686,11 +687,11 @@ const updateModel = <T>(
         }
 
         case "pressed-unselect-button": {
-          const removed = toSelectedItems(model).filter(
-            (x) => toItemId(x) !== toItemId(msg.item)
-          );
-
-          return { ...model, selectedItems: removed };
+          return removeFromSelected({
+            config,
+            model,
+            item: msg.item,
+          });
         }
 
         case "focused-selected-item": {
@@ -764,11 +765,11 @@ const updateModel = <T>(
         }
 
         case "pressed-unselect-button": {
-          const removed = toSelectedItems(model).filter(
-            (x) => toItemId(x) !== toItemId(msg.item)
-          );
-
-          return { ...model, selectedItems: removed };
+          return removeFromSelected({
+            config,
+            model,
+            item: msg.item,
+          });
         }
 
         case "focused-selected-item": {
@@ -933,11 +934,11 @@ const updateModel = <T>(
         }
 
         case "pressed-unselect-button": {
-          const removed = toSelectedItems(model).filter(
-            (x) => toItemId(x) !== toItemId(msg.item)
-          );
-
-          return { ...model, selectedItems: removed };
+          return removeFromSelected({
+            config,
+            model,
+            item: msg.item,
+          });
         }
 
         case "pressed-backspace-key": {
@@ -1105,15 +1106,16 @@ const updateModel = <T>(
             );
           }
 
-          const removed = toSelectedItems(model).filter(
-            (x) => toItemId(x) !== toItemId(enteredItem)
+          return clearInputValue(
+            removeFromSelected({
+              model: {
+                ...model,
+                type: "focused__closed",
+              },
+              config,
+              item: enteredItem,
+            })
           );
-
-          return clearInputValue({
-            ...model,
-            selectedItems: removed,
-            type: "focused__closed",
-          });
         }
 
         case "pressed-escape-key": {
@@ -1500,15 +1502,43 @@ const addSelected = <T>({
     return { ...model, selectedItems: [item] };
   }
 
-  const selectedItemsNew = intersect(
-    config.toItemId,
-    model.allItems,
-    uniqueBy(config.toItemId, [...model.selectedItems, item])
+  const selectedItemsNew = Array.from(
+    yieldIntersectionLeft(
+      config.toItemId,
+      yieldUnique(config.toItemId, [...model.selectedItems, item]),
+      model.allItems
+    )
   );
 
   return {
     ...model,
     selectedItems: selectedItemsNew,
+  };
+};
+
+const removeFromSelected = <T>({
+  config,
+  model,
+  item,
+}: {
+  config: Config<T>;
+  model: Model<T>;
+  item: T;
+}): Model<T> => {
+  if (model.selectMode.type === "single-select") {
+    return { ...model, selectedItems: [] };
+  }
+
+  const removed = Array.from(
+    keepIf(
+      (x) => config.toItemId(x) !== config.toItemId(item),
+      yieldSelectedItems(model)
+    )
+  );
+
+  return {
+    ...model,
+    selectedItems: removed,
   };
 };
 

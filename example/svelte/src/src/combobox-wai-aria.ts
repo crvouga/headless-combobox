@@ -160,7 +160,11 @@ const ariaSelectedList = <T>(config: Config<T>, model: Model<T>) => {
   };
 };
 
-const ariaSelectedItem = <T>(config: Config<T>, model: Model<T>, item: T) => {
+export const ariaSelectedItem = <T>(
+  config: Config<T>,
+  model: Model<T>,
+  item: T
+) => {
   return {
     id: selectedListItemId(config, item),
     role: "listitem",
@@ -173,7 +177,7 @@ const ariaSelectedItem = <T>(config: Config<T>, model: Model<T>, item: T) => {
  * @description
  * This function returns WAI-ARIA attributes for the "unselect" button.
  */
-const ariaUnselectButton = () => {
+export const ariaUnselectButton = () => {
   return {
     role: "button",
     tabindex: -1,

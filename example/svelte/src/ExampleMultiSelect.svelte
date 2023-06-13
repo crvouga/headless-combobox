@@ -74,7 +74,7 @@
       },
     });
 
-    console.log(msg.type, output.model.type);
+    console.log(msg.type, output.model.type, output.model);
   };
 
   const handleKeyDown = (event: KeyboardEvent) => {
@@ -120,24 +120,33 @@
       class:rtl={state.selectedItemDirection === "right-to-left"}
       {...state.aria.selectedList}
     >
-      {#each state.selectedItems as selection}
+      {#each state.renderSelectedItems as selectedItem}
         <li
-          {...state.aria.selectedItem(selection)}
-          bind:this={selectionRefs[selection.id]}
+          {...selectedItem.aria}
+          bind:this={selectionRefs[selectedItem.item.id]}
           class="chip"
-          class:chip-highlighted={state.isSelectedItemFocused(selection)}
+          class:chip-highlighted={selectedItem.status === "focused"}
           on:mousedown|preventDefault
           on:focus={() =>
-            dispatch({ type: "focused-selected-item", item: selection })}
+            dispatch({
+              type: "focused-selected-item",
+              item: selectedItem.item,
+            })}
           on:blur={() =>
-            dispatch({ type: "blurred-selected-item", item: selection })}
+            dispatch({
+              type: "blurred-selected-item",
+              item: selectedItem.item,
+            })}
         >
-          {selection.label}
+          {selectedItem.item.label}
           <span
-            {...state.aria.unselectButton(selection)}
+            {...selectedItem.ariaUnselectButton}
             class="chip-delete-btn"
             on:mousedown|preventDefault={() =>
-              dispatch({ type: "pressed-unselect-button", item: selection })}
+              dispatch({
+                type: "pressed-unselect-button",
+                item: selectedItem.item,
+              })}
           >
             &times;
           </span>

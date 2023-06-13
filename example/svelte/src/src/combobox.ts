@@ -1531,7 +1531,7 @@ const updateKeyboardNavigationForSelections = <T>({
     return model;
   }
 
-  if ("inputValue" in model && toSearchValue(model) !== "") {
+  if (toSearchValue(model) !== "") {
     return model;
   }
 

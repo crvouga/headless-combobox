@@ -19,8 +19,8 @@ export const clampIndex = (index: number, length: number) => {
 };
 
 export const uniqueBy = <TItem>(
-  items: TItem[],
-  toKey: (item: TItem) => string | number
+  toKey: (item: TItem) => string | number,
+  items: TItem[]
 ): TItem[] => {
   const seen = new Set<string | number>();
   const result: TItem[] = [];
@@ -58,4 +58,26 @@ export const intersect = <T>(
   }
 
   return output;
+};
+
+export const reverse = <T>(xs: T[]): T[] => {
+  const reversed: T[] = [];
+
+  for (let i = xs.length - 1; i >= 0; i--) {
+    const x = xs[i];
+    if (x) {
+      reversed.push(x);
+    }
+  }
+
+  return reversed;
+};
+
+export const yieldReverse = function* <T>(xs: T[]): Generator<T> {
+  for (let i = xs.length - 1; i >= 0; i--) {
+    const x = xs[i];
+    if (x) {
+      yield x;
+    }
+  }
 };

@@ -552,46 +552,16 @@ const didSelectedItemsChange = <T>(
   prev: Model<T>,
   next: Model<T>
 ): boolean => {
-  //
-  // NOTE:
-  // Right now I don't trust selectedItems is always a subset of allItems
-  // If selected items is not a subset of all items this can cause infinite loop for consumers of this library!
-  //
-
-  const prevSelectedItems = intersectionLeft(
+  const intersected = intersectionLeft(
     config.toItemId,
     prev.selectedItems,
-    prev.allItems
-  );
-  const nextSelectedItems = intersectionLeft(
-    config.toItemId,
-    next.selectedItems,
-    next.allItems
+    next.selectedItems
   );
 
-  if (prevSelectedItems.length !== nextSelectedItems.length) {
-    return true;
-  }
-
-  for (let i = 0; i < prevSelectedItems.length; i++) {
-    const itemA = prevSelectedItems[i];
-
-    if (!itemA) {
-      return false;
-    }
-
-    const itemB = nextSelectedItems[i];
-
-    if (!itemB) {
-      return true;
-    }
-
-    if (config.toItemId(itemA) !== config.toItemId(itemB)) {
-      return true;
-    }
-  }
-
-  return false;
+  return (
+    intersected.length !== prev.selectedItems.length ||
+    intersected.length !== next.selectedItems.length
+  );
 };
 
 const updateSetters = <T>({

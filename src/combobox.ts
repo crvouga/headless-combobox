@@ -1475,7 +1475,7 @@ const addSelected = <T>({
   const selectedItemsNew = Array.from(
     yieldIntersectionLeft(
       config.toItemId,
-      yieldUnique(config.toItemId, [...model.selectedItems, item]),
+      yieldUnique(config.toItemId, [item, ...model.selectedItems]),
       model.allItems
     )
   );
@@ -1778,15 +1778,13 @@ export const yieldSelectedItems = function* <T>(model: Model<T>): Generator<T> {
     model.selectMode.type === "multi-select" &&
     model.selectMode.selectedItemListDirection === "right-to-left"
   ) {
-    for (const x of yieldReverse(model.selectedItems)) {
+    for (const x of model.selectedItems) {
       yield x;
     }
     return;
   }
 
-  for (const x of model.selectedItems) {
-    yield x;
-  }
+  yield* yieldReverse(model.selectedItems);
 };
 
 /**

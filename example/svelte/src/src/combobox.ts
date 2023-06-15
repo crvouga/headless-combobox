@@ -333,7 +333,6 @@ export const update = <T>(
    *
    */
   if (input.model.skipOnce.includes(input.msg.type)) {
-    console.log("IGNORED");
     return {
       model: {
         ...input.model,

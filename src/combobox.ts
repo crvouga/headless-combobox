@@ -333,6 +333,7 @@ export const update = <T>(
    *
    */
   if (input.model.skipOnce.includes(input.msg.type)) {
+    console.log("IGNORED");
     return {
       model: {
         ...input.model,
@@ -426,10 +427,10 @@ export const update = <T>(
     }
   }
 
-  // focus on input when navigating selected items with keyboard
+  // focus on input when navigating from selected item list to input
   if (
-    isSelectedItemHighlighted(input.model) &&
-    !isSelectedItemHighlighted(output.model)
+    input.model.type === "selected-item-highlighted" &&
+    output.model.type === "focused__closed"
   ) {
     output.effects.push({
       type: "focus-input",
@@ -509,16 +510,11 @@ export const update = <T>(
    Two events fire. input focused then input pressed. This causes the suggestion drop down to open and then close.
 
    */
-  if (
-    (isBlurred(input.model) ||
-      input.model.type === "selected-item-highlighted") &&
-    isFocused(output.model)
-  ) {
+  if (isBlurred(input.model) && isFocused(output.model)) {
     output.model = {
       ...output.model,
       skipOnce: [
-        // ...output.model.skipOnce.filter((x) => x !== "pressed-input"),
-        ...output.model.skipOnce,
+        ...output.model.skipOnce.filter((x) => x !== "pressed-input"),
         "pressed-input",
       ],
     };
@@ -1291,7 +1287,10 @@ const updateModel = <T>(
         }
 
         case "blurred-selected-item": {
-          return model;
+          return {
+            ...model,
+            type: "blurred",
+          };
         }
 
         case "focused-input": {

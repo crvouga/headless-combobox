@@ -114,7 +114,7 @@ export type SelectMode =
   | {
       type: "multi-select";
       selectedItemListDirection: SelectedItemListDirection;
-      disableSelectedItemsKeyboardNavigation?: boolean;
+      disableSelectedItemListKeyboardNavigation?: boolean;
     };
 
 export type SelectedItemListDirection = "left-to-right" | "right-to-left";
@@ -1530,7 +1530,7 @@ const updateSelectedItemKeyboardNavigation = <T>({
     return model;
   }
 
-  if (model.selectMode.disableSelectedItemsKeyboardNavigation) {
+  if (model.selectMode.disableSelectedItemListKeyboardNavigation) {
     return model;
   }
 

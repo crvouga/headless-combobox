@@ -114,6 +114,7 @@ export type SelectMode =
   | {
       type: "multi-select";
       selectedItemListDirection: SelectedItemListDirection;
+      disableSelectedItemListKeyboardNavigation?: boolean;
     };
 
 export type SelectedItemListDirection = "left-to-right" | "right-to-left";
@@ -390,7 +391,7 @@ export const update = <T>(
   }
 
   // focus on input when user presses it
-  if (input.msg.type === "pressed-input") {
+  if (input.msg.type === "pressed-input" && isBlurred(output.model)) {
     output.effects.push({
       type: "focus-input",
     });
@@ -726,7 +727,7 @@ const updateModel = <T>(
         }
 
         case "pressed-horizontal-arrow-key": {
-          return updateKeyboardNavigationForSelections({ model, msg });
+          return updateSelectedItemKeyboardNavigation({ model, msg });
         }
 
         case "pressed-unselect-button": {
@@ -895,7 +896,7 @@ const updateModel = <T>(
         }
 
         case "pressed-horizontal-arrow-key": {
-          return updateKeyboardNavigationForSelections({ model, msg });
+          return updateSelectedItemKeyboardNavigation({ model, msg });
         }
 
         case "pressed-unselect-button": {
@@ -1025,7 +1026,7 @@ const updateModel = <T>(
         }
 
         case "pressed-horizontal-arrow-key": {
-          return updateKeyboardNavigationForSelections({ model, msg });
+          return updateSelectedItemKeyboardNavigation({ model, msg });
         }
 
         case "pressed-enter-key": {
@@ -1510,7 +1511,7 @@ const removeFromSelected = <T>({
   };
 };
 
-const updateKeyboardNavigationForSelections = <T>({
+const updateSelectedItemKeyboardNavigation = <T>({
   model,
   msg,
 }: {
@@ -1526,6 +1527,10 @@ const updateKeyboardNavigationForSelections = <T>({
   }
 
   if (model.selectMode.type !== "multi-select") {
+    return model;
+  }
+
+  if (model.selectMode.disableSelectedItemListKeyboardNavigation) {
     return model;
   }
 

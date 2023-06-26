@@ -81,7 +81,7 @@ pnpm install headless-combobox
 
 ## Credit
 
-This library is steals from these following libraries:
+This library is steals from these libraries:
 
 - [MUI's Autocomplete](https://mui.com/material-ui/react-autocomplete/#multiple-values)
 - [Headless UI's Combobox](https://headlessui.com/react/combobox)

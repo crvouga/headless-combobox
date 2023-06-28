@@ -253,6 +253,9 @@ export type Msg<T> =
       type: "blurred-selected-item";
       item: T;
     }
+  | {
+      type: "toggle-opened";
+    }
   //
   // Setters
   //
@@ -678,6 +681,12 @@ const updateModel = <T>(
 
     case "focused__closed": {
       switch (msg.type) {
+        case "toggle-opened": {
+          return {
+            ...model,
+            type: "focused__opened",
+          };
+        }
         case "pressed-input": {
           return closedToOpened(model);
         }
@@ -795,6 +804,12 @@ const updateModel = <T>(
 
     case "focused__opened": {
       switch (msg.type) {
+        case "toggle-opened": {
+          return {
+            ...model,
+            type: "focused__closed",
+          };
+        }
         case "hovered-over-item": {
           return {
             ...model,
@@ -940,6 +955,12 @@ const updateModel = <T>(
 
     case "focused__opened__highlighted": {
       switch (msg.type) {
+        case "toggle-opened": {
+          return {
+            ...model,
+            type: "focused__closed",
+          };
+        }
         case "hovered-over-item": {
           return { ...model, highlightIndex: msg.index };
         }

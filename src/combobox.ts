@@ -14,7 +14,6 @@ import {
   keepIf,
   memoize,
   removeFirst,
-  yieldIntersectionLeft,
   yieldReverse,
   yieldUnique,
 } from "./utils";
@@ -97,11 +96,7 @@ export const initConfig = <T>({
  * The simpleFilter function is a default implementation of the deterministicFilter function.
  */
 export const simpleFilter = function* <T>(config: Config<T>, model: Model<T>) {
-  for (
-    let i = 0;
-    i < Math.min(model.allItems.length, model.visibleItemLimit);
-    i++
-  ) {
+  for (let i = 0; i < model.allItems.length; i++) {
     const item = model.allItems[i];
 
     if (!item) {

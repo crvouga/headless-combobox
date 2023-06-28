@@ -191,6 +191,14 @@ This library is steals from these libraries:
     });
   };
 
+  const onKeydown = (event: KeyboardEvent) => {
+    const msg = Combobox.keyToMsg<Item>(event.key);
+    if (msg.shouldPreventDefault) {
+      event.preventDefault();
+    }
+    dispatch(msg);
+  };
+
   /*
 
 
@@ -231,14 +239,14 @@ This library is steals from these libraries:
       on:focus={() => dispatch({ type: "focused-input" })}
       on:blur={() => dispatch({ type: "blurred-input" })}
       on:mousedown={() => dispatch({ type: "pressed-input" })}
-      on:keydown={(event) => dispatch(Combobox.keyToMsg(event.key))}
+      on:keydown={onKeydown}
     />
     <ul
       {...state.aria.itemList}
       class="suggestions"
       class:hide={!state.isOpened}
     >
-      {#if state.visibleItems.length === 0}
+      {#if state.renderItems.length === 0}
         <li>No results</li>
       {/if}
       {#each state.renderItems as item, index}

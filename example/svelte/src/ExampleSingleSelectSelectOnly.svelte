@@ -125,7 +125,7 @@
       class="suggestions"
       class:hide={!state.isOpened}
     >
-      {#if state.visibleItems.length === 0}
+      {#if state.renderItems.length === 0}
         <li>No results</li>
       {/if}
       {#each state.renderItems as item, index}

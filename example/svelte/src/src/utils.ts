@@ -150,7 +150,6 @@ export const memoize = <X, Y>(
 ): ((x: X) => Y) => {
   return (x: X) => {
     const key = keyFn(x);
-    console.log({ cache });
     if (cache.has(key)) {
       return cache.get(key)!;
     }

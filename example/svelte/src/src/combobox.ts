@@ -4,6 +4,7 @@ import {
   ariaSelectedItem,
   ariaUnselectButton,
 } from "./combobox-wai-aria";
+import { LRUCache } from "./lru-cache";
 import { isNonEmpty, type NonEmpty } from "./non-empty";
 import {
   circularIndex,
@@ -30,6 +31,11 @@ import {
 export type Config<T> = {
   toItemId: (item: T) => string | number;
   toItemInputValue: (item: T) => string;
+  /**
+   * @description
+   * The deterministicFilter function is used to filter the items in the suggestion dropdown.
+   * This must always be deterministic! That means it must always return the same order and same items for the same input.
+   */
   deterministicFilter: (model: Model<T>) => Generator<T, void, unknown>;
   deterministicFilterKeyFn: (model: Model<T>) => string;
   isEmptyItem: (value: T) => boolean;
@@ -43,6 +49,7 @@ export type Config<T> = {
 export const initConfig = <T>({
   namespace,
   isEmptyItem = () => false,
+  visibleItemCacheCapacity = 100,
   ...config
 }: {
   toItemId: (item: T) => string | number;
@@ -50,11 +57,12 @@ export const initConfig = <T>({
   isEmptyItem?: (item: T) => boolean;
   deterministicFilter?: (model: Model<T>) => T[];
   namespace?: string;
+  visibleItemCacheCapacity?: number;
 }): Config<T> => {
   const configFull: Config<T> = {
     ...config,
     isEmptyItem,
-    visibleItemCache: new Map(),
+    visibleItemCache: new LRUCache(visibleItemCacheCapacity),
     namespace: namespace ?? "combobox",
     deterministicFilter: function* (model) {
       for (const item of model.allItems) {
@@ -2088,6 +2096,9 @@ export const toVisibleItems = <T>(config: Config<T>, model: Model<T>): T[] => {
   return Array.from(yieldVisibleItems(config, model));
 };
 
+/**
+ * Get visible items memoized
+ */
 const toVisibleItemsMemoized = <T>(config: Config<T>) => {
   return memoize(
     config.visibleItemCache,

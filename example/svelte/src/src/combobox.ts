@@ -74,7 +74,8 @@ export const initConfig = <T>({
         model.inputMode.type === "search-mode"
           ? model.inputMode.inputValue
           : "";
-      const key = `${model.allItems.length}-${inputVal}`;
+
+      const key = `${model.visibleItemLimit}-${model.allItems.length}-${inputVal}`;
 
       return key;
     },

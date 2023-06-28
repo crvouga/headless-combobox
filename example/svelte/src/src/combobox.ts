@@ -102,6 +102,7 @@ export type Model<T> = ModelState & {
   selectMode: SelectMode;
   inputMode: InputMode;
   highlightMode: HighlightMode;
+  visibleItemLimit: number;
 };
 
 /**
@@ -184,11 +185,13 @@ export const init = <T>({
   selectMode,
   inputMode,
   highlightMode,
+  visibleItemLimit = 500,
 }: {
   allItems: T[];
   selectMode?: SelectMode;
   inputMode?: InputMode;
   highlightMode?: HighlightMode;
+  visibleItemLimit?: number;
 }): Model<T> => {
   return {
     type: "blurred",
@@ -200,6 +203,7 @@ export const init = <T>({
       : { type: "search-mode", hasSearched: false, inputValue: "" },
     selectMode: selectMode ? selectMode : { type: "single-select" },
     highlightMode: highlightMode ? highlightMode : { type: "clamp" },
+    visibleItemLimit: Math.abs(visibleItemLimit),
   };
 };
 
@@ -692,9 +696,11 @@ const updateModel = <T>(
           return {
             ...model,
             type: "selected-item-highlighted",
-            focusedIndex: toSelectedItems(model).findIndex(
-              (item) => toItemId(item) === toItemId(msg.item)
-            ),
+            focusedIndex:
+              findIndex(
+                (item) => toItemId(item) === toItemId(msg.item),
+                yieldSelectedItems(model)
+              ) ?? 0,
           };
         }
 
@@ -776,9 +782,11 @@ const updateModel = <T>(
           return {
             ...model,
             type: "selected-item-highlighted",
-            focusedIndex: toSelectedItems(model).findIndex(
-              (item) => toItemId(item) === toItemId(msg.item)
-            ),
+            focusedIndex:
+              findIndex(
+                (item) => toItemId(item) === toItemId(msg.item),
+                yieldSelectedItems(model)
+              ) ?? 0,
           };
         }
 
@@ -897,11 +905,9 @@ const updateModel = <T>(
         case "pressed-vertical-arrow-key": {
           const visible = toVisibleItems(config, model);
 
-          const selectedIndex = visible.findIndex((item) =>
-            toSelectedItems(model).some((x) => toItemId(item) === toItemId(x))
-          );
+          const selectedItemIndex = toSelectedItemIndex(config, model);
 
-          if (selectedIndex === -1) {
+          if (!selectedItemIndex) {
             return {
               ...model,
               highlightIndex: 0,
@@ -918,7 +924,7 @@ const updateModel = <T>(
 
           const highlightIndex = toNextHighlightIndex(
             model.highlightMode,
-            selectedIndex + delta,
+            selectedItemIndex + delta,
             visible.length
           );
 
@@ -1145,12 +1151,11 @@ const updateModel = <T>(
         }
 
         case "focused-selected-item": {
+          const selectedItemIndex = toSelectedItemIndex(config, model);
           return {
             ...model,
             type: "selected-item-highlighted",
-            focusedIndex: toSelectedItems(model).findIndex(
-              (item) => toItemId(item) === toItemId(msg.item)
-            ),
+            focusedIndex: selectedItemIndex ?? 0,
           };
         }
 
@@ -1328,9 +1333,11 @@ const updateModel = <T>(
           return {
             ...model,
             type: "selected-item-highlighted",
-            focusedIndex: toSelectedItems(model).findIndex(
-              (item) => toItemId(item) === toItemId(msg.item)
-            ),
+            focusedIndex:
+              findIndex(
+                (item) => toItemId(item) === toItemId(msg.item),
+                yieldSelectedItems(model)
+              ) ?? 0,
           };
         }
 
@@ -1458,12 +1465,20 @@ const toSelectedItemIndex = <T>(
   config: Config<T>,
   model: Model<T>
 ): number | null => {
-  const selectedIndex = toVisibleItems(config, model).findIndex((item) =>
-    toSelectedItems(model).some(
-      (x) => config.toItemId(item) === config.toItemId(x)
-    )
-  );
-  return selectedIndex === -1 ? null : selectedIndex;
+  const selectedItemIdSet = new Set<string | number>();
+  for (const item of yieldSelectedItems(model)) {
+    selectedItemIdSet.add(config.toItemId(item));
+  }
+
+  let index = 0;
+  for (const item of yieldVisibleItems(config, model)) {
+    if (selectedItemIdSet.has(config.toItemId(item))) {
+      return index;
+    }
+    index++;
+  }
+
+  return null;
 };
 
 const setInputValue = <T>(model: Model<T>, inputValue: string): Model<T> => {
@@ -2009,21 +2024,50 @@ export const yieldVisibleItems = function* <T>(
   config: Config<T>,
   model: Model<T>
 ): Generator<T> {
+  //
+  //
+  //
+
   if (model.inputMode.type === "select-only") {
+    let index = 0;
     for (const item of model.allItems) {
+      if (index >= model.visibleItemLimit) {
+        break;
+      }
       yield item;
+      index++;
     }
     return;
   }
+
+  //
+  //
+  //
 
   if (model.inputMode.type === "search-mode" && !model.inputMode.hasSearched) {
+    let index = 0;
     for (const item of model.allItems) {
+      if (index >= model.visibleItemLimit) {
+        break;
+      }
       yield item;
+      index++;
     }
     return;
   }
 
-  yield* config.deterministicFilter(model);
+  //
+  //
+  //
+
+  let index = 0;
+  for (const item of config.deterministicFilter(model)) {
+    if (index >= model.visibleItemLimit) {
+      break;
+    }
+    yield item;
+    index++;
+  }
 };
 
 /**

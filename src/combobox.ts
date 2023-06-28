@@ -101,7 +101,20 @@ export type Model<T> = ModelState & {
   skipOnce: Msg<T>["type"][];
   selectMode: SelectMode;
   inputMode: InputMode;
+  highlightMode: HighlightMode;
+  visibleItemLimit: number;
 };
+
+/**
+ * @group Model
+ */
+type HighlightMode =
+  | {
+      type: "circular";
+    }
+  | {
+      type: "clamp";
+    };
 
 /**
  * @group Model
@@ -130,7 +143,7 @@ export type InputMode =
   | {
       type: "search-mode";
       inputValue: string;
-      hasSearched: boolean;
+      hasSearched?: boolean;
     };
 
 type Blurred = {
@@ -171,10 +184,14 @@ export const init = <T>({
   allItems,
   selectMode,
   inputMode,
+  highlightMode,
+  visibleItemLimit = 500,
 }: {
   allItems: T[];
   selectMode?: SelectMode;
   inputMode?: InputMode;
+  highlightMode?: HighlightMode;
+  visibleItemLimit?: number;
 }): Model<T> => {
   return {
     type: "blurred",
@@ -185,6 +202,8 @@ export const init = <T>({
       ? inputMode
       : { type: "search-mode", hasSearched: false, inputValue: "" },
     selectMode: selectMode ? selectMode : { type: "single-select" },
+    highlightMode: highlightMode ? highlightMode : { type: "clamp" },
+    visibleItemLimit: Math.abs(visibleItemLimit),
   };
 };
 
@@ -677,9 +696,11 @@ const updateModel = <T>(
           return {
             ...model,
             type: "selected-item-highlighted",
-            focusedIndex: toSelectedItems(model).findIndex(
-              (item) => toItemId(item) === toItemId(msg.item)
-            ),
+            focusedIndex:
+              findIndex(
+                (item) => toItemId(item) === toItemId(msg.item),
+                yieldSelectedItems(model)
+              ) ?? 0,
           };
         }
 
@@ -761,9 +782,11 @@ const updateModel = <T>(
           return {
             ...model,
             type: "selected-item-highlighted",
-            focusedIndex: toSelectedItems(model).findIndex(
-              (item) => toItemId(item) === toItemId(msg.item)
-            ),
+            focusedIndex:
+              findIndex(
+                (item) => toItemId(item) === toItemId(msg.item),
+                yieldSelectedItems(model)
+              ) ?? 0,
           };
         }
 
@@ -882,11 +905,9 @@ const updateModel = <T>(
         case "pressed-vertical-arrow-key": {
           const visible = toVisibleItems(config, model);
 
-          const selectedIndex = visible.findIndex((item) =>
-            toSelectedItems(model).some((x) => toItemId(item) === toItemId(x))
-          );
+          const selectedItemIndex = toSelectedItemIndex(config, model);
 
-          if (selectedIndex === -1) {
+          if (!selectedItemIndex) {
             return {
               ...model,
               highlightIndex: 0,
@@ -901,8 +922,9 @@ const updateModel = <T>(
               ? 1
               : -1;
 
-          const highlightIndex = circularIndex(
-            selectedIndex + delta,
+          const highlightIndex = toNextHighlightIndex(
+            model.highlightMode,
+            selectedItemIndex + delta,
             visible.length
           );
 
@@ -1049,7 +1071,8 @@ const updateModel = <T>(
         case "pressed-vertical-arrow-key": {
           const visible = toVisibleItems(config, model);
           const delta = msg.key === "arrow-down" ? 1 : -1;
-          const highlightIndex = circularIndex(
+          const highlightIndex = toNextHighlightIndex(
+            model.highlightMode,
             model.highlightIndex + delta,
             visible.length
           );
@@ -1128,12 +1151,11 @@ const updateModel = <T>(
         }
 
         case "focused-selected-item": {
+          const selectedItemIndex = toSelectedItemIndex(config, model);
           return {
             ...model,
             type: "selected-item-highlighted",
-            focusedIndex: toSelectedItems(model).findIndex(
-              (item) => toItemId(item) === toItemId(msg.item)
-            ),
+            focusedIndex: selectedItemIndex ?? 0,
           };
         }
 
@@ -1311,9 +1333,11 @@ const updateModel = <T>(
           return {
             ...model,
             type: "selected-item-highlighted",
-            focusedIndex: toSelectedItems(model).findIndex(
-              (item) => toItemId(item) === toItemId(msg.item)
-            ),
+            focusedIndex:
+              findIndex(
+                (item) => toItemId(item) === toItemId(msg.item),
+                yieldSelectedItems(model)
+              ) ?? 0,
           };
         }
 
@@ -1441,12 +1465,20 @@ const toSelectedItemIndex = <T>(
   config: Config<T>,
   model: Model<T>
 ): number | null => {
-  const selectedIndex = toVisibleItems(config, model).findIndex((item) =>
-    toSelectedItems(model).some(
-      (x) => config.toItemId(item) === config.toItemId(x)
-    )
-  );
-  return selectedIndex === -1 ? null : selectedIndex;
+  const selectedItemIdSet = new Set<string | number>();
+  for (const item of yieldSelectedItems(model)) {
+    selectedItemIdSet.add(config.toItemId(item));
+  }
+
+  let index = 0;
+  for (const item of yieldVisibleItems(config, model)) {
+    if (selectedItemIdSet.has(config.toItemId(item))) {
+      return index;
+    }
+    index++;
+  }
+
+  return null;
 };
 
 const setInputValue = <T>(model: Model<T>, inputValue: string): Model<T> => {
@@ -1648,6 +1680,22 @@ const modelToInputValue = <T>(config: Config<T>, model: Model<T>): string => {
   return "";
 };
 
+export const toNextHighlightIndex = <T>(
+  highlightMode: HighlightMode,
+  highlightIndexNew: number,
+  visibleItemLength: number
+): number => {
+  if (highlightMode.type === "circular") {
+    return circularIndex(highlightIndexNew, visibleItemLength);
+  }
+
+  if (highlightMode.type === "clamp") {
+    return clampIndex(highlightIndexNew, visibleItemLength);
+  }
+
+  return highlightIndexNew;
+};
+
 /** @module Selectors **/
 
 /**
@@ -1769,16 +1817,20 @@ export const toHighlightedItem = <T>(
   config: Config<T>,
   model: Model<T>
 ): T | null => {
-  switch (model.type) {
-    case "focused__opened__highlighted": {
-      const item = toVisibleItems(config, model)[model.highlightIndex];
-
-      return item ?? null;
-    }
-    default: {
-      return null;
-    }
+  if (model.type !== "focused__opened__highlighted") {
+    return null;
   }
+
+  let index = 0;
+
+  for (const item of yieldVisibleItems(config, model)) {
+    if (index === model.highlightIndex) {
+      return item;
+    }
+    index++;
+  }
+
+  return null;
 };
 
 /**
@@ -1827,9 +1879,8 @@ export const yieldSelectedItems = function* <T>(model: Model<T>): Generator<T> {
  * This function returns the selected item
  */
 export const toSelectedItem = <T>(model: Model<T>): T | null => {
-  const selectedItems = toSelectedItems(model);
-  if (isNonEmpty(selectedItems)) {
-    return selectedItems[0];
+  for (const selectedItem of yieldSelectedItems(model)) {
+    return selectedItem;
   }
   return null;
 };
@@ -1844,7 +1895,12 @@ export const isItemSelected = <T>(
   model: Model<T>,
   item: T
 ): boolean => {
-  return toSelectedItems(model).some((x) => toItemId(x) === toItemId(item));
+  for (const selectedItem of yieldSelectedItems(model)) {
+    if (toItemId(selectedItem) === toItemId(item)) {
+      return true;
+    }
+  }
+  return false;
 };
 
 /**
@@ -1946,15 +2002,18 @@ export const toItemStatus = <T>(
   model: Model<T>,
   item: T
 ): ItemStatus => {
-  if (isItemSelectedAndHighlighted(config, model, item)) {
+  const isSelected = isItemSelected(config, model, item);
+  const isHighlighted = isItemHighlighted(config, model, item);
+
+  if (isSelected && isHighlighted) {
     return "selected-and-highlighted";
   }
 
-  if (isItemSelected(config, model, item)) {
+  if (isSelected) {
     return "selected";
   }
 
-  if (isItemHighlighted(config, model, item)) {
+  if (isHighlighted) {
     return "highlighted";
   }
 
@@ -1965,21 +2024,50 @@ export const yieldVisibleItems = function* <T>(
   config: Config<T>,
   model: Model<T>
 ): Generator<T> {
+  //
+  //
+  //
+
   if (model.inputMode.type === "select-only") {
+    let index = 0;
     for (const item of model.allItems) {
+      if (index >= model.visibleItemLimit) {
+        break;
+      }
       yield item;
+      index++;
     }
     return;
   }
+
+  //
+  //
+  //
 
   if (model.inputMode.type === "search-mode" && !model.inputMode.hasSearched) {
+    let index = 0;
     for (const item of model.allItems) {
+      if (index >= model.visibleItemLimit) {
+        break;
+      }
       yield item;
+      index++;
     }
     return;
   }
 
-  yield* config.deterministicFilter(model);
+  //
+  //
+  //
+
+  let index = 0;
+  for (const item of config.deterministicFilter(model)) {
+    if (index >= model.visibleItemLimit) {
+      break;
+    }
+    yield item;
+    index++;
+  }
 };
 
 /**
@@ -2006,15 +2094,36 @@ export const yieldRenderItems = function* <T>(
   config: Config<T>,
   model: Model<T>
 ): Generator<RenderItem<T>> {
+  const selectedItemIdSet = new Set<string | number>();
+  for (const item of yieldSelectedItems(model)) {
+    selectedItemIdSet.add(config.toItemId(item));
+  }
+
+  const highlightedIndex =
+    model.type === "focused__opened__highlighted" ? model.highlightIndex : null;
+
+  let index = 0;
   for (const item of yieldVisibleItems(config, model)) {
+    const isSelected = selectedItemIdSet.has(config.toItemId(item));
+    const isHighlighted = index === highlightedIndex;
+
     yield {
       item,
-      status: toItemStatus(config, model, item),
+      status:
+        isSelected && isHighlighted
+          ? "selected-and-highlighted"
+          : isSelected
+          ? "selected"
+          : isHighlighted
+          ? "highlighted"
+          : "unselected",
       inputValue: config.toItemInputValue(item),
       aria: ariaItem(config, model, item),
     };
+    index++;
   }
 };
+
 export const toRenderItems = <T>(
   config: Config<T>,
   model: Model<T>

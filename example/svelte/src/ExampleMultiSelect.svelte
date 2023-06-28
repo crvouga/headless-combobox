@@ -12,7 +12,7 @@
   type Item = { id: number; label: string };
 
   const fruits: Item[] = [];
-  for (let i = 0; i < 500; i++) {
+  for (let i = 0; i < 1000; i++) {
     fruits.push({ id: i, label: `item ${i}` });
   }
 
@@ -46,6 +46,10 @@
     selectMode: {
       type: "multi-select",
       selectedItemListDirection: "right-to-left",
+    },
+    visibleItemLimit: 100,
+    highlightMode: {
+      type: "circular",
     },
   });
 

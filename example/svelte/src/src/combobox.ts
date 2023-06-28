@@ -65,8 +65,13 @@ export const initConfig = <T>({
     visibleItemCache: new LRUCache(visibleItemCacheCapacity),
     namespace: namespace ?? "combobox",
     deterministicFilter: function* (model) {
+      let i = 0;
       for (const item of model.allItems) {
+        if (i >= model.visibleItemLimit) {
+          break;
+        }
         yield item;
+        i++;
       }
     },
     deterministicFilterKeyFn: (model) => {
@@ -75,7 +80,7 @@ export const initConfig = <T>({
           ? model.inputMode.inputValue
           : "";
 
-      const key = `${model.visibleItemLimit}-${model.allItems.length}-${inputVal}`;
+      const key = `${model.inputMode.type}-${model.visibleItemLimit}-${model.allItems.length}-${inputVal}`;
 
       return key;
     },
@@ -1557,11 +1562,7 @@ const addSelected = <T>({
   }
 
   const selectedItemsNew = Array.from(
-    yieldIntersectionLeft(
-      config.toItemId,
-      yieldUnique(config.toItemId, [item, ...model.selectedItems]),
-      model.allItems
-    )
+    yieldUnique(config.toItemId, [item, ...model.selectedItems])
   );
 
   return {

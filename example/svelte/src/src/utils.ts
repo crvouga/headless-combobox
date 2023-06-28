@@ -1,3 +1,5 @@
+import { LRUCache } from "./lru-cache";
+
 export const removeFirst = <T>(predicate: (x: T) => boolean, arr: T[]): T[] => {
   const index = arr.findIndex(predicate);
   if (index === -1) return arr;
@@ -132,4 +134,28 @@ export const keepIf = function* <T>(
       yield x;
     }
   }
+};
+
+//
+//
+//
+//
+//
+//
+//
+export const memoize = <X, Y>(
+  cache: Map<string, Y>,
+  keyFn: (x: X) => string,
+  fn: (x: X) => Y
+): ((x: X) => Y) => {
+  return (x: X) => {
+    const key = keyFn(x);
+    console.log({ cache });
+    if (cache.has(key)) {
+      return cache.get(key)!;
+    }
+    const y = fn(x);
+    cache.set(key, y);
+    return y;
+  };
 };

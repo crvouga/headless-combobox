@@ -11,6 +11,7 @@ import {
   findIndex,
   intersectionLeft,
   keepIf,
+  memoize,
   removeFirst,
   yieldIntersectionLeft,
   yieldReverse,
@@ -30,8 +31,10 @@ export type Config<T> = {
   toItemId: (item: T) => string | number;
   toItemInputValue: (item: T) => string;
   deterministicFilter: (model: Model<T>) => Generator<T, void, unknown>;
+  deterministicFilterKeyFn: (model: Model<T>) => string;
   isEmptyItem: (value: T) => boolean;
   namespace: string;
+  visibleItemCache: Map<string, T[]>;
 };
 
 /**
@@ -51,11 +54,17 @@ export const initConfig = <T>({
   const configFull: Config<T> = {
     ...config,
     isEmptyItem,
+    visibleItemCache: new Map(),
     namespace: namespace ?? "combobox",
     deterministicFilter: function* (model) {
       for (const item of model.allItems) {
         yield item;
       }
+    },
+    deterministicFilterKeyFn: (model) => {
+      return model.inputMode.type === "search-mode"
+        ? model.inputMode.inputValue
+        : "";
     },
   };
   return {
@@ -427,7 +436,7 @@ export const update = <T>(
     isHighlighted(output.model) &&
     input.msg.type === "pressed-vertical-arrow-key"
   ) {
-    const visible = toVisibleItems(config, output.model);
+    const visible = toVisibleItemsMemoized(config)(output.model);
 
     const highlightedItem = visible[output.model.highlightIndex];
 
@@ -903,7 +912,7 @@ const updateModel = <T>(
         }
 
         case "pressed-vertical-arrow-key": {
-          const visible = toVisibleItems(config, model);
+          const visible = toVisibleItemsMemoized(config)(model);
 
           const selectedItemIndex = toSelectedItemIndex(config, model);
 
@@ -1069,7 +1078,7 @@ const updateModel = <T>(
         }
 
         case "pressed-vertical-arrow-key": {
-          const visible = toVisibleItems(config, model);
+          const visible = toVisibleItemsMemoized(config)(model);
           const delta = msg.key === "arrow-down" ? 1 : -1;
           const highlightIndex = toNextHighlightIndex(
             model.highlightMode,
@@ -1084,7 +1093,7 @@ const updateModel = <T>(
         }
 
         case "pressed-enter-key": {
-          const visible = toVisibleItems(config, model);
+          const visible = toVisibleItemsMemoized(config)(model);
 
           const enteredItem = visible[model.highlightIndex];
 
@@ -2077,6 +2086,18 @@ export const yieldVisibleItems = function* <T>(
  */
 export const toVisibleItems = <T>(config: Config<T>, model: Model<T>): T[] => {
   return Array.from(yieldVisibleItems(config, model));
+};
+
+const toVisibleItemsMemoized = <T>(config: Config<T>) => {
+  return memoize(
+    config.visibleItemCache,
+    (model) => {
+      return config.deterministicFilterKeyFn(model);
+    },
+    (model: Model<T>): T[] => {
+      return toVisibleItems(config, model);
+    }
+  );
 };
 
 /**

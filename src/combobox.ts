@@ -641,6 +641,12 @@ const updateModel = <T>(
   switch (model.type) {
     case "blurred": {
       switch (msg.type) {
+        case "toggle-opened": {
+          return {
+            ...model,
+            type: "focused__closed",
+          };
+        }
         case "focused-input": {
           return resetInputValue(config, {
             ...model,

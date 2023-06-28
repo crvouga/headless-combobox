@@ -101,7 +101,19 @@ export type Model<T> = ModelState & {
   skipOnce: Msg<T>["type"][];
   selectMode: SelectMode;
   inputMode: InputMode;
+  highlightMode: HighlightMode;
 };
+
+/**
+ * @group Model
+ */
+type HighlightMode =
+  | {
+      type: "circular";
+    }
+  | {
+      type: "clamp";
+    };
 
 /**
  * @group Model
@@ -130,7 +142,7 @@ export type InputMode =
   | {
       type: "search-mode";
       inputValue: string;
-      hasSearched: boolean;
+      hasSearched?: boolean;
     };
 
 type Blurred = {
@@ -171,10 +183,12 @@ export const init = <T>({
   allItems,
   selectMode,
   inputMode,
+  highlightMode,
 }: {
   allItems: T[];
   selectMode?: SelectMode;
   inputMode?: InputMode;
+  highlightMode?: HighlightMode;
 }): Model<T> => {
   return {
     type: "blurred",
@@ -185,6 +199,7 @@ export const init = <T>({
       ? inputMode
       : { type: "search-mode", hasSearched: false, inputValue: "" },
     selectMode: selectMode ? selectMode : { type: "single-select" },
+    highlightMode: highlightMode ? highlightMode : { type: "clamp" },
   };
 };
 
@@ -901,7 +916,8 @@ const updateModel = <T>(
               ? 1
               : -1;
 
-          const highlightIndex = circularIndex(
+          const highlightIndex = toNextHighlightIndex(
+            model.highlightMode,
             selectedIndex + delta,
             visible.length
           );
@@ -1049,7 +1065,8 @@ const updateModel = <T>(
         case "pressed-vertical-arrow-key": {
           const visible = toVisibleItems(config, model);
           const delta = msg.key === "arrow-down" ? 1 : -1;
-          const highlightIndex = circularIndex(
+          const highlightIndex = toNextHighlightIndex(
+            model.highlightMode,
             model.highlightIndex + delta,
             visible.length
           );
@@ -1646,6 +1663,22 @@ const modelToInputValue = <T>(config: Config<T>, model: Model<T>): string => {
   }
 
   return "";
+};
+
+export const toNextHighlightIndex = <T>(
+  highlightMode: HighlightMode,
+  highlightIndexNew: number,
+  visibleItemLength: number
+): number => {
+  if (highlightMode.type === "circular") {
+    return circularIndex(highlightIndexNew, visibleItemLength);
+  }
+
+  if (highlightMode.type === "clamp") {
+    return clampIndex(highlightIndexNew, visibleItemLength);
+  }
+
+  return highlightIndexNew;
 };
 
 /** @module Selectors **/

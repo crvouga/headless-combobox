@@ -644,9 +644,10 @@ const updateModel = <T>(
         case "toggle-opened": {
           return {
             ...model,
-            type: "focused__closed",
+            type: "focused__opened",
           };
         }
+
         case "focused-input": {
           return resetInputValue(config, {
             ...model,

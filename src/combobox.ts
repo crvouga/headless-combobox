@@ -510,15 +510,15 @@ export const update = <T>(
    Two events fire. input focused then input pressed. This causes the suggestion drop down to open and then close.
 
    */
-  if (isBlurred(input.model) && isFocused(output.model)) {
-    output.model = {
-      ...output.model,
-      skipOnce: [
-        ...output.model.skipOnce.filter((x) => x !== "pressed-input"),
-        "pressed-input",
-      ],
-    };
-  }
+  // if (isBlurred(input.model) && isFocused(output.model)) {
+  //   output.model = {
+  //     ...output.model,
+  //     skipOnce: [
+  //       ...output.model.skipOnce.filter((x) => x !== "pressed-input"),
+  //       "pressed-input",
+  //     ],
+  //   };
+  // }
 
   /**
    *

@@ -70,9 +70,13 @@ export const initConfig = <T>({
       }
     },
     deterministicFilterKeyFn: (model) => {
-      return model.inputMode.type === "search-mode"
-        ? model.inputMode.inputValue
-        : "";
+      const inputVal =
+        model.inputMode.type === "search-mode"
+          ? model.inputMode.inputValue
+          : "";
+      const key = `${model.allItems.length}-${inputVal}`;
+
+      return key;
     },
   };
   return {

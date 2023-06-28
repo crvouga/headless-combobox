@@ -97,7 +97,11 @@ export const initConfig = <T>({
  * The simpleFilter function is a default implementation of the deterministicFilter function.
  */
 export const simpleFilter = function* <T>(config: Config<T>, model: Model<T>) {
-  for (let i = 0; i < model.allItems.length; i++) {
+  for (
+    let i = 0;
+    i < Math.min(model.allItems.length, model.visibleItemLimit);
+    i++
+  ) {
     const item = model.allItems[i];
 
     if (!item) {
@@ -2098,14 +2102,14 @@ export const yieldVisibleItems = function* <T>(
  *
  * This function returns the all the visible items.
  */
-export const toVisibleItems = <T>(config: Config<T>, model: Model<T>): T[] => {
+const toVisibleItems = <T>(config: Config<T>, model: Model<T>): T[] => {
   return Array.from(yieldVisibleItems(config, model));
 };
 
 /**
  * Get visible items memoized
  */
-const toVisibleItemsMemoized = <T>(config: Config<T>) => {
+export const toVisibleItemsMemoized = <T>(config: Config<T>) => {
   return memoize(
     config.visibleItemCache,
     (model) => {
@@ -2281,7 +2285,6 @@ export const toState = <T>(config: Config<T>, model: Model<T>) => {
   return {
     aria: aria(config, model),
     allItems: model.allItems,
-    visibleItems: toVisibleItems(config, model),
     renderItems: toRenderItems(config, model),
     renderSelectedItems: toRenderSelectedItems(config, model),
     isOpened: isOpened(model),

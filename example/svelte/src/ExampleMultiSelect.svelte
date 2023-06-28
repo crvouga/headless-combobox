@@ -12,7 +12,7 @@
   type Item = { id: number; label: string };
 
   const fruits: Item[] = [];
-  for (let i = 0; i < 1000; i++) {
+  for (let i = 0; i < 10_000; i++) {
     fruits.push({ id: i, label: `item ${i}` });
   }
 
@@ -177,7 +177,7 @@
       class="suggestions"
       class:hide={!state.isOpened}
     >
-      {#if state.visibleItems.length === 0}
+      {#if state.renderItems.length === 0}
         <li>No results</li>
       {/if}
       {#each state.renderItems as item, index}

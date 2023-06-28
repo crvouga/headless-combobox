@@ -230,7 +230,7 @@ This library is steals from these libraries:
         })}
       on:focus={() => dispatch({ type: "focused-input" })}
       on:blur={() => dispatch({ type: "blurred-input" })}
-      on:click={() => dispatch({ type: "pressed-input" })}
+      on:mousedown={() => dispatch({ type: "pressed-input" })}
       on:keydown={(event) => dispatch(Combobox.keyToMsg(event.key))}
     />
     <ul

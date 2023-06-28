@@ -159,7 +159,7 @@
       bind:this={input}
       on:focus={() => dispatch({ type: "focused-input" })}
       on:blur={() => dispatch({ type: "blurred-input" })}
-      on:click={() => dispatch({ type: "pressed-input" })}
+      on:mousedown={() => dispatch({ type: "pressed-input" })}
     >
       {state.inputValue}
     </div>

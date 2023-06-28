@@ -164,7 +164,7 @@
           type: "inputted-value",
           inputValue: event.currentTarget.value,
         })}
-      on:click={() => dispatch({ type: "pressed-input" })}
+      on:mousedown={() => dispatch({ type: "pressed-input" })}
       on:focus={() => dispatch({ type: "focused-input" })}
       on:blur={() => dispatch({ type: "blurred-input" })}
     />

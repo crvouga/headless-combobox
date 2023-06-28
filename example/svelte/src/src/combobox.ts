@@ -1493,7 +1493,7 @@ const toSelectedItemIndex = <T>(
   }
 
   let index = 0;
-  for (const item of yieldVisibleItems(config, model)) {
+  for (const item of toVisibleItemsMemoized(config)(model)) {
     if (selectedItemIdSet.has(config.toItemId(item))) {
       return index;
     }
@@ -1845,7 +1845,7 @@ export const toHighlightedItem = <T>(
 
   let index = 0;
 
-  for (const item of yieldVisibleItems(config, model)) {
+  for (const item of toVisibleItemsMemoized(config)(model)) {
     if (index === model.highlightIndex) {
       return item;
     }
@@ -2140,7 +2140,8 @@ export const yieldRenderItems = function* <T>(
     model.type === "focused__opened__highlighted" ? model.highlightIndex : null;
 
   let index = 0;
-  for (const item of yieldVisibleItems(config, model)) {
+
+  for (const item of toVisibleItemsMemoized(config)(model)) {
     const isSelected = selectedItemIdSet.has(config.toItemId(item));
     const isHighlighted = index === highlightedIndex;
 

@@ -394,7 +394,10 @@ export const update = <T>(
   }
 
   // focus on input when user presses it
-  if (input.msg.type === "pressed-input" && isBlurred(output.model)) {
+  const didPressBlurredInput =
+    input.msg.type === "pressed-input" && isBlurred(output.model);
+  const didJustOpen = isClosed(input.model) && isOpened(output.model);
+  if (didPressBlurredInput || didJustOpen) {
     output.effects.push({
       type: "focus-input",
     });

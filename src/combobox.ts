@@ -628,15 +628,15 @@ const updateSetters = <T>({
     //
     const allItemsNew: T[] = [];
     const selectedItemIds = new Set<string | number>();
-    for (const selectedItem of model.selectedItems) {
-      allItemsNew.push(selectedItem);
-      selectedItemIds.add(config.toItemId(selectedItem));
-    }
     for (const item of msg.allItems) {
       if (selectedItemIds.has(config.toItemId(item))) {
         continue;
       }
       allItemsNew.push(item);
+    }
+    for (const selectedItem of model.selectedItems) {
+      allItemsNew.push(selectedItem);
+      selectedItemIds.add(config.toItemId(selectedItem));
     }
     return {
       ...model,
@@ -650,15 +650,15 @@ const updateSetters = <T>({
     //
     const allItemsNew: T[] = [];
     const selectedItemIds = new Set<string | number>();
-    for (const selectedItem of model.selectedItems) {
-      allItemsNew.push(selectedItem);
-      selectedItemIds.add(config.toItemId(selectedItem));
-    }
     for (const item of model.allItems) {
       if (selectedItemIds.has(config.toItemId(item))) {
         continue;
       }
       allItemsNew.push(item);
+    }
+    for (const selectedItem of model.selectedItems) {
+      allItemsNew.push(selectedItem);
+      selectedItemIds.add(config.toItemId(selectedItem));
     }
     return {
       ...model,

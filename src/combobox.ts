@@ -96,6 +96,8 @@ export const initConfig = <T>({
  * The simpleFilter function is a default implementation of the deterministicFilter function.
  */
 export const simpleFilter = function* <T>(config: Config<T>, model: Model<T>) {
+  const currentInputValue = toCurrentInputValue(config, model).toLowerCase();
+
   for (let i = 0; i < model.allItems.length; i++) {
     const item = model.allItems[i];
 
@@ -104,10 +106,7 @@ export const simpleFilter = function* <T>(config: Config<T>, model: Model<T>) {
     }
 
     if (
-      config
-        .toItemInputValue(item)
-        .toLowerCase()
-        .includes(toCurrentInputValue(config, model).toLowerCase())
+      config.toItemInputValue(item).toLowerCase().includes(currentInputValue)
     ) {
       yield item;
     }
@@ -122,6 +121,9 @@ export const simpleFilter = function* <T>(config: Config<T>, model: Model<T>) {
  * This is the data you will be saving in your app.
  */
 export type Model<T> = ModelState & {
+  /**
+   * All items that can be selected. Items must be unique.
+   */
   allItems: T[];
   selectedItems: T[];
   skipOnce: Msg<T>["type"][];
@@ -621,23 +623,47 @@ const updateSetters = <T>({
   msg: Msg<T>;
 }): Model<T> => {
   if (msg.type === "set-all-items") {
+    //
+    // remove duplicates
+    //
+    const allItemsNew: T[] = [];
+    const selectedItemIds = new Set<string | number>();
+    for (const selectedItem of model.selectedItems) {
+      allItemsNew.push(selectedItem);
+      selectedItemIds.add(config.toItemId(selectedItem));
+    }
+    for (const item of msg.allItems) {
+      if (selectedItemIds.has(config.toItemId(item))) {
+        continue;
+      }
+      allItemsNew.push(item);
+    }
     return {
       ...model,
-      allItems: msg.allItems,
+      allItems: allItemsNew,
     };
   }
 
   if (msg.type === "set-selected-items") {
+    //
+    // remove duplicates
+    //
+    const allItemsNew: T[] = [];
+    const selectedItemIds = new Set<string | number>();
+    for (const selectedItem of model.selectedItems) {
+      allItemsNew.push(selectedItem);
+      selectedItemIds.add(config.toItemId(selectedItem));
+    }
+    for (const item of model.allItems) {
+      if (selectedItemIds.has(config.toItemId(item))) {
+        continue;
+      }
+      allItemsNew.push(item);
+    }
     return {
       ...model,
-      //
-      // Important that selectedItems is a subset of allItems! Else it will cause infinite loop for consumers of the library!
-      //
-      selectedItems: intersectionLeft(
-        config.toItemId,
-        msg.selectedItems,
-        model.allItems
-      ),
+      allItems: allItemsNew,
+      selectedItems: msg.selectedItems,
     };
   }
 

@@ -631,7 +631,7 @@ const updateSetters = <T>({
     for (const selectedItem of model.selectedItems) {
       selectedItemIds.add(config.toItemId(selectedItem));
     }
-    for (const item of model.allItems) {
+    for (const item of msg.allItems) {
       if (selectedItemIds.has(config.toItemId(item))) {
         continue;
       }
@@ -661,7 +661,7 @@ const updateSetters = <T>({
       }
       allItemsNew.push(item);
     }
-    for (const selectedItem of model.selectedItems) {
+    for (const selectedItem of msg.selectedItems) {
       allItemsNew.push(selectedItem);
     }
     return {

@@ -624,11 +624,14 @@ const updateSetters = <T>({
 }): Model<T> => {
   if (msg.type === "set-all-items") {
     //
-    // remove duplicates
+    // remove duplicates and put selected items at end so the empty item is always first
     //
     const allItemsNew: T[] = [];
     const selectedItemIds = new Set<string | number>();
-    for (const item of msg.allItems) {
+    for (const selectedItem of model.selectedItems) {
+      selectedItemIds.add(config.toItemId(selectedItem));
+    }
+    for (const item of model.allItems) {
       if (selectedItemIds.has(config.toItemId(item))) {
         continue;
       }
@@ -636,7 +639,6 @@ const updateSetters = <T>({
     }
     for (const selectedItem of model.selectedItems) {
       allItemsNew.push(selectedItem);
-      selectedItemIds.add(config.toItemId(selectedItem));
     }
     return {
       ...model,
@@ -646,10 +648,13 @@ const updateSetters = <T>({
 
   if (msg.type === "set-selected-items") {
     //
-    // remove duplicates
+    // remove duplicates and put selected items at end so the empty item is always first
     //
     const allItemsNew: T[] = [];
     const selectedItemIds = new Set<string | number>();
+    for (const selectedItem of model.selectedItems) {
+      selectedItemIds.add(config.toItemId(selectedItem));
+    }
     for (const item of model.allItems) {
       if (selectedItemIds.has(config.toItemId(item))) {
         continue;
@@ -658,7 +663,6 @@ const updateSetters = <T>({
     }
     for (const selectedItem of model.selectedItems) {
       allItemsNew.push(selectedItem);
-      selectedItemIds.add(config.toItemId(selectedItem));
     }
     return {
       ...model,

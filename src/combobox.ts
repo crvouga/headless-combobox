@@ -700,7 +700,7 @@ const toNextAllItems = <T>(
   //
   for (const item of allItems) {
     const itemId = config.toItemId(item);
-    if (itemId in selectedItemsById) {
+    if (selectedItemsById.has(itemId)) {
       selectedItemsById.delete(itemId);
     }
     allItemsNew.push(item);

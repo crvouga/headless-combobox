@@ -623,23 +623,12 @@ const updateSetters = <T>({
   msg: Msg<T>;
 }): Model<T> => {
   if (msg.type === "set-all-items") {
-    //
-    // remove duplicates and put selected items at end so the empty item is always first
-    //
-    const allItemsNew: T[] = [];
-    const selectedItemIds = new Set<string | number>();
-    for (const selectedItem of model.selectedItems) {
-      selectedItemIds.add(config.toItemId(selectedItem));
-    }
-    for (const item of msg.allItems) {
-      if (selectedItemIds.has(config.toItemId(item))) {
-        continue;
-      }
-      allItemsNew.push(item);
-    }
-    for (const selectedItem of model.selectedItems) {
-      allItemsNew.push(selectedItem);
-    }
+    const allItemsNew = toNextAllItems(
+      config,
+      msg.allItems,
+      model.selectedItems
+    );
+
     return {
       ...model,
       allItems: allItemsNew,
@@ -647,23 +636,11 @@ const updateSetters = <T>({
   }
 
   if (msg.type === "set-selected-items") {
-    //
-    // remove duplicates and put selected items at end so the empty item is always first
-    //
-    const allItemsNew: T[] = [];
-    const selectedItemIds = new Set<string | number>();
-    for (const selectedItem of model.selectedItems) {
-      selectedItemIds.add(config.toItemId(selectedItem));
-    }
-    for (const item of model.allItems) {
-      if (selectedItemIds.has(config.toItemId(item))) {
-        continue;
-      }
-      allItemsNew.push(item);
-    }
-    for (const selectedItem of msg.selectedItems) {
-      allItemsNew.push(selectedItem);
-    }
+    const allItemsNew = toNextAllItems(
+      config,
+      model.allItems,
+      msg.selectedItems
+    );
     return {
       ...model,
       allItems: allItemsNew,
@@ -703,6 +680,41 @@ const updateSetters = <T>({
   }
 
   return model;
+};
+
+/**
+ * This ensures selected items is always a subset of all items and order is maintained.
+ */
+const toNextAllItems = <T>(
+  config: Config<T>,
+  allItems: T[],
+  selectedItems: T[]
+): T[] => {
+  const allItemsNew: T[] = [];
+  const selectedItemsById = new Map<string | number, T>();
+  for (const selectedItem of selectedItems) {
+    selectedItemsById.set(config.toItemId(selectedItem), selectedItem);
+  }
+  //
+  //
+  //
+  for (const item of allItems) {
+    const itemId = config.toItemId(item);
+    if (itemId in selectedItemsById) {
+      selectedItemsById.delete(itemId);
+    }
+    allItemsNew.push(item);
+  }
+  //
+  // Add remaining selected items to all items
+  //
+  for (const selectedItem of selectedItemsById.values()) {
+    allItemsNew.push(selectedItem);
+  }
+  //
+  //
+  //
+  return allItemsNew;
 };
 
 const updateModel = <T>(

@@ -511,23 +511,23 @@ export const update = <T>(
    The state is opened then an unwanted hover message changes the state to a highlighted state.
 
    */
-  if (
-    isClosed(input.model) &&
-    isOpened(output.model) &&
-    output.effects.some((effect) => effect.type === "scroll-item-into-view")
-  ) {
-    output.model = {
-      ...output.model,
-      skipOnce: ["hovered-over-item", "hovered-over-item"],
-    };
-  }
+  // if (
+  //   isClosed(input.model) &&
+  //   isOpened(output.model) &&
+  //   output.effects.some((effect) => effect.type === "scroll-item-into-view")
+  // ) {
+  //   output.model = {
+  //     ...output.model,
+  //     skipOnce: ["hovered-over-item", "hovered-over-item"],
+  //   };
+  // }
 
-  if (isClosed(input.model) && isOpened(output.model)) {
-    output.model = {
-      ...output.model,
-      skipOnce: [...output.model.skipOnce, "hovered-over-item"],
-    };
-  }
+  // if (isClosed(input.model) && isOpened(output.model)) {
+  //   output.model = {
+  //     ...output.model,
+  //     skipOnce: [...output.model.skipOnce, "hovered-over-item"],
+  //   };
+  // }
 
   /**
 

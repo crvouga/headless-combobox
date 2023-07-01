@@ -220,7 +220,7 @@
   }
   .input {
     width: 100%;
-
+    cursor: pointer;
     font-size: large;
     padding: 0.5rem;
     box-sizing: border-box;

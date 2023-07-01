@@ -464,6 +464,10 @@ export const update = <T>(
         type: "scroll-item-into-view",
         item: highlightedItem,
       });
+      output.model = {
+        ...output.model,
+        skipOnce: ["hovered-over-item"],
+      };
     }
   }
 

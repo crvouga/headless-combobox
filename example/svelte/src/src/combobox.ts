@@ -4,6 +4,7 @@ import {
   ariaSelectedItem,
   ariaUnselectButton,
 } from "./combobox-wai-aria";
+import type { ItemStore } from "./item-store";
 import { LRUCache } from "./lru-cache";
 import { isNonEmpty, type NonEmpty } from "./non-empty";
 import {
@@ -40,6 +41,7 @@ export type Config<T> = {
   isEmptyItem: (value: T) => boolean;
   namespace: string;
   visibleItemCache: Map<string, T[]>;
+  itemStore?: ItemStore<T>;
 };
 
 /**
@@ -84,6 +86,7 @@ export const initConfig = <T>({
       return key;
     },
   };
+
   return {
     ...configFull,
     deterministicFilter: (model) => simpleFilter(configFull, model),

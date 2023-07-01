@@ -1,6 +1,6 @@
-import type { ItemsStore } from "./items-store";
+import type { ItemStore as ItemStore } from "./item-store";
 
-export const initItemsStore = <T>(): ItemsStore<T> => {
+export const initItemStore = <T>(): ItemStore<T> => {
   const itemsById = new Map<string, T>();
   const indexById = new Map<string, number>();
   const idByIndex = new Map<string, number>();

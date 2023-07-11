@@ -1,5 +1,15 @@
 export type ItemStore<T> = {
-  getById: (id: string) => Promise<T | undefined>;
-  getIndex: (id: string) => Promise<number>;
-  search: (searchQuery: string) => Generator<T>;
+  insert: (input: { items: T[] }) => Promise<void>;
+  getById: (input: { id: string }) => Promise<T | null | undefined>;
+  getIndex: (input: { id: string }) => Promise<number | null | undefined>;
+  search: (input: {
+    searchQuery: string;
+    pageSize: number;
+    page: number;
+  }) => Promise<{
+    items: T[];
+    total: number;
+    pageIndex: number;
+    pageSize: number;
+  }>;
 };

@@ -51,6 +51,7 @@
     highlightMode: {
       type: "circular",
     },
+    disableCloseOnSelect: true,
   });
 
   /*

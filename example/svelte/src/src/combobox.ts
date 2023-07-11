@@ -133,7 +133,17 @@ export type Model<T> = ModelState & {
   selectMode: SelectMode;
   inputMode: InputMode;
   highlightMode: HighlightMode;
+  /**
+   * @description
+   * The `visibleItemLimit` is used to limit the number of items that are visible in the suggestion dropdown.
+   * Good for performance.
+   */
   visibleItemLimit: number;
+  /**
+   * @description
+   * When selecting an item from the drop down the combobox will not transition to a closed state.
+   */
+  disableCloseOnSelect?: boolean;
 };
 
 /**
@@ -217,12 +227,14 @@ export const init = <T>({
   inputMode,
   highlightMode,
   visibleItemLimit = 500,
+  disableCloseOnSelect = false,
 }: {
   allItems: T[];
   selectMode?: SelectMode;
   inputMode?: InputMode;
   highlightMode?: HighlightMode;
   visibleItemLimit?: number;
+  disableCloseOnSelect?: boolean;
 }): Model<T> => {
   return {
     type: "blurred",
@@ -235,6 +247,7 @@ export const init = <T>({
     selectMode: selectMode ? selectMode : { type: "single-select" },
     highlightMode: highlightMode ? highlightMode : { type: "clamp" },
     visibleItemLimit: Math.abs(visibleItemLimit),
+    disableCloseOnSelect,
   };
 };
 
@@ -670,9 +683,12 @@ const updateModel = <T>(
         }
 
         case "focused-input": {
-          return resetInputValue(config, {
-            ...model,
-            type: "focused__opened",
+          return resetInputValue({
+            config,
+            model: {
+              ...model,
+              type: "focused__opened",
+            },
           });
         }
 
@@ -684,7 +700,7 @@ const updateModel = <T>(
         }
 
         case "pressed-unselect-button": {
-          return removeFromSelected({
+          return removeSelected({
             config,
             model,
             item: msg.item,
@@ -727,7 +743,7 @@ const updateModel = <T>(
 
         case "inputted-value": {
           if (model.inputMode.type === "select-only") {
-            return resetInputValue(config, closedToOpened(model));
+            return resetInputValue({ config, model: closedToOpened(model) });
           }
           if (
             msg.inputValue === "" &&
@@ -748,12 +764,12 @@ const updateModel = <T>(
         }
 
         case "pressed-enter-key": {
-          return resetInputValue(config, closedToOpened(model));
+          return resetInputValue({ config, model: closedToOpened(model) });
         }
 
         case "pressed-vertical-arrow-key": {
           if (model.selectMode.type === "single-select") {
-            return resetInputValue(config, closedToOpened(model));
+            return resetInputValue({ config, model: closedToOpened(model) });
           }
 
           const selectedItemIndex = toSelectedItemIndex(config, model);
@@ -770,7 +786,7 @@ const updateModel = <T>(
         }
 
         case "pressed-unselect-button": {
-          return removeFromSelected({
+          return removeSelected({
             config,
             model,
             item: msg.item,
@@ -842,6 +858,7 @@ const updateModel = <T>(
             type: "focused__closed",
           };
         }
+
         case "hovered-over-item": {
           return {
             ...model,
@@ -877,7 +894,7 @@ const updateModel = <T>(
 
         case "inputted-value": {
           if (model.inputMode.type === "select-only") {
-            return resetInputValue(config, model);
+            return resetInputValue({ config, model });
           }
 
           if (
@@ -895,9 +912,12 @@ const updateModel = <T>(
         }
 
         case "pressed-enter-key": {
-          return resetInputValue(config, {
-            ...model,
-            type: "focused__closed",
+          return resetInputValue({
+            config,
+            model: {
+              ...model,
+              type: "focused__closed",
+            },
           });
         }
 
@@ -946,7 +966,7 @@ const updateModel = <T>(
         }
 
         case "pressed-unselect-button": {
-          return removeFromSelected({
+          return removeSelected({
             config,
             model,
             item: msg.item,
@@ -992,6 +1012,7 @@ const updateModel = <T>(
             type: "focused__closed",
           };
         }
+
         case "hovered-over-item": {
           return { ...model, highlightIndex: msg.index };
         }
@@ -1002,45 +1023,11 @@ const updateModel = <T>(
 
         case "pressed-item": {
           const pressedItem = msg.item;
-
-          if (config.isEmptyItem(pressedItem)) {
-            return {
-              ...model,
-              selectedItems: [],
-              type: "focused__closed",
-            };
-          }
-
-          if (model.selectMode.type === "multi-select") {
-            const modelNew = toggleSelected({
-              config,
-              model: {
-                ...model,
-                type: "focused__closed",
-              },
-              item: msg.item,
-            });
-
-            return resetInputValue(config, modelNew);
-          }
-
-          if (!isItemSelected(config, model, pressedItem)) {
-            const modelNew = addSelected({
-              model: {
-                ...model,
-                type: "focused__closed",
-              },
-              item: pressedItem,
-              config,
-            });
-
-            return resetInputValue(config, modelNew);
-          }
-
-          return {
-            ...model,
-            type: "focused__closed",
-          };
+          return toggleSelected({
+            config,
+            item: pressedItem,
+            model,
+          });
         }
 
         case "pressed-input": {
@@ -1049,9 +1036,12 @@ const updateModel = <T>(
 
         case "inputted-value": {
           if (model.inputMode.type === "select-only") {
-            return resetInputValue(config, {
-              ...model,
-              type: "focused__opened",
+            return resetInputValue({
+              config,
+              model: {
+                ...model,
+                type: "focused__opened",
+              },
             });
           }
           if (
@@ -1091,50 +1081,11 @@ const updateModel = <T>(
             return { ...model, type: "focused__closed" };
           }
 
-          if (config.isEmptyItem(enteredItem)) {
-            return {
-              ...model,
-              selectedItems: [],
-              type: "focused__closed",
-            };
-          }
-
-          if (model.selectMode.type === "single-select") {
-            const modelNew = addSelected({
-              model: {
-                ...model,
-                type: "focused__closed",
-              },
-              item: enteredItem,
-              config,
-            });
-
-            return resetInputValue(config, modelNew);
-          }
-
-          if (!isItemSelected(config, model, enteredItem)) {
-            return clearInputValue(
-              addSelected({
-                model: {
-                  ...model,
-                  type: "focused__closed",
-                },
-                item: enteredItem,
-                config,
-              })
-            );
-          }
-
-          return clearInputValue(
-            removeFromSelected({
-              model: {
-                ...model,
-                type: "focused__closed",
-              },
-              config,
-              item: enteredItem,
-            })
-          );
+          return toggleSelected({
+            config,
+            model,
+            item: enteredItem,
+          });
         }
 
         case "pressed-escape-key": {
@@ -1142,8 +1093,11 @@ const updateModel = <T>(
         }
 
         case "pressed-unselect-button": {
-          const removed = toSelectedItems(model).filter(
-            (x) => toItemId(x) !== toItemId(msg.item)
+          const removed = Array.from(
+            keepIf(
+              (x) => toItemId(x) !== toItemId(msg.item),
+              yieldSelectedItems(model)
+            )
           );
 
           return { ...model, selectedItems: removed };
@@ -1238,18 +1192,24 @@ const updateModel = <T>(
 
         case "pressed-vertical-arrow-key": {
           if (model.selectMode.type === "single-select") {
-            return resetInputValue(config, {
-              ...model,
-              type: "focused__opened",
+            return resetInputValue({
+              config,
+              model: {
+                ...model,
+                type: "focused__opened",
+              },
             });
           }
 
           const selectedItemIndex = toSelectedItemIndex(config, model);
 
-          return resetInputValue(config, {
-            ...model,
-            highlightIndex: selectedItemIndex ? selectedItemIndex : 0,
-            type: "focused__opened__highlighted",
+          return resetInputValue({
+            config,
+            model: {
+              ...model,
+              highlightIndex: selectedItemIndex ? selectedItemIndex : 0,
+              type: "focused__opened__highlighted",
+            },
           });
         }
 
@@ -1258,17 +1218,15 @@ const updateModel = <T>(
             return setInputValue(
               {
                 ...model,
-
                 type: "focused__opened",
               },
-              modelToInputValue(config, model)
+              toInputValue({ config, model })
             );
           }
           if (toSearchValue(model) === "") {
             return setInputValue(
               {
                 ...model,
-
                 selectedItems: [],
                 type: "focused__opened",
               },
@@ -1295,8 +1253,11 @@ const updateModel = <T>(
         }
 
         case "pressed-backspace-key": {
-          const removedHighlightedIndex = toSelectedItems(model).filter(
-            (_, index) => index !== model.focusedIndex
+          const removedHighlightedIndex = Array.from(
+            keepIf(
+              (_, index) => index !== model.focusedIndex,
+              yieldSelectedItems(model)
+            )
           );
 
           return clearInputValue({
@@ -1307,9 +1268,13 @@ const updateModel = <T>(
         }
 
         case "pressed-unselect-button": {
-          const removed = toSelectedItems(model).filter(
-            (x) => toItemId(x) !== toItemId(msg.item)
+          const removed = Array.from(
+            keepIf(
+              (x) => toItemId(x) !== toItemId(msg.item),
+              yieldSelectedItems(model)
+            )
           );
+
           if (isNonEmpty(removed)) {
             const selectedItemHighlightIndex = clampIndex(
               model.focusedIndex,
@@ -1437,27 +1402,39 @@ const toggleSelected = <T>({
   model: Model<T>;
   item: T;
 }): Model<T> => {
-  if (!isItemSelected(config, model, item)) {
-    const modelNew = addSelected({
-      config,
-      item,
-      model: {
-        ...model,
-        type: "focused__closed",
-      },
-    });
-    return resetInputValue(config, modelNew);
+  if (config.isEmptyItem(item)) {
+    return {
+      ...model,
+      type: "focused__closed",
+    };
   }
 
-  const modelNew: Model<T> = {
-    ...model,
-    type: "focused__closed",
-    selectedItems: toSelectedItems(model).filter(
-      (x) => config.toItemId(x) !== config.toItemId(item)
-    ),
-  };
+  const transitioned: Model<T> = model.disableCloseOnSelect
+    ? model
+    : { ...model, type: "focused__closed" };
 
-  return resetInputValue(config, modelNew);
+  if (
+    isItemSelected(config, model, item) &&
+    model.selectMode.type === "multi-select"
+  ) {
+    return resetInputValue({
+      config,
+      model: removeSelected({
+        config,
+        model: transitioned,
+        item,
+      }),
+    });
+  }
+
+  return resetInputValue({
+    config,
+    model: addSelected({
+      config,
+      item,
+      model: transitioned,
+    }),
+  });
 };
 
 const toSelectedItemIndex = <T>(
@@ -1543,7 +1520,7 @@ const addSelected = <T>({
   };
 };
 
-const removeFromSelected = <T>({
+const removeSelected = <T>({
   config,
   model,
   item,
@@ -1621,14 +1598,23 @@ const updateSelectedItemKeyboardNavigation = <T>({
   return model;
 };
 
-export const resetInputValue = <T>(
-  config: Config<T>,
-  model: Model<T>
-): Model<T> => {
-  return setInputValue(model, modelToInputValue(config, model));
+export const resetInputValue = <T>({
+  config,
+  model,
+}: {
+  config: Config<T>;
+  model: Model<T>;
+}): Model<T> => {
+  return setInputValue(model, toInputValue({ config, model }));
 };
 
-const modelToInputValue = <T>(config: Config<T>, model: Model<T>): string => {
+const toInputValue = <T>({
+  config,
+  model,
+}: {
+  config: Config<T>;
+  model: Model<T>;
+}): string => {
   if (
     model.inputMode.type === "select-only" &&
     model.selectMode.type === "multi-select"
@@ -1793,11 +1779,11 @@ export const toCurrentInputValue = <T>(
   model: Model<T>
 ): string => {
   if (model.inputMode.type === "select-only") {
-    return modelToInputValue(config, model);
+    return toInputValue({ config, model });
   }
 
   if (model.type === "blurred") {
-    return modelToInputValue(config, model);
+    return toInputValue({ config, model });
   }
 
   return toSearchValue(model);

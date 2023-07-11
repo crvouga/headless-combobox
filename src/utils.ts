@@ -126,13 +126,15 @@ export const findIndex = <T>(
 //
 
 export const keepIf = function* <T>(
-  predicate: (x: T) => boolean,
+  predicate: (x: T, index: number) => boolean,
   xs: Iterable<T>
 ): Generator<T> {
+  let index = 0;
   for (const x of xs) {
-    if (predicate(x)) {
+    if (predicate(x, index)) {
       yield x;
     }
+    index++;
   }
 };
 

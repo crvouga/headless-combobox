@@ -1635,11 +1635,13 @@ const toInputValue = <T>({
     model.inputMode.type === "select-only" &&
     model.selectMode.type === "single-select"
   ) {
-    const emptyItem = model.allItems.find((item) => config.isEmptyItem(item));
     const selectedItem = toSelectedItem(model);
+
     if (selectedItem) {
       return config.toItemInputValue(selectedItem);
     }
+
+    const emptyItem = model.allItems.find((item) => config.isEmptyItem(item));
 
     if (isHighlighted(model)) {
       const highlightedItem = model.allItems[model.highlightIndex];

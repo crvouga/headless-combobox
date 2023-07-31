@@ -50,6 +50,7 @@ Let me know if you find any issues.
 
 ## Links
 
+- [bundlephobia](https://bundlephobia.com/package/headless-combobox)
 - [API Reference](https://headless-combobox.vercel.app/)
 - [Github](https://github.com/crvouga/headless-combobox)
 - [NPM](https://www.npmjs.com/package/headless-combobox)

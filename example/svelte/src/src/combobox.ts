@@ -1023,6 +1023,7 @@ const updateModel = <T>(
 
         case "pressed-item": {
           const pressedItem = msg.item;
+
           return toggleSelected({
             config,
             item: pressedItem,
@@ -1393,6 +1394,9 @@ const handlePressedInputWhenOpened = <T>(model: Model<T>): Model<T> => {
   return model;
 };
 
+/**
+ * This is the logic for selecting a item in the drop down
+ */
 const toggleSelected = <T>({
   config,
   model,
@@ -1405,6 +1409,7 @@ const toggleSelected = <T>({
   if (config.isEmptyItem(item)) {
     return {
       ...model,
+      selectedItems: [],
       type: "focused__closed",
     };
   }

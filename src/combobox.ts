@@ -1247,10 +1247,7 @@ const updateModel = <T>(
         case "pressed-key":
         case "pressed-enter-key":
         case "pressed-escape-key": {
-          return clearInputValue({
-            ...model,
-            type: "focused__closed",
-          });
+          return clearInputValue({ ...model, type: "focused__closed" });
         }
 
         case "pressed-backspace-key": {
@@ -1269,27 +1266,27 @@ const updateModel = <T>(
         }
 
         case "pressed-unselect-button": {
-          const removed = Array.from(
+          const removedOne = Array.from(
             keepIf(
               (x) => toItemId(x) !== toItemId(msg.item),
               yieldSelectedItems(model)
             )
           );
 
-          if (isNonEmpty(removed)) {
+          if (isNonEmpty(removedOne)) {
             const selectedItemHighlightIndex = clampIndex(
               model.focusedIndex,
-              removed.length
+              removedOne.length
             );
             return {
               ...model,
-              selectedItems: removed,
+              selectedItems: removedOne,
               focusedIndex: selectedItemHighlightIndex,
             };
           }
           return clearInputValue({
             ...model,
-            selectedItems: removed,
+            selectedItems: removedOne,
             type: "focused__closed",
           });
         }
@@ -1326,6 +1323,10 @@ const updateModel = <T>(
             selectedItems: [],
             type: "focused__opened",
           });
+        }
+
+        case "pressed-input": {
+          return clearInputValue({ ...model, type: "focused__opened" });
         }
 
         default: {

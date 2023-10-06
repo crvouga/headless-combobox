@@ -360,6 +360,9 @@ export type Effect<T> =
     }
   | {
       type: "focus-input";
+    }
+  | {
+      type: "blur-input";
     };
 
 /**
@@ -377,6 +380,34 @@ export type Event =
     };
 
 /**
+ *
+ *
+ */
+export type Input<T> = {
+  model: Model<T>;
+  msg: Msg<T>;
+};
+
+/**
+ *
+ *
+ */
+export type Output<T> = {
+  model: Model<T>;
+  effects: Effect<T>[];
+  events: Event[];
+};
+
+/**
+ * A plugin is just a function that takes the previous and next state of the combobox and returns the final next state.
+ */
+export type Plugin<T> = (
+  config: Config<T>,
+  input: Input<T>,
+  output: Output<T>
+) => Output<T>;
+
+/**
  * @group Update
  *
  * The update function is the main function.
@@ -385,15 +416,28 @@ export type Event =
  */
 export const update = <T>(
   config: Config<T>,
-  input: {
-    model: Model<T>;
-    msg: Msg<T>;
+  input: Input<T>,
+  plugins: Plugin<T>[] = []
+): Output<T> => {
+  const output = updateMain(config, input);
+
+  let runningInput = input;
+  let runningOutput = output;
+
+  for (const plugin of plugins) {
+    const currentOutput = plugin(config, runningInput, runningOutput);
+
+    runningInput = {
+      model: runningOutput.model,
+      msg: runningInput.msg,
+    };
+    runningOutput = currentOutput;
   }
-): {
-  model: Model<T>;
-  effects: Effect<T>[];
-  events: Event[];
-} => {
+
+  return runningOutput;
+};
+
+const updateMain = <T>(config: Config<T>, input: Input<T>): Output<T> => {
   /**
    *
    *
@@ -419,11 +463,7 @@ export const update = <T>(
    *
    */
 
-  let output: {
-    model: Model<T>;
-    effects: Effect<T>[];
-    events: Event[];
-  } = {
+  let output: Output<T> = {
     model: input.model,
     effects: [],
     events: [],
@@ -700,7 +740,7 @@ const updateModel = <T>(
         }
 
         case "pressed-unselect-button": {
-          return removeSelected({
+          return removeSelectedItem({
             config,
             model,
             item: msg.item,
@@ -786,7 +826,7 @@ const updateModel = <T>(
         }
 
         case "pressed-unselect-button": {
-          return removeSelected({
+          return removeSelectedItem({
             config,
             model,
             item: msg.item,
@@ -966,7 +1006,7 @@ const updateModel = <T>(
         }
 
         case "pressed-unselect-button": {
-          return removeSelected({
+          return removeSelectedItem({
             config,
             model,
             item: msg.item,
@@ -1425,7 +1465,7 @@ const toggleSelected = <T>({
   ) {
     return resetInputValue({
       config,
-      model: removeSelected({
+      model: removeSelectedItem({
         config,
         model: transitioned,
         item,
@@ -1493,7 +1533,7 @@ const setHasSearched = <T>(model: Model<T>, hasSearched: boolean): Model<T> => {
   return model;
 };
 
-const clearInputValue = <T>(model: Model<T>): Model<T> => {
+export const clearInputValue = <T>(model: Model<T>): Model<T> => {
   return setInputValue(model, "");
 };
 
@@ -1526,7 +1566,7 @@ const addSelected = <T>({
   };
 };
 
-const removeSelected = <T>({
+export const removeSelectedItem = <T>({
   config,
   model,
   item,
@@ -2276,6 +2316,7 @@ export const handleEffects = <T>(
     scrollItemIntoView: (item: T) => void;
     focusInput: () => void;
     focusSelectedItem: (selectedIem: T) => void;
+    blurInput?: () => void;
   }
 ) => {
   for (let i = 0; i < effects.length; i++) {
@@ -2292,6 +2333,10 @@ export const handleEffects = <T>(
         }
         case "focus-input": {
           handlers.focusInput();
+          break;
+        }
+        case "blur-input": {
+          handlers.blurInput?.();
           break;
         }
         default: {

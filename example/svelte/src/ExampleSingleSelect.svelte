@@ -71,7 +71,9 @@
       return;
     }
 
-    const output = Combobox.update(config, { msg, model });
+    const output = Combobox.update(config, { msg, model }, [
+      Combobox.Plugins.toggleOnSelect(),
+    ]);
 
     console.log(model.type, msg.type, output.model);
 

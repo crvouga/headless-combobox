@@ -51,7 +51,6 @@
     highlightMode: {
       type: "circular",
     },
-    disableCloseOnSelect: true,
   });
 
   /*
@@ -63,7 +62,9 @@
   */
 
   const dispatch = (msg: Combobox.Msg<Item>) => {
-    const output = Combobox.update(config, { msg, model });
+    const output = Combobox.update(config, { msg, model }, [
+      Combobox.Plugins.toggleOnSelect(),
+    ]);
 
     model = output.model;
 

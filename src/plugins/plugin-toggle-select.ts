@@ -10,7 +10,7 @@ import type { Plugin } from "../combobox";
  */
 export const toggleOnSelect =
   <T>(): Plugin<T> =>
-  (config, input, output) => {
+  ({ config, input, output }) => {
     const { msg } = input;
 
     const inputtedItem =

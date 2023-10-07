@@ -73,6 +73,7 @@
 
     const output = Combobox.update(config, { msg, model }, [
       Combobox.Plugins.toggleOnSelect(),
+      Combobox.Plugins.resetSearchOnDropdownToggle(),
     ]);
 
     console.log(model.type, msg.type, output.model);

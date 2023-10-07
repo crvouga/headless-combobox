@@ -5,9 +5,11 @@ import {
   ariaUnselectButton,
 } from "./combobox-wai-aria";
 import type { ItemStore } from "./item-store";
-import { LRUCache } from "./lru-cache";
-import { isNonEmpty, type NonEmpty } from "./non-empty";
+
 import {
+  LRUCache,
+  isNonEmpty,
+  type NonEmpty,
   circularIndex,
   clampIndex,
   findIndex,
@@ -401,11 +403,25 @@ export type Output<T> = {
 /**
  * A plugin is just a function that takes the previous and next state of the combobox and returns the final next state.
  */
-export type Plugin<T> = (
-  config: Config<T>,
-  input: Input<T>,
-  output: Output<T>
-) => Output<T>;
+export type Plugin<T> = (input: {
+  /**
+   * The config of the combobox
+   */
+  config: Config<T>;
+  /**
+   * The initial model of the combobox
+   */
+  initialModel: Model<T>;
+  /**
+   * This is the running input in the chain of plugins
+   */
+  input: Input<T>;
+  /**
+   * This is the running output in the chain of plugins
+   * That will eventually be returned by the update function
+   */
+  output: Output<T>;
+}) => Output<T>;
 
 /**
  * @group Update
@@ -425,7 +441,12 @@ export const update = <T>(
   let runningOutput = output;
 
   for (const plugin of plugins) {
-    const currentOutput = plugin(config, runningInput, runningOutput);
+    const currentOutput = plugin({
+      config,
+      initialModel: input.model,
+      input: runningInput,
+      output: runningOutput,
+    });
 
     runningInput = {
       model: runningOutput.model,

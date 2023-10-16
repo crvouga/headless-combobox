@@ -38,7 +38,7 @@ export type Config<T> = {
    * The deterministicFilter function is used to filter the items in the suggestion dropdown.
    * This must always be deterministic! That means it must always return the same order and same items for the same input.
    */
-  deterministicFilter: (model: Model<T>) => Generator<T, void, unknown>;
+  deterministicFilter: (model: Model<T>) => Iterable<T>;
   deterministicFilterKeyFn: (model: Model<T>) => string;
   isEmptyItem: (value: T) => boolean;
   namespace: string;
@@ -58,25 +58,21 @@ export const initConfig = <T>({
   toItemId: (item: T) => string | number;
   toItemInputValue: (item: T) => string;
   isEmptyItem?: (item: T) => boolean;
-  deterministicFilter?: (model: Model<T>) => T[];
+  deterministicFilter?: (model: Model<T>) => Iterable<T>;
   namespace?: string;
   visibleItemCacheCapacity?: number;
 }): Config<T> => {
+  const deterministicFilter: Config<T>["deterministicFilter"] =
+    config.deterministicFilter
+      ? config.deterministicFilter
+      : (model) => simpleFilter(configFull, model);
+
   const configFull: Config<T> = {
     ...config,
     isEmptyItem,
     visibleItemCache: new LRUCache(visibleItemCacheCapacity),
     namespace: namespace ?? "combobox",
-    deterministicFilter: function* (model) {
-      let i = 0;
-      for (const item of model.allItems) {
-        if (i >= model.visibleItemLimit) {
-          break;
-        }
-        yield item;
-        i++;
-      }
-    },
+    deterministicFilter,
     deterministicFilterKeyFn: (model) => {
       const inputVal =
         model.inputMode.type === "search-mode"
@@ -89,10 +85,7 @@ export const initConfig = <T>({
     },
   };
 
-  return {
-    ...configFull,
-    deterministicFilter: (model) => simpleFilter(configFull, model),
-  };
+  return configFull;
 };
 
 /**

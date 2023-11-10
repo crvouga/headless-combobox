@@ -100,6 +100,12 @@
   */
 
   $: state = Combobox.toState(config, model);
+
+  function onPressedItem(item: Item) {
+    input?.focus();
+    dispatch({ type: "pressed-item", item });
+    input?.focus();
+  }
 </script>
 
 <div>
@@ -178,6 +184,7 @@
       {...state.aria.itemList}
       class="suggestions"
       class:hide={!state.isOpened}
+      on:mousedown|preventDefault|stopPropagation
     >
       {#if state.renderItems.length === 0}
         <li>No results</li>
@@ -187,8 +194,7 @@
           {...item.aria}
           bind:this={itemEls[item.item.id]}
           on:mouseover={() => dispatch({ type: "hovered-over-item", index })}
-          on:mousedown|preventDefault={() =>
-            dispatch({ type: "pressed-item", item: item.item })}
+          on:mousedown|preventDefault={() => onPressedItem(item.item)}
           on:focus={() => dispatch({ type: "hovered-over-item", index })}
           class="option"
           class:highlighted={item.status === "highlighted"}

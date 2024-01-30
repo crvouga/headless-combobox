@@ -2209,6 +2209,7 @@ export const toVisibleItemsMemoized = <T>(config: Config<T>) => {
 type RenderItem<T> = {
   item: T;
   status: ItemStatus;
+  statusDetailed: ItemStatusDetailed;
   inputValue: string;
   aria: ReturnType<typeof ariaItem>;
 };
@@ -2221,6 +2222,7 @@ export const yieldRenderItems = function* <T>(
     selectedItemIdSet.add(config.toItemId(item));
   }
 
+  const isNavigatingWithKeyboardVal = isNavigatingWithKeyboard(model);
   const highlightedIndex =
     model.type === "focused__opened__highlighted" ? model.highlightIndex : null;
 
@@ -2239,6 +2241,18 @@ export const yieldRenderItems = function* <T>(
           ? "selected"
           : isHighlighted
           ? "highlighted"
+          : "unselected",
+      statusDetailed:
+        isSelected && isHighlighted
+          ? isNavigatingWithKeyboardVal
+            ? "selected-and-highlighted-with-keyboard"
+            : "selected-and-highlighted-with-mouse"
+          : isSelected
+          ? "selected"
+          : isHighlighted
+          ? isNavigatingWithKeyboardVal
+            ? "highlighted-with-keyboard"
+            : "highlighted-with-mouse"
           : "unselected",
       inputValue: config.toItemInputValue(item),
       aria: ariaItem(config, model, item),

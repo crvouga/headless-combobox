@@ -53,14 +53,12 @@ export const initConfig = <T>({
   namespace,
   isEmptyItem = () => false,
   visibleItemCacheCapacity = 100,
-
   ...config
 }: {
   toItemId: (item: T) => string | number;
   toItemInputValue: (item: T) => string;
   isEmptyItem?: (item: T) => boolean;
   deterministicFilter?: (model: Model<T>) => Iterable<T>;
-  deterministicFilterKeyFn?: (model: Model<T>) => string;
   namespace?: string;
   visibleItemCacheCapacity?: number;
 }): Config<T> => {
@@ -69,34 +67,22 @@ export const initConfig = <T>({
       ? config.deterministicFilter
       : (model) => simpleFilter(configFull, model);
 
-  /**
-   * TODO Caching is not working properly
-   * The cache is not invalidated when the input changes
-   *
-   *
-
-   */
-  const deterministicFilterKeyFn: Config<T>["deterministicFilterKeyFn"] =
-    config.deterministicFilterKeyFn
-      ? config.deterministicFilterKeyFn
-      : (model) => {
-          const inputVal =
-            model.inputMode.type === "search-mode"
-              ? model.inputMode.inputValue
-              : "";
-
-          const key = `${model.inputMode.type}-${model.visibleItemLimit}-${model.allItems.length}-${inputVal}`;
-
-          return key;
-        };
-
   const configFull: Config<T> = {
     ...config,
     isEmptyItem,
     visibleItemCache: new LRUCache(visibleItemCacheCapacity),
     namespace: namespace ?? "combobox",
     deterministicFilter,
-    deterministicFilterKeyFn,
+    deterministicFilterKeyFn: (model) => {
+      const inputVal =
+        model.inputMode.type === "search-mode"
+          ? model.inputMode.inputValue
+          : "";
+
+      const key = `${model.inputMode.type}-${model.visibleItemLimit}-${model.allItems.length}-${inputVal}`;
+
+      return key;
+    },
   };
 
   return configFull;
@@ -2209,7 +2195,6 @@ export const toVisibleItemsMemoized = <T>(config: Config<T>) => {
 type RenderItem<T> = {
   item: T;
   status: ItemStatus;
-  statusDetailed: ItemStatusDetailed;
   inputValue: string;
   aria: ReturnType<typeof ariaItem>;
 };
@@ -2222,8 +2207,6 @@ export const yieldRenderItems = function* <T>(
     selectedItemIdSet.add(config.toItemId(item));
   }
 
-  const isNavigatingWithKeyboardVal = isNavigatingWithKeyboard(model);
-  
   const highlightedIndex =
     model.type === "focused__opened__highlighted" ? model.highlightIndex : null;
 
@@ -2243,18 +2226,6 @@ export const yieldRenderItems = function* <T>(
           : isHighlighted
           ? "highlighted"
           : "unselected",
-      statusDetailed:
-        isSelected && isHighlighted
-          ? isNavigatingWithKeyboardVal
-            ? "selected-and-highlighted-with-keyboard"
-            : "selected-and-highlighted-with-mouse"
-          : isSelected
-          ? "selected"
-          : isHighlighted
-          ? isNavigatingWithKeyboardVal
-            ? "highlighted-with-keyboard"
-            : "highlighted-with-mouse"
-          : "unselected",
       inputValue: config.toItemInputValue(item),
       aria: ariaItem(config, model, item),
     };
@@ -2262,9 +2233,6 @@ export const yieldRenderItems = function* <T>(
   }
 };
 
-/**
- * TODO make it more obvious that this using caching it was causing a CONFUSING bugs
- */
 export const toRenderItems = <T>(
   config: Config<T>,
   model: Model<T>

@@ -1139,7 +1139,7 @@ const updateModel = <T>(
             model.highlightIndex + delta,
             visible.length
           );
-          return { ...model, highlightIndex: highlightIndex };
+          return { ...model, highlightIndex: highlightIndex, isKeyboardNavigation: true };
         }
 
         case "pressed-horizontal-arrow-key": {
@@ -2223,6 +2223,7 @@ export const yieldRenderItems = function* <T>(
   }
 
   const isNavigatingWithKeyboardVal = isNavigatingWithKeyboard(model);
+  
   const highlightedIndex =
     model.type === "focused__opened__highlighted" ? model.highlightIndex : null;
 

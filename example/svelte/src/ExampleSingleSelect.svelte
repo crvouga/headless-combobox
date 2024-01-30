@@ -170,10 +170,10 @@
             dispatch({ type: "pressed-item", item: item.item })}
           on:focus={() => dispatch({ type: "hovered-over-item", index })}
           class="option"
-          class:highlighted={item.status === "highlighted"}
-          class:selected={item.status === "selected"}
-          class:selected-and-highlighted={item.status ===
-            "selected-and-highlighted"}
+          class:highlighted={item.statusDetailed === "highlighted-with-keyboard"}
+          class:selected={item.statusDetailed === "selected"}
+          class:selected-and-highlighted={item.statusDetailed ===
+            "selected-and-highlighted-with-keyboard"}
         >
           {item.inputValue}
         </li>
@@ -253,6 +253,11 @@
     margin: 0;
     padding: 0;
   }
+
+.option:hover {
+    background-color: #333;
+}
+
   .highlighted {
     background-color: #333;
     color: white;

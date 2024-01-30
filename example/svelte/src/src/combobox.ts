@@ -211,6 +211,7 @@ type FocusedOpened = {
 type FocusedOpenedHighlighted = {
   type: "focused__opened__highlighted";
   highlightIndex: number;
+  isKeyboardNavigation: boolean;
 };
 
 type SelectedItemHighlighted = {
@@ -846,6 +847,7 @@ const updateModel = <T>(
             ...closedToOpened(model),
             highlightIndex: selectedItemIndex ? selectedItemIndex : 0,
             type: "focused__opened__highlighted",
+            isKeyboardNavigation: true,
           };
         }
 
@@ -932,6 +934,7 @@ const updateModel = <T>(
             ...model,
             type: "focused__opened__highlighted",
             highlightIndex: msg.index,
+            isKeyboardNavigation: false,
           };
         }
 
@@ -999,6 +1002,7 @@ const updateModel = <T>(
               ...model,
               highlightIndex: 0,
               type: "focused__opened__highlighted",
+              isKeyboardNavigation: true,
             };
           }
 
@@ -1019,6 +1023,7 @@ const updateModel = <T>(
             ...model,
             highlightIndex,
             type: "focused__opened__highlighted",
+            isKeyboardNavigation: true,
           };
         }
 
@@ -1134,7 +1139,7 @@ const updateModel = <T>(
             model.highlightIndex + delta,
             visible.length
           );
-          return { ...model, highlightIndex: highlightIndex };
+          return { ...model, highlightIndex: highlightIndex, isKeyboardNavigation: true };
         }
 
         case "pressed-horizontal-arrow-key": {
@@ -1278,6 +1283,7 @@ const updateModel = <T>(
               ...model,
               highlightIndex: selectedItemIndex ? selectedItemIndex : 0,
               type: "focused__opened__highlighted",
+              isKeyboardNavigation: true,
             },
           });
         }
@@ -2049,6 +2055,50 @@ export type ItemStatus =
   | "highlighted"
   | "unselected";
 
+export const isNavigatingWithKeyboard = <T>(model: Model<T>): boolean => {
+  return (
+    model.type === "focused__opened__highlighted" && model.isKeyboardNavigation
+  );
+};
+
+export type ItemStatusDetailed =
+  | "selected"
+  | "highlighted-with-keyboard"
+  | "highlighted-with-mouse"
+  | "selected-and-highlighted-with-keyboard"
+  | "selected-and-highlighted-with-mouse"
+  | "unselected";
+
+export const toItemStatusDetailed = <T>(
+  config: Config<T>,
+  model: Model<T>,
+  item: T
+): ItemStatusDetailed => {
+  const isSelected = isItemSelected(config, model, item);
+
+  if (isSelected) {
+    return "selected";
+  }
+
+  const isHighlighted = isItemHighlighted(config, model, item);
+  const isKeyboardNavigation = isNavigatingWithKeyboard(model);
+
+  if (isSelected && isHighlighted) {
+    if (isKeyboardNavigation) {
+      return "selected-and-highlighted-with-keyboard";
+    }
+    return "selected-and-highlighted-with-mouse";
+  }
+
+  if (isHighlighted) {
+    if (isKeyboardNavigation) {
+      return "highlighted-with-keyboard";
+    }
+    return "highlighted-with-mouse";
+  }
+  return "unselected";
+};
+
 /**
  * @group Selectors
  *
@@ -2159,6 +2209,7 @@ export const toVisibleItemsMemoized = <T>(config: Config<T>) => {
 type RenderItem<T> = {
   item: T;
   status: ItemStatus;
+  statusDetailed: ItemStatusDetailed;
   inputValue: string;
   aria: ReturnType<typeof ariaItem>;
 };
@@ -2171,6 +2222,8 @@ export const yieldRenderItems = function* <T>(
     selectedItemIdSet.add(config.toItemId(item));
   }
 
+  const isNavigatingWithKeyboardVal = isNavigatingWithKeyboard(model);
+  
   const highlightedIndex =
     model.type === "focused__opened__highlighted" ? model.highlightIndex : null;
 
@@ -2189,6 +2242,18 @@ export const yieldRenderItems = function* <T>(
           ? "selected"
           : isHighlighted
           ? "highlighted"
+          : "unselected",
+      statusDetailed:
+        isSelected && isHighlighted
+          ? isNavigatingWithKeyboardVal
+            ? "selected-and-highlighted-with-keyboard"
+            : "selected-and-highlighted-with-mouse"
+          : isSelected
+          ? "selected"
+          : isHighlighted
+          ? isNavigatingWithKeyboardVal
+            ? "highlighted-with-keyboard"
+            : "highlighted-with-mouse"
           : "unselected",
       inputValue: config.toItemInputValue(item),
       aria: ariaItem(config, model, item),

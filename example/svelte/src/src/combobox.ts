@@ -1087,7 +1087,7 @@ const updateModel = <T>(
         }
 
         case "hovered-over-item": {
-          return { ...model, highlightIndex: msg.index };
+          return { ...model, highlightIndex: msg.index, isKeyboardNavigation: false };
         }
 
         case "blurred-input": {

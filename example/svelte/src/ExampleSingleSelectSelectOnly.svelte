@@ -124,7 +124,6 @@
       {...state.aria.itemList}
       class="suggestions"
       class:hide={!state.isOpened}
-      on:mousedown|preventDefault|stopPropagation
     >
       {#if state.renderItems.length === 0}
         <li>No results</li>

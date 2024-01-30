@@ -53,14 +53,12 @@ export const initConfig = <T>({
   namespace,
   isEmptyItem = () => false,
   visibleItemCacheCapacity = 100,
-
   ...config
 }: {
   toItemId: (item: T) => string | number;
   toItemInputValue: (item: T) => string;
   isEmptyItem?: (item: T) => boolean;
   deterministicFilter?: (model: Model<T>) => Iterable<T>;
-  deterministicFilterKeyFn?: (model: Model<T>) => string;
   namespace?: string;
   visibleItemCacheCapacity?: number;
 }): Config<T> => {
@@ -69,34 +67,22 @@ export const initConfig = <T>({
       ? config.deterministicFilter
       : (model) => simpleFilter(configFull, model);
 
-  /**
-   * TODO Caching is not working properly
-   * The cache is not invalidated when the input changes
-   *
-   *
-
-   */
-  const deterministicFilterKeyFn: Config<T>["deterministicFilterKeyFn"] =
-    config.deterministicFilterKeyFn
-      ? config.deterministicFilterKeyFn
-      : (model) => {
-          const inputVal =
-            model.inputMode.type === "search-mode"
-              ? model.inputMode.inputValue
-              : "";
-
-          const key = `${model.inputMode.type}-${model.visibleItemLimit}-${model.allItems.length}-${inputVal}`;
-
-          return key;
-        };
-
   const configFull: Config<T> = {
     ...config,
     isEmptyItem,
     visibleItemCache: new LRUCache(visibleItemCacheCapacity),
     namespace: namespace ?? "combobox",
     deterministicFilter,
-    deterministicFilterKeyFn,
+    deterministicFilterKeyFn: (model) => {
+      const inputVal =
+        model.inputMode.type === "search-mode"
+          ? model.inputMode.inputValue
+          : "";
+
+      const key = `${model.inputMode.type}-${model.visibleItemLimit}-${model.allItems.length}-${inputVal}`;
+
+      return key;
+    },
   };
 
   return configFull;
@@ -2262,9 +2248,6 @@ export const yieldRenderItems = function* <T>(
   }
 };
 
-/**
- * TODO make it more obvious that this using caching it was causing a CONFUSING bugs
- */
 export const toRenderItems = <T>(
   config: Config<T>,
   model: Model<T>

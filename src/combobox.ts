@@ -211,6 +211,7 @@ type FocusedOpened = {
 type FocusedOpenedHighlighted = {
   type: "focused__opened__highlighted";
   highlightIndex: number;
+  isKeyboardNavigation: boolean;
 };
 
 type SelectedItemHighlighted = {
@@ -846,6 +847,7 @@ const updateModel = <T>(
             ...closedToOpened(model),
             highlightIndex: selectedItemIndex ? selectedItemIndex : 0,
             type: "focused__opened__highlighted",
+            isKeyboardNavigation: true,
           };
         }
 
@@ -932,6 +934,7 @@ const updateModel = <T>(
             ...model,
             type: "focused__opened__highlighted",
             highlightIndex: msg.index,
+            isKeyboardNavigation:false
           };
         }
 
@@ -999,6 +1002,7 @@ const updateModel = <T>(
               ...model,
               highlightIndex: 0,
               type: "focused__opened__highlighted",
+              isKeyboardNavigation: true,
             };
           }
 
@@ -1019,6 +1023,7 @@ const updateModel = <T>(
             ...model,
             highlightIndex,
             type: "focused__opened__highlighted",
+            isKeyboardNavigation: true,
           };
         }
 
@@ -1278,6 +1283,7 @@ const updateModel = <T>(
               ...model,
               highlightIndex: selectedItemIndex ? selectedItemIndex : 0,
               type: "focused__opened__highlighted",
+              isKeyboardNavigation: true,
             },
           });
         }
@@ -2048,6 +2054,11 @@ export type ItemStatus =
   | "selected"
   | "highlighted"
   | "unselected";
+
+
+export const isNavigatingWithKeyboard = <T>(model: Model<T>): boolean => {
+  return model.type === 'focused__opened__highlighted' && model.isKeyboardNavigation;
+}
 
 /**
  * @group Selectors

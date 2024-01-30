@@ -934,7 +934,7 @@ const updateModel = <T>(
             ...model,
             type: "focused__opened__highlighted",
             highlightIndex: msg.index,
-            isKeyboardNavigation:false
+            isKeyboardNavigation: false,
           };
         }
 
@@ -2055,10 +2055,49 @@ export type ItemStatus =
   | "highlighted"
   | "unselected";
 
-
 export const isNavigatingWithKeyboard = <T>(model: Model<T>): boolean => {
-  return model.type === 'focused__opened__highlighted' && model.isKeyboardNavigation;
-}
+  return (
+    model.type === "focused__opened__highlighted" && model.isKeyboardNavigation
+  );
+};
+
+export type ItemStatusDetailed =
+  | "selected"
+  | "highlighted-with-keyboard"
+  | "highlighted-with-mouse"
+  | "selected-and-highlighted-with-keyboard"
+  | "selected-and-highlighted-with-mouse"
+  | "unselected";
+
+export const toItemStatusDetailed = <T>(
+  config: Config<T>,
+  model: Model<T>,
+  item: T
+): ItemStatusDetailed => {
+  const isSelected = isItemSelected(config, model, item);
+
+  if (isSelected) {
+    return "selected";
+  }
+
+  const isHighlighted = isItemHighlighted(config, model, item);
+  const isKeyboardNavigation = isNavigatingWithKeyboard(model);
+
+  if (isSelected && isHighlighted) {
+    if (isKeyboardNavigation) {
+      return "selected-and-highlighted-with-keyboard";
+    }
+    return "selected-and-highlighted-with-mouse";
+  }
+
+  if (isHighlighted) {
+    if (isKeyboardNavigation) {
+      return "highlighted-with-keyboard";
+    }
+    return "highlighted-with-mouse";
+  }
+  return "unselected";
+};
 
 /**
  * @group Selectors

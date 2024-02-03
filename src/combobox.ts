@@ -1900,6 +1900,14 @@ export const toHighlightedItem = <T>(
   return null;
 };
 
+export const toHighlightedIndex = <T>(model: Model<T>): number  => {
+  if (model.type !== "focused__opened__highlighted") {
+    return -1;
+  }
+
+  return model.highlightIndex;
+}
+
 /**
  * @group Selectors
  *

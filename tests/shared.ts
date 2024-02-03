@@ -128,7 +128,7 @@ export const top100Films = [
   { label: "Monty Python and the Holy Grail", year: 1975 },
 ];
 
-type Item = {
+export type Item = {
   label: string;
   year: number;
 };

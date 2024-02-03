@@ -753,9 +753,16 @@ const updateModel = <T>(
             config,
             model: {
               ...model,
-              type: "focused__opened",
+              type: "focused__closed",
             },
           });
+        }
+
+        case "pressed-input": {
+          return {
+            ...model,
+            type: "focused__opened",
+          }
         }
 
         case "pressed-unselect-all-button": {

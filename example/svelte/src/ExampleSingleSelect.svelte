@@ -169,10 +169,10 @@
             dispatch({ type: "pressed-item", item: item.item })}
           on:focus={() => dispatch({ type: "hovered-over-item", index })}
           class="option"
-          class:highlighted={item.statusDetailed === "highlighted-with-keyboard"}
-          class:selected={item.statusDetailed === "selected"}
-          class:selected-and-highlighted={item.statusDetailed ===
-            "selected-and-highlighted-with-keyboard"}
+          class:highlighted={item.status === "highlighted"}
+          class:selected={item.status === "selected"}
+          class:selected-and-highlighted={item.status ===
+            "selected-and-highlighted"}
         >
           {item.inputValue}
         </li>

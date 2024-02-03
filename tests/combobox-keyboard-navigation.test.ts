@@ -212,10 +212,91 @@ describe("combobox keyboard navigation", () => {
     if(selectedItem === null) throw new Error('selectedItem is null')
     expect(Combobox.toCurrentInputValue(config,pressedEnterKey.model)).toBe(config.toItemInputValue(selectedItem));
   })
+
+  it('does not circle back to last item when on first item and arrow up key is pressed by default', () => {
+    const initial = Combobox.init({allItems,});
+    const pressedInput = Combobox.update(config, {
+      model: initial,
+      msg: { type: "pressed-input" },
+    });
+    const pressedArrowDown = Combobox.update(config, {
+      model: pressedInput.model,
+      msg: { type: "pressed-vertical-arrow-key", key: 'arrow-down' },
+    });
+    const pressedArrowUp = Combobox.update(config, {
+      model: pressedArrowDown.model,
+      msg: { type: "pressed-vertical-arrow-key", key: 'arrow-up' },
+    });
+    expect(Combobox.toHighlightedIndex(pressedInput.model)).toBe(-1);
+    expect(Combobox.toHighlightedIndex(pressedArrowDown.model)).toBe(0);
+    expect(Combobox.toHighlightedIndex(pressedArrowUp.model)).toBe(0);
+  })
+
+  it('does circle back to last item when on first item and arrow up key is pressed', () => {
+    const initial = Combobox.init({allItems,highlightMode: {type: 'circular'}});
+    const pressedInput = Combobox.update(config, {
+      model: initial,
+      msg: { type: "pressed-input" },
+    });
+    const pressedArrowDown = Combobox.update(config, {
+      model: pressedInput.model,
+      msg: { type: "pressed-vertical-arrow-key", key: 'arrow-down' },
+    });
+    const pressedArrowUp = Combobox.update(config, {
+      model: pressedArrowDown.model,
+      msg: { type: "pressed-vertical-arrow-key", key: 'arrow-up' },
+    });
+    expect(Combobox.toHighlightedIndex(pressedInput.model)).toBe(-1);
+    expect(Combobox.toHighlightedIndex(pressedArrowDown.model)).toBe(0);
+    const lastIndex = Combobox.toRenderItems(config, pressedArrowUp.model).length - 1
+    expect(Combobox.toHighlightedIndex(pressedArrowUp.model)).toBe(lastIndex);
+  })
+
+  it('does not circle back to first item when on last item and arrow down key is pressed by default', () => {
+    const initial = Combobox.init({allItems,});
+    const {highligtedLastItem, lastIndex} = navigatedDownToLastItem(initial);
+    const pressedArrowDown = Combobox.update(config, {
+      model: highligtedLastItem.model,
+      msg: { type: "pressed-vertical-arrow-key", key: 'arrow-down' },
+    });
+    expect(Combobox.toHighlightedIndex(highligtedLastItem.model)).toBe(lastIndex);
+    expect(Combobox.toHighlightedIndex(pressedArrowDown.model)).toBe(lastIndex);
+  })
+
+  it('does circle back to first item when on last item and arrow down key is pressed', () => {
+    const initial = Combobox.init({allItems,highlightMode: {type: 'circular'}});
+    const {highligtedLastItem, lastIndex} = navigatedDownToLastItem(initial);
+    const pressedArrowDown = Combobox.update(config, {
+      model: highligtedLastItem.model,
+      msg: { type: "pressed-vertical-arrow-key", key: 'arrow-down' },
+    });
+    expect(Combobox.toHighlightedIndex(highligtedLastItem.model)).toBe(lastIndex);
+    expect(Combobox.toHighlightedIndex(pressedArrowDown.model)).toBe(0);
+  })
 });
 
 
+function navigatedDownToLastItem(initial: Combobox.Model<Item>) {
+  const pressedInput = Combobox.update(config, {
+    model: initial,
+    msg: { type: "pressed-input" },
+  });
+  const lastIndex = Combobox.toRenderItems(config, pressedInput.model).length - 1
+  let highligtedLastItem = pressedInput;
+  for(let i = 0; i <= lastIndex; i++) {
+    highligtedLastItem = Combobox.update(config, {
+      model: highligtedLastItem.model,
+      msg: { type: "pressed-vertical-arrow-key", key: 'arrow-down' },
+    });
+  }
 
+  return  {
+    lastIndex,
+    initial,
+    pressedInput,
+    highligtedLastItem,
+  }
+}
 
 function selectSecondItemWithKeyboard(initial: Combobox.Model<Item>) {
   const pressedInput = Combobox.update(config, {

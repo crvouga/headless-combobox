@@ -5,7 +5,7 @@
   "types": "dist/index.d.ts",
   "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest --dir tests",
     "build": "tsc",
     "prepublish": "rm -rf dist && tsc",
     "prepublishOnly": "rm -rf dist && tsc",
@@ -25,6 +25,7 @@
   "homepage": "https://github.com/crvouga/headless-combobox#readme",
   "devDependencies": {
     "typedoc": "^0.24.4",
-    "typescript": "^5.0.4"
+    "typescript": "^5.0.4",
+    "vitest": "^1.2.2"
   }
 }

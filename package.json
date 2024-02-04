@@ -1,13 +1,13 @@
 {
   "name": "headless-combobox",
-  "version": "6.0.5",
+  "version": "6.0.6",
   "description": "",
   "types": "dist/index.d.ts",
   "main": "dist/index.js",
   "scripts": {
     "test": "vitest --dir tests",
     "build": "tsc",
-    "prepublish": "rm -rf dist && tsc",
+    "prepublish": "rm -rf dist && tsc && npm test",
     "prepublishOnly": "rm -rf dist && tsc",
     "postpublish": "npm run update-example-deps",
     "update-example-deps": "cd ./example/svelte && npm install headless-combobox@latest",

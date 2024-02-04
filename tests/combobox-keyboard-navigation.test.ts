@@ -2,8 +2,6 @@ import { describe, expect, it } from "vitest";
 import * as Combobox from "../src";
 import { allItems, config, Item } from "./shared";
 
-
-
 describe("combobox keyboard navigation", () => {
   it("opens when focused on and arrow up key is pressed", () => {
     const initial = Combobox.init({allItems,});

@@ -1,9 +1,12 @@
+// Links
+// https://github.com/mui/material-ui/blob/master/packages/mui-base/src/useAutocomplete/useAutocomplete.js#L332
+// 
 import {
   aria,
   ariaItem,
   ariaSelectedItem,
   ariaUnselectButton,
-} from "./combobox-wai-aria";
+} from "./combobox-html-wai-aria";
 import type { ItemStore } from "./item-store";
 
 import {

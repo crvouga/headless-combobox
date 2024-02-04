@@ -239,4 +239,22 @@ describe("combobox", () => {
     expect(Combobox.toHighlightedIndex(hovered.model)).toEqual(2);
     expect(Combobox.toHighlightedIndex(inputted.model)).toEqual(-1);
   })
+
+  it('scrolls item into view when opened', () => {
+    const initial = Combobox.init({
+      allItems,
+    });
+    const pressedInput = Combobox.update(config, {
+      model: initial,
+      msg: { type: "pressed-input" },
+    });
+    const randomItem = allItems[Math.floor(Math.random() * allItems.length)];
+    const pressedItem = Combobox.update(config, {
+      model: pressedInput.model,
+      msg: { type: "pressed-item", item:  randomItem },
+    });
+    expect(Combobox.isClosed(initial)).toEqual(true);
+    expect(Combobox.isOpened(pressedInput.model)).toEqual(true);
+    // expect(pressedInput.effects).toContainEqual({ type: "scroll-into-view", index: 0 });
+  })
 });

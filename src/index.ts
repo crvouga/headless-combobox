@@ -1,4 +1,4 @@
 export * from "./combobox";
 export * from "./utils/non-empty";
-export * from "./combobox-wai-aria";
+export * from "./combobox-html-wai-aria";
 export * as Plugins from "./plugins";

@@ -34,7 +34,6 @@ Let me know if you find any issues.
 - 🔌 Framework agnostic. You do have to write error prone adapter code.
 - 🌳 [Elm](https://elm-lang.org/)-like API. People may hate that.
 - 📚 Missing good documentation. The only way to learn this library is through the examples.
-- 🧪 Missing automated tests. (This is one is on the agenda)
 
 ## Good use cases are
 

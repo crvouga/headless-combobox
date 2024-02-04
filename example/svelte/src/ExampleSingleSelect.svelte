@@ -76,7 +76,6 @@
       Combobox.Plugins.resetSearchOnDropdownToggle(),
     ]);
 
-    console.log(model.type, msg.type, output.model);
 
     model = output.model;
 
@@ -163,10 +162,9 @@
         <li
           {...item.aria}
           bind:this={items[item.item.id]}
+          
           on:mousemove={() => dispatch({ type: "hovered-over-item", index })}
-          on:mousedown|preventDefault={() =>
-            /* Make sure it's a mousedown event instead of click event */
-            dispatch({ type: "pressed-item", item: item.item })}
+          on:mousedown|preventDefault={() => dispatch({ type: "pressed-item", item: item.item })}
           on:focus={() => dispatch({ type: "hovered-over-item", index })}
           class="option"
           class:highlighted={item.status === "highlighted"}
@@ -252,10 +250,6 @@
     margin: 0;
     padding: 0;
   }
-
-.option:hover {
-    background-color: #333;
-}
 
   .highlighted {
     background-color: #333;

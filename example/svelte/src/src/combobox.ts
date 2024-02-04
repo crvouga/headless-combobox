@@ -1,9 +1,12 @@
+// Links
+// https://github.com/mui/material-ui/blob/master/packages/mui-base/src/useAutocomplete/useAutocomplete.js#L332
+// 
 import {
   aria,
   ariaItem,
   ariaSelectedItem,
   ariaUnselectButton,
-} from "./combobox-wai-aria";
+} from "./combobox-html-wai-aria";
 import type { ItemStore } from "./item-store";
 
 import {
@@ -360,6 +363,7 @@ export type Effect<T> =
   | {
       type: "scroll-item-into-view";
       item: T;
+      index: number
     }
   | {
       type: "focus-selected-item";
@@ -375,8 +379,6 @@ export type Effect<T> =
 /**
  * @group Update
  *
- * The Effect<T> represents all the possible effects that can happen to the combobox.
- * You as the user of the library has to implement the side effects
  **/
 export type Event =
   | {
@@ -519,6 +521,7 @@ const updateMain = <T>(config: Config<T>, input: Input<T>): Output<T> => {
     output.effects.push({
       type: "scroll-item-into-view",
       item: selectedItem,
+      index: toSelectedItemIndex(config, output.model) ?? -1,
     });
   }
 
@@ -545,6 +548,7 @@ const updateMain = <T>(config: Config<T>, input: Input<T>): Output<T> => {
       output.effects.push({
         type: "scroll-item-into-view",
         item: highlightedItem,
+        index: output.model.highlightIndex,
       });
       output.model = {
         ...output.model,

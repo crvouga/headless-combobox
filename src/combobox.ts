@@ -1132,7 +1132,7 @@ const updateModel = <T>(
               type: "focused__opened",
             });
           }
-          return setHasSearched(setInputValue(model, msg.inputValue), true);
+          return setHasSearched(setInputValue({...model, type: 'focused__opened'}, msg.inputValue), true);
         }
 
         case "pressed-vertical-arrow-key": {
@@ -2194,7 +2194,7 @@ export const yieldVisibleItems = function* <T>(
  *
  * This function returns the all the visible items.
  */
-const toVisibleItems = <T>(config: Config<T>, model: Model<T>): T[] => {
+export const toVisibleItems = <T>(config: Config<T>, model: Model<T>): T[] => {
   return Array.from(yieldVisibleItems(config, model));
 };
 

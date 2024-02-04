@@ -171,4 +171,72 @@ describe("combobox", () => {
     expect(Combobox.isClosed(selected.model)).toEqual(true);
     expect(Combobox.isFocused(selected.model)).toEqual(true);
   });
+
+  it("shows all items when input value is empty", () => {
+    const initial = Combobox.init({
+      allItems,
+    });
+    const visibleItems = Combobox.toVisibleItems(config,initial);
+    expect(visibleItems).toEqual(allItems);
+  });
+
+  it("opens when search is inputted", () => {
+    const initial = Combobox.init({
+      allItems,
+    });
+
+    const focused = Combobox.update(config, {
+      model: initial,
+      msg: { type: "focused-input" },
+    });
+
+    const inputted = Combobox.update(config, {
+      model: focused.model,
+      msg: { type: "inputted-value", inputValue: "a" },
+    });
+
+    expect(Combobox.isClosed(initial)).toEqual(true);
+    expect(Combobox.isOpened(inputted.model)).toEqual(true);  
+  });
+
+  it('filters items when search is inputted', () => {
+    const initial = Combobox.init({
+      allItems,
+    });
+    const focused = Combobox.update(config, {
+      model: initial,
+      msg: { type: "focused-input" },
+    });
+    const inputted = Combobox.update(config, {
+      model: focused.model,
+      msg: { type: "inputted-value", inputValue: "star wars" },
+    });
+    const visibleItems = Combobox.toVisibleItems(config,inputted.model);
+    const filteredItems = allItems.filter(item => item.label.toLowerCase().includes("star wars"));
+    expect(visibleItems).toEqual(filteredItems);
+  })
+
+  it('should reset highlighted index when search is inputted', () => {
+    const initial = Combobox.init({
+      allItems,
+    });
+    const pressedInput = Combobox.update(config, {
+      model: initial,
+      msg: { type: "pressed-input" },
+    });
+    
+    const hovered = Combobox.update(config, {
+      model: pressedInput.model,
+      msg: { type: "hovered-over-item", index: 2 },
+    });
+
+    const inputted = Combobox.update(config, {
+      model: hovered.model,
+      msg: { type: "inputted-value", inputValue: "star wars" },
+    });
+
+    expect(Combobox.toHighlightedIndex(pressedInput.model)).toEqual(-1);
+    expect(Combobox.toHighlightedIndex(hovered.model)).toEqual(2);
+    expect(Combobox.toHighlightedIndex(inputted.model)).toEqual(-1);
+  })
 });

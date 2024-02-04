@@ -753,9 +753,16 @@ const updateModel = <T>(
             config,
             model: {
               ...model,
-              type: "focused__opened",
+              type: "focused__closed",
             },
           });
+        }
+
+        case "pressed-input": {
+          return {
+            ...model,
+            type: "focused__opened",
+          }
         }
 
         case "pressed-unselect-all-button": {
@@ -1125,7 +1132,7 @@ const updateModel = <T>(
               type: "focused__opened",
             });
           }
-          return setHasSearched(setInputValue(model, msg.inputValue), true);
+          return setHasSearched(setInputValue({...model, type: 'focused__opened'}, msg.inputValue), true);
         }
 
         case "pressed-vertical-arrow-key": {
@@ -1893,6 +1900,14 @@ export const toHighlightedItem = <T>(
   return null;
 };
 
+export const toHighlightedIndex = <T>(model: Model<T>): number  => {
+  if (model.type !== "focused__opened__highlighted") {
+    return -1;
+  }
+
+  return model.highlightIndex;
+}
+
 /**
  * @group Selectors
  *
@@ -2179,7 +2194,7 @@ export const yieldVisibleItems = function* <T>(
  *
  * This function returns the all the visible items.
  */
-const toVisibleItems = <T>(config: Config<T>, model: Model<T>): T[] => {
+export const toVisibleItems = <T>(config: Config<T>, model: Model<T>): T[] => {
   return Array.from(yieldVisibleItems(config, model));
 };
 

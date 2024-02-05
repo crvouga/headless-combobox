@@ -201,21 +201,21 @@ type Blurred = {
 };
 
 type FocusedClosed = {
-  type: "focused__closed";
+  type: "focused-closed";
 };
 
 type FocusedOpened = {
-  type: "focused__opened";
+  type: "focused-opened";
 };
 
 type FocusedOpenedHighlighted = {
-  type: "focused__opened__highlighted";
+  type: "focused-opened-highlighted";
   highlightIndex: number;
   isKeyboardNavigation: boolean;
 };
 
-type SelectedItemHighlighted = {
-  type: "selected-item-highlighted";
+type HighlightedSelected = {
+  type: "highlighted-selected";
   focusedIndex: number;
 };
 
@@ -224,7 +224,7 @@ type ModelState =
   | FocusedClosed
   | FocusedOpened
   | FocusedOpenedHighlighted
-  | SelectedItemHighlighted;
+  | HighlightedSelected;
 
 /**
  * @group Model
@@ -572,8 +572,8 @@ const updateMain = <T>(config: Config<T>, input: Input<T>): Output<T> => {
 
   // focus on input when navigating from selected item list to input
   if (
-    input.model.type === "selected-item-highlighted" &&
-    output.model.type === "focused__closed"
+    input.model.type === "highlighted-selected" &&
+    output.model.type === "focused-closed"
   ) {
     output.effects.push({
       type: "focus-input",
@@ -748,7 +748,7 @@ const updateModel = <T>(
         case "toggle-opened": {
           return {
             ...model,
-            type: "focused__opened",
+            type: "focused-opened",
           };
         }
 
@@ -757,7 +757,7 @@ const updateModel = <T>(
             config,
             model: {
               ...model,
-              type: "focused__closed",
+              type: "focused-closed",
             },
           });
         }
@@ -765,7 +765,7 @@ const updateModel = <T>(
         case "pressed-input": {
           return {
             ...model,
-            type: "focused__opened",
+            type: "focused-opened",
           }
         }
 
@@ -787,7 +787,7 @@ const updateModel = <T>(
         case "focused-selected-item": {
           return {
             ...model,
-            type: "selected-item-highlighted",
+            type: "highlighted-selected",
             focusedIndex:
               findIndex(
                 (item) => toItemId(item) === toItemId(msg.item),
@@ -802,12 +802,12 @@ const updateModel = <T>(
       }
     }
 
-    case "focused__closed": {
+    case "focused-closed": {
       switch (msg.type) {
         case "toggle-opened": {
           return {
             ...model,
-            type: "focused__opened",
+            type: "focused-opened",
           };
         }
         case "pressed-input": {
@@ -854,7 +854,7 @@ const updateModel = <T>(
           return {
             ...closedToOpened(model),
             highlightIndex: selectedItemIndex ? selectedItemIndex : 0,
-            type: "focused__opened__highlighted",
+            type: "focused-opened-highlighted",
             isKeyboardNavigation: true,
           };
         }
@@ -874,7 +874,7 @@ const updateModel = <T>(
         case "focused-selected-item": {
           return {
             ...model,
-            type: "selected-item-highlighted",
+            type: "highlighted-selected",
             focusedIndex:
               findIndex(
                 (item) => toItemId(item) === toItemId(msg.item),
@@ -918,7 +918,7 @@ const updateModel = <T>(
           return {
             ...model,
             selectedItems: [],
-            type: "focused__closed",
+            type: "focused-closed",
           };
         }
 
@@ -928,19 +928,19 @@ const updateModel = <T>(
       }
     }
 
-    case "focused__opened": {
+    case "focused-opened": {
       switch (msg.type) {
         case "toggle-opened": {
           return {
             ...model,
-            type: "focused__closed",
+            type: "focused-closed",
           };
         }
 
         case "hovered-over-item": {
           return {
             ...model,
-            type: "focused__opened__highlighted",
+            type: "focused-opened-highlighted",
             highlightIndex: msg.index,
             isKeyboardNavigation: false,
           };
@@ -960,7 +960,7 @@ const updateModel = <T>(
           if (config.isEmptyItem(pressedItem)) {
             return {
               ...model,
-              type: "focused__closed",
+              type: "focused-closed",
             };
           }
 
@@ -983,7 +983,7 @@ const updateModel = <T>(
             return clearInputValue({
               ...model,
               selectedItems: [],
-              type: "focused__opened",
+              type: "focused-opened",
             });
           }
 
@@ -995,7 +995,7 @@ const updateModel = <T>(
             config,
             model: {
               ...model,
-              type: "focused__closed",
+              type: "focused-closed",
             },
           });
         }
@@ -1009,7 +1009,7 @@ const updateModel = <T>(
             return {
               ...model,
               highlightIndex: 0,
-              type: "focused__opened__highlighted",
+              type: "focused-opened-highlighted",
               isKeyboardNavigation: true,
             };
           }
@@ -1030,7 +1030,7 @@ const updateModel = <T>(
           return {
             ...model,
             highlightIndex,
-            type: "focused__opened__highlighted",
+            type: "focused-opened-highlighted",
             isKeyboardNavigation: true,
           };
         }
@@ -1038,7 +1038,7 @@ const updateModel = <T>(
         case "pressed-escape-key": {
           return {
             ...model,
-            type: "focused__closed",
+            type: "focused-closed",
           };
         }
 
@@ -1075,7 +1075,7 @@ const updateModel = <T>(
           return {
             ...model,
             selectedItems: [],
-            type: "focused__opened",
+            type: "focused-opened",
           };
         }
 
@@ -1085,12 +1085,12 @@ const updateModel = <T>(
       }
     }
 
-    case "focused__opened__highlighted": {
+    case "focused-opened-highlighted": {
       switch (msg.type) {
         case "toggle-opened": {
           return {
             ...model,
-            type: "focused__closed",
+            type: "focused-closed",
           };
         }
 
@@ -1122,7 +1122,7 @@ const updateModel = <T>(
               config,
               model: {
                 ...model,
-                type: "focused__opened",
+                type: "focused-opened",
               },
             });
           }
@@ -1133,10 +1133,10 @@ const updateModel = <T>(
             return clearInputValue({
               ...model,
               selectedItems: [],
-              type: "focused__opened",
+              type: "focused-opened",
             });
           }
-          return setHasSearched(setInputValue({...model, type: 'focused__opened'}, msg.inputValue), true);
+          return setHasSearched(setInputValue({...model, type: 'focused-opened'}, msg.inputValue), true);
         }
 
         case "pressed-vertical-arrow-key": {
@@ -1160,7 +1160,7 @@ const updateModel = <T>(
           const enteredItem = visible[model.highlightIndex];
 
           if (!enteredItem) {
-            return { ...model, type: "focused__closed" };
+            return { ...model, type: "focused-closed" };
           }
 
           return toggleSelected({
@@ -1171,7 +1171,7 @@ const updateModel = <T>(
         }
 
         case "pressed-escape-key": {
-          return { ...model, type: "focused__closed" };
+          return { ...model, type: "focused-closed" };
         }
 
         case "pressed-unselect-button": {
@@ -1189,7 +1189,7 @@ const updateModel = <T>(
           const selectedItemIndex = toSelectedItemIndex(config, model);
           return {
             ...model,
-            type: "selected-item-highlighted",
+            type: "highlighted-selected",
             focusedIndex: selectedItemIndex ?? 0,
           };
         }
@@ -1200,7 +1200,7 @@ const updateModel = <T>(
             if (isNonEmpty(removed)) {
               return { ...model, selectedItems: removed };
             }
-            return { ...model, type: "focused__opened" };
+            return { ...model, type: "focused-opened" };
           }
           return model;
         }
@@ -1209,7 +1209,7 @@ const updateModel = <T>(
           return {
             ...model,
             selectedItems: [],
-            type: "focused__opened",
+            type: "focused-opened",
           };
         }
 
@@ -1219,13 +1219,13 @@ const updateModel = <T>(
       }
     }
 
-    case "selected-item-highlighted": {
+    case "highlighted-selected": {
       switch (msg.type) {
         case "pressed-horizontal-arrow-key": {
           if (model.selectMode.type !== "multi-select") {
             return clearInputValue({
               ...model,
-              type: "focused__closed",
+              type: "focused-closed",
             });
           }
 
@@ -1236,7 +1236,7 @@ const updateModel = <T>(
           ) {
             return clearInputValue({
               ...model,
-              type: "focused__closed",
+              type: "focused-closed",
             });
           }
 
@@ -1247,7 +1247,7 @@ const updateModel = <T>(
           ) {
             return clearInputValue({
               ...model,
-              type: "focused__closed",
+              type: "focused-closed",
             });
           }
 
@@ -1278,7 +1278,7 @@ const updateModel = <T>(
               config,
               model: {
                 ...model,
-                type: "focused__opened",
+                type: "focused-opened",
               },
             });
           }
@@ -1290,7 +1290,7 @@ const updateModel = <T>(
             model: {
               ...model,
               highlightIndex: selectedItemIndex ? selectedItemIndex : 0,
-              type: "focused__opened__highlighted",
+              type: "focused-opened-highlighted",
               isKeyboardNavigation: true,
             },
           });
@@ -1301,7 +1301,7 @@ const updateModel = <T>(
             return setInputValue(
               {
                 ...model,
-                type: "focused__opened",
+                type: "focused-opened",
               },
               toInputValue({ config, model })
             );
@@ -1311,7 +1311,7 @@ const updateModel = <T>(
               {
                 ...model,
                 selectedItems: [],
-                type: "focused__opened",
+                type: "focused-opened",
               },
               msg.inputValue
             );
@@ -1320,7 +1320,7 @@ const updateModel = <T>(
             {
               ...model,
 
-              type: "focused__opened",
+              type: "focused-opened",
             },
             msg.inputValue
           );
@@ -1329,7 +1329,7 @@ const updateModel = <T>(
         case "pressed-key":
         case "pressed-enter-key":
         case "pressed-escape-key": {
-          return clearInputValue({ ...model, type: "focused__closed" });
+          return clearInputValue({ ...model, type: "focused-closed" });
         }
 
         case "pressed-backspace-key": {
@@ -1343,7 +1343,7 @@ const updateModel = <T>(
           return clearInputValue({
             ...model,
             selectedItems: removedHighlightedIndex,
-            type: "focused__closed",
+            type: "focused-closed",
           });
         }
 
@@ -1369,14 +1369,14 @@ const updateModel = <T>(
           return clearInputValue({
             ...model,
             selectedItems: removedOne,
-            type: "focused__closed",
+            type: "focused-closed",
           });
         }
 
         case "focused-selected-item": {
           return {
             ...model,
-            type: "selected-item-highlighted",
+            type: "highlighted-selected",
             focusedIndex:
               findIndex(
                 (item) => toItemId(item) === toItemId(msg.item),
@@ -1395,7 +1395,7 @@ const updateModel = <T>(
         case "focused-input": {
           return clearInputValue({
             ...model,
-            type: "focused__opened",
+            type: "focused-opened",
           });
         }
 
@@ -1403,12 +1403,12 @@ const updateModel = <T>(
           return clearInputValue({
             ...model,
             selectedItems: [],
-            type: "focused__opened",
+            type: "focused-opened",
           });
         }
 
         case "pressed-input": {
-          return clearInputValue({ ...model, type: "focused__opened" });
+          return clearInputValue({ ...model, type: "focused-opened" });
         }
 
         default: {
@@ -1432,12 +1432,12 @@ const closedToOpened = <T>(model: Model<T>): Model<T> => {
     return setHasSearched(
       {
         ...model,
-        type: "focused__opened",
+        type: "focused-opened",
       },
       false
     );
   }
-  return { ...model, type: "focused__opened" };
+  return { ...model, type: "focused-opened" };
 };
 
 const focusedToBlurred = <T>(model: Model<T>): Model<T> => {
@@ -1463,14 +1463,14 @@ const handlePressedInputWhenOpened = <T>(model: Model<T>): Model<T> => {
   ) {
     return {
       ...model,
-      type: "focused__closed",
+      type: "focused-closed",
     };
   }
 
   if (model.inputMode.type === "select-only") {
     return {
       ...model,
-      type: "focused__closed",
+      type: "focused-closed",
     };
   }
 
@@ -1493,13 +1493,13 @@ const toggleSelected = <T>({
     return {
       ...model,
       selectedItems: [],
-      type: "focused__closed",
+      type: "focused-closed",
     };
   }
 
   const transitioned: Model<T> = model.disableCloseOnSelect
     ? model
-    : { ...model, type: "focused__closed" };
+    : { ...model, type: "focused-closed" };
 
   if (
     isItemSelected(config, model, item) &&
@@ -1667,7 +1667,7 @@ const updateSelectedItemKeyboardNavigation = <T>({
   ) {
     return {
       ...model,
-      type: "selected-item-highlighted",
+      type: "highlighted-selected",
       focusedIndex: 0,
     };
   }
@@ -1678,7 +1678,7 @@ const updateSelectedItemKeyboardNavigation = <T>({
   ) {
     return {
       ...model,
-      type: "selected-item-highlighted",
+      type: "highlighted-selected",
       focusedIndex: 0,
     };
   }
@@ -1788,10 +1788,10 @@ export const isUnselected = <T>(
   model: ModelState
 ): model is UnselectedState<T> => {
   return (
-    model.type === "focused__opened" ||
-    model.type === "focused__opened__highlighted" ||
+    model.type === "focused-opened" ||
+    model.type === "focused-opened-highlighted" ||
     model.type === "blurred" ||
-    model.type === "focused__closed"
+    model.type === "focused-closed"
   );
 };
 export type UnselectedState<T> = Exclude<ModelState, SelectedState<T>>;
@@ -1803,8 +1803,8 @@ export type UnselectedState<T> = Exclude<ModelState, SelectedState<T>>;
  */
 export const isOpened = (model: ModelState): model is OpenedState => {
   return (
-    model.type === "focused__opened" ||
-    model.type === "focused__opened__highlighted"
+    model.type === "focused-opened" ||
+    model.type === "focused-opened-highlighted"
   );
 };
 export type OpenedState = FocusedOpened | FocusedOpenedHighlighted;
@@ -1827,7 +1827,7 @@ export type ClosedState = Exclude<ModelState, OpenedState>;
 export const isHighlighted = (
   model: ModelState
 ): model is FocusedOpenedHighlighted => {
-  return model.type === "focused__opened__highlighted";
+  return model.type === "focused-opened-highlighted";
 };
 
 /**
@@ -1845,8 +1845,8 @@ export const isBlurred = (model: ModelState): model is Blurred => {
  */
 export const isSelectedItemHighlighted = (
   model: ModelState
-): model is SelectedItemHighlighted => {
-  return model.type === "selected-item-highlighted";
+): model is HighlightedSelected => {
+  return model.type === "highlighted-selected";
 };
 
 /**
@@ -1888,7 +1888,7 @@ export const toHighlightedItem = <T>(
   config: Config<T>,
   model: Model<T>
 ): T | null => {
-  if (model.type !== "focused__opened__highlighted") {
+  if (model.type !== "focused-opened-highlighted") {
     return null;
   }
 
@@ -1905,7 +1905,7 @@ export const toHighlightedItem = <T>(
 };
 
 export const toHighlightedIndex = <T>(model: Model<T>): number  => {
-  if (model.type !== "focused__opened__highlighted") {
+  if (model.type !== "focused-opened-highlighted") {
     return -1;
   }
 
@@ -1992,7 +1992,7 @@ export const isItemIndexHighlighted = <T>(
   index: number
 ): boolean => {
   switch (model.type) {
-    case "focused__opened__highlighted": {
+    case "focused-opened-highlighted": {
       return model.highlightIndex === index;
     }
     default: {
@@ -2073,7 +2073,7 @@ export type ItemStatus =
 
 export const isNavigatingWithKeyboard = <T>(model: Model<T>): boolean => {
   return (
-    model.type === "focused__opened__highlighted" && model.isKeyboardNavigation
+    model.type === "focused-opened-highlighted" && model.isKeyboardNavigation
   );
 };
 
@@ -2238,7 +2238,7 @@ export const yieldRenderItems = function* <T>(
   }
 
   const highlightedIndex =
-    model.type === "focused__opened__highlighted" ? model.highlightIndex : null;
+    model.type === "focused-opened-highlighted" ? model.highlightIndex : null;
 
   let index = 0;
 

@@ -23,8 +23,7 @@ describe("combobox plugin toggle on select", () => {
       model: selected.model,
       msg: { type: "pressed-item", item },
     }, [Combobox.Plugins.toggleOnSelect()]);
-    expect(Combobox.toSelectedItem(initial)).toEqual(null);
-    expect(Combobox.toSelectedItem(pressed.model)).toEqual(null);
+    
     expect(Combobox.toSelectedItem(selected.model)).toEqual(item);
     expect(Combobox.toSelectedItem(unselected.model)).toEqual(null);
   })

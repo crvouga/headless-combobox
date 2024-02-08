@@ -257,4 +257,20 @@ describe("combobox", () => {
     expect(Combobox.isOpened(pressedInput.model)).toEqual(true);
     // expect(pressedInput.effects).toContainEqual({ type: "scroll-into-view", index: 0 });
   })
+
+  it('sets input value to selected item name on select', () => {
+    const initial = Combobox.init(config, {
+      allItems,
+    });
+    const pressedInput = Combobox.update(config, {
+      model: initial,
+      msg: { type: "pressed-input" },
+    });
+    const randomItem = allItems[Math.floor(Math.random() * allItems.length)];
+    const pressedItem = Combobox.update(config, {
+      model: pressedInput.model,
+      msg: { type: "pressed-item", item:  randomItem },
+    });
+    expect(Combobox.toCurrentInputValue(config, pressedItem.model)).toEqual(config.toItemInputValue(randomItem));
+  })
 });

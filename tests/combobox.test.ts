@@ -324,6 +324,6 @@ describe("combobox", () => {
     
     expect(Combobox.toCurrentInputValue(config, pressedInput.model)).toEqual("");
     expect(Combobox.toCurrentInputValue(config, selectedItem.model)).toEqual(config.toItemInputValue(randomItem));
-    
   })
+
 });

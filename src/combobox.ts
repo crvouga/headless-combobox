@@ -614,6 +614,11 @@ const updateMain = <T>(config: Config<T>, input: Input<T>): Output<T> => {
 
   if (didSelectedItemsChange(config, input.model, output.model)) {
     output.events.push({ type: "selected-items-changed" });
+
+    // TODO move this somewhere else
+    if(toSelectedItems(output.model).length === 0) {
+      output.model = clearInputValue(output.model)
+    }
   }
 
   return output;

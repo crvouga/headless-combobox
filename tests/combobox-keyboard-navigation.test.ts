@@ -4,7 +4,7 @@ import { allItems, config, Item } from "./shared";
 
 describe("combobox keyboard navigation", () => {
   it("opens when focused on and arrow up key is pressed", () => {
-    const initial = Combobox.init({allItems,});
+    const initial = Combobox.init(config, {allItems,});
     const focused = Combobox.update(config, {
       model: initial,
       msg: { type: "focused-input" },
@@ -19,7 +19,7 @@ describe("combobox keyboard navigation", () => {
   });
 
   it("opens when focused on and arrow down key is pressed", () => {
-    const initial = Combobox.init({allItems,});
+    const initial = Combobox.init(config, {allItems,});
     const focused = Combobox.update(config, {
       model: initial,
       msg: { type: "focused-input" },
@@ -34,7 +34,7 @@ describe("combobox keyboard navigation", () => {
   });
 
   it("stays closed when focused on and arrow left key is pressed", () => {
-    const initial = Combobox.init({allItems,});
+    const initial = Combobox.init(config, {allItems,});
     const focused = Combobox.update(config, {
       model: initial,
       msg: { type: "focused-input" },
@@ -49,7 +49,7 @@ describe("combobox keyboard navigation", () => {
   });
 
   it("stays closed when focused on and arrow right key is pressed", () => {
-    const initial = Combobox.init({allItems,});
+    const initial = Combobox.init(config, {allItems,});
     const focused = Combobox.update(config, {
       model: initial,
       msg: { type: "focused-input" },
@@ -64,7 +64,7 @@ describe("combobox keyboard navigation", () => {
   });
 
   it('closes when focused on and escape key is pressed', () => {
-    const initial = Combobox.init({allItems,});
+    const initial = Combobox.init(config, {allItems,});
     const focused = Combobox.update(config, {
       model: initial,
       msg: { type: "focused-input" },
@@ -79,7 +79,7 @@ describe("combobox keyboard navigation", () => {
   })
 
   it('opens on when focused and on first arrow down key but does not highlight any item', () => {
-    const initial = Combobox.init({allItems,});
+    const initial = Combobox.init(config, {allItems,});
     const focused = Combobox.update(config, {
       model: initial,
       msg: { type: "focused-input" },
@@ -95,7 +95,7 @@ describe("combobox keyboard navigation", () => {
   })
 
   it('opens on first key down then highlights first item', () => {
-    const initial = Combobox.init({allItems,});
+    const initial = Combobox.init(config, {allItems,});
     const focused = Combobox.update(config, {
       model: initial,
       msg: { type: "focused-input" },
@@ -114,7 +114,7 @@ describe("combobox keyboard navigation", () => {
   })
 
   it('highlights the next item when arrow down key is pressed', () => {
-    const initial = Combobox.init({allItems,});
+    const initial = Combobox.init(config, {allItems,});
     const pressedInput = Combobox.update(config, {
       model: initial,
       msg: { type: "pressed-input" },
@@ -133,7 +133,7 @@ describe("combobox keyboard navigation", () => {
   })
 
   it('highlights the previous item when arrow up key is pressed', () => {
-    const initial = Combobox.init({allItems,});
+    const initial = Combobox.init(config, {allItems,});
     const pressedInput = Combobox.update(config, {
       model: initial,
       msg: { type: "pressed-input" },
@@ -158,21 +158,21 @@ describe("combobox keyboard navigation", () => {
   })
 
   it('selects highlighted index when enter key is pressed', () => {
-    const initial = Combobox.init({allItems,});
+    const initial = Combobox.init(config, {allItems,});
     const {pressedArrowDownAgain,pressedEnterKey} = selectSecondItemWithKeyboard(initial);
     expect(Combobox.toSelectedItem(pressedArrowDownAgain.model)).toBe(null);
     expect(Combobox.toSelectedItem(pressedEnterKey.model)).toBe(allItems[1]);
   })
 
   it('closes when selecting with enter key', () => {
-    const initial = Combobox.init({allItems,});
+    const initial = Combobox.init(config, {allItems,});
     const {pressedArrowDownAgain,pressedEnterKey} = selectSecondItemWithKeyboard(initial);
     expect(Combobox.isOpened(pressedArrowDownAgain.model)).toBe(true);
     expect(Combobox.isClosed(pressedEnterKey.model)).toBe(true);
   })
 
   it('starts highlighed index from selected index - arrow down', () => {
-    const initial = Combobox.init({allItems,});
+    const initial = Combobox.init(config, {allItems,});
     const {pressedEnterKey} = selectSecondItemWithKeyboard(initial);
     const pressedArrowDown = Combobox.update(config, {
       model: pressedEnterKey.model,
@@ -188,7 +188,7 @@ describe("combobox keyboard navigation", () => {
   })
 
   it('starts highlighed index from selected index - arrow down', () => {
-    const initial = Combobox.init({allItems,});
+    const initial = Combobox.init(config, {allItems,});
     const {pressedEnterKey} = selectSecondItemWithKeyboard(initial);
     const pressedArrowUp = Combobox.update(config, {
       model: pressedEnterKey.model,
@@ -203,7 +203,7 @@ describe("combobox keyboard navigation", () => {
   })
 
   it(`sets input value to selected item's input value on select`, () => {
-    const initial = Combobox.init({allItems,});
+    const initial = Combobox.init(config, {allItems,});
     const {pressedArrowDownAgain, pressedEnterKey} = selectSecondItemWithKeyboard(initial);
     expect(Combobox.toCurrentInputValue(config, pressedArrowDownAgain.model)).toBe('');
     const selectedItem = Combobox.toSelectedItem(pressedEnterKey.model);
@@ -212,7 +212,7 @@ describe("combobox keyboard navigation", () => {
   })
 
   it('does not circle back to last item when on first item and arrow up key is pressed by default', () => {
-    const initial = Combobox.init({allItems,});
+    const initial = Combobox.init(config, {allItems,});
     const pressedInput = Combobox.update(config, {
       model: initial,
       msg: { type: "pressed-input" },
@@ -231,7 +231,7 @@ describe("combobox keyboard navigation", () => {
   })
 
   it('does circle back to last item when on first item and arrow up key is pressed', () => {
-    const initial = Combobox.init({allItems,highlightMode: {type: 'circular'}});
+    const initial = Combobox.init(config, {allItems,highlightMode: {type: 'circular'}});
     const pressedInput = Combobox.update(config, {
       model: initial,
       msg: { type: "pressed-input" },
@@ -251,7 +251,7 @@ describe("combobox keyboard navigation", () => {
   })
 
   it('does not circle back to first item when on last item and arrow down key is pressed by default', () => {
-    const initial = Combobox.init({allItems,});
+    const initial = Combobox.init(config, {allItems,});
     const {highligtedLastItem, lastIndex} = navigatedDownToLastItem(initial);
     const pressedArrowDown = Combobox.update(config, {
       model: highligtedLastItem.model,
@@ -262,7 +262,7 @@ describe("combobox keyboard navigation", () => {
   })
 
   it('does circle back to first item when on last item and arrow down key is pressed', () => {
-    const initial = Combobox.init({allItems,highlightMode: {type: 'circular'}});
+    const initial = Combobox.init(config, {allItems,highlightMode: {type: 'circular'}});
     const {highligtedLastItem, lastIndex} = navigatedDownToLastItem(initial);
     const pressedArrowDown = Combobox.update(config, {
       model: highligtedLastItem.model,

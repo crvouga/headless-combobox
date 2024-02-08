@@ -540,7 +540,7 @@ const updateMain = <T>(config: Config<T>, input: Input<T>): Output<T> => {
     isHighlighted(output.model) &&
     input.msg.type === "pressed-vertical-arrow-key"
   ) {
-    const visible = toVisibleItemsMemoized(config)(output.model);
+    const visible = toFilteredItemsMemoized(config)(output.model);
 
     const highlightedItem = visible[output.model.highlightIndex];
 
@@ -1001,7 +1001,7 @@ const updateModel = <T>(
         }
 
         case "pressed-vertical-arrow-key": {
-          const visible = toVisibleItemsMemoized(config)(model);
+          const visible = toFilteredItemsMemoized(config)(model);
 
           const selectedItemIndex = toSelectedItemIndex(config, model);
 
@@ -1140,7 +1140,7 @@ const updateModel = <T>(
         }
 
         case "pressed-vertical-arrow-key": {
-          const visible = toVisibleItemsMemoized(config)(model);
+          const visible = toFilteredItemsMemoized(config)(model);
           const delta = msg.key === "arrow-down" ? 1 : -1;
           const highlightIndex = toNextHighlightIndex(
             model.highlightMode,
@@ -1155,7 +1155,7 @@ const updateModel = <T>(
         }
 
         case "pressed-enter-key": {
-          const visible = toVisibleItemsMemoized(config)(model);
+          const visible = toFilteredItemsMemoized(config)(model);
 
           const enteredItem = visible[model.highlightIndex];
 
@@ -1535,7 +1535,7 @@ const toSelectedItemIndex = <T>(
   }
 
   let index = 0;
-  for (const item of toVisibleItemsMemoized(config)(model)) {
+  for (const item of toFilteredItemsMemoized(config)(model)) {
     if (selectedItemIdSet.has(config.toItemId(item))) {
       return index;
     }
@@ -1894,7 +1894,7 @@ export const toHighlightedItem = <T>(
 
   let index = 0;
 
-  for (const item of toVisibleItemsMemoized(config)(model)) {
+  for (const item of toFilteredItemsMemoized(config)(model)) {
     if (index === model.highlightIndex) {
       return item;
     }
@@ -2143,7 +2143,7 @@ export const toItemStatus = <T>(
   return "unselected";
 };
 
-export const yieldVisibleItems = function* <T>(
+export const yieldFilteredItems = function* <T>(
   config: Config<T>,
   model: Model<T>
 ): Generator<T> {
@@ -2198,21 +2198,21 @@ export const yieldVisibleItems = function* <T>(
  *
  * This function returns the all the visible items.
  */
-export const toVisibleItems = <T>(config: Config<T>, model: Model<T>): T[] => {
-  return Array.from(yieldVisibleItems(config, model));
+export const toFilteredItems = <T>(config: Config<T>, model: Model<T>): T[] => {
+  return Array.from(yieldFilteredItems(config, model));
 };
 
 /**
  * Get visible items memoized
  */
-export const toVisibleItemsMemoized = <T>(config: Config<T>) => {
+export const toFilteredItemsMemoized = <T>(config: Config<T>) => {
   return memoize(
     config.visibleItemCache,
     (model) => {
       return config.deterministicFilterKeyFn(model);
     },
     (model: Model<T>): T[] => {
-      return toVisibleItems(config, model);
+      return toFilteredItems(config, model);
     }
   );
 };
@@ -2242,7 +2242,7 @@ export const yieldRenderItems = function* <T>(
 
   let index = 0;
 
-  for (const item of toVisibleItemsMemoized(config)(model)) {
+  for (const item of toFilteredItemsMemoized(config)(model)) {
     const isSelected = selectedItemIdSet.has(config.toItemId(item));
     const isHighlighted = index === highlightedIndex;
 

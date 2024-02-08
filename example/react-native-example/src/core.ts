@@ -370,7 +370,7 @@ export const update = <TItem>(
     isHighlighted(output.model) &&
     msg.type === "pressed-vertical-arrow-key"
   ) {
-    const filtered = toVisibleItems(config, output.model);
+    const filtered = toFilteredItems(config, output.model);
 
     const highlightedItem = filtered[output.model.highlightIndex];
 
@@ -780,7 +780,7 @@ const updateModel = <T>(
         }
 
         case "pressed-vertical-arrow-key": {
-          const filtered = toVisibleItems(config, model);
+          const filtered = toFilteredItems(config, model);
 
           const selectedIndex = filtered.findIndex((item) =>
             model.selected.some(
@@ -936,7 +936,7 @@ const updateModel = <T>(
         }
 
         case "pressed-vertical-arrow-key": {
-          const filtered = toVisibleItems(config, model);
+          const filtered = toFilteredItems(config, model);
           const delta = msg.key === "arrow-down" ? 1 : -1;
           const highlightIndex = circularIndex(
             model.highlightIndex + delta,
@@ -950,7 +950,7 @@ const updateModel = <T>(
         }
 
         case "pressed-enter-key": {
-          const filtered = toVisibleItems(config, model);
+          const filtered = toFilteredItems(config, model);
 
           const enteredItem = filtered[model.highlightIndex];
 
@@ -1152,7 +1152,7 @@ const updateModel = <T>(
         }
 
         case "pressed-vertical-arrow-key": {
-          const filtered = toVisibleItems(config, model);
+          const filtered = toFilteredItems(config, model);
           const highlightIndex =
             msg.key === "arrow-up" ? filtered.length - 1 : 0;
 
@@ -1220,7 +1220,7 @@ const updateModel = <T>(
         }
 
         case "pressed-vertical-arrow-key": {
-          const filtered = toVisibleItems(config, model);
+          const filtered = toFilteredItems(config, model);
           const delta = msg.key === "arrow-down" ? 1 : -1;
           const highlightIndex = circularIndex(
             model.highlightIndex + delta,
@@ -1233,7 +1233,7 @@ const updateModel = <T>(
         }
 
         case "pressed-enter-key": {
-          const filtered = toVisibleItems(config, model);
+          const filtered = toFilteredItems(config, model);
 
           const enteredItem = filtered[model.highlightIndex];
 
@@ -1795,7 +1795,7 @@ export const toHighlightedItem = <TItem>(
 
     case "unselected__focused__opened__highlighted":
     case "selected__focused__opened__highlighted": {
-      const item = toVisibleItems(config, model)[model.highlightIndex];
+      const item = toFilteredItems(config, model)[model.highlightIndex];
 
       return item ?? null;
     }
@@ -1999,7 +1999,7 @@ export const toItemStatus = <TItem>(
  * This function returns the all the visible items.
  * This function really isn't necessary, but it's here for a more consistent API.
  */
-export const toVisibleItems = <T>(config: Config<T>, model: Model<T>): T[] => {
+export const toFilteredItems = <T>(config: Config<T>, model: Model<T>): T[] => {
   if (model.selectOnly) {
     return model.allItems;
   }
@@ -2084,7 +2084,7 @@ export const toState = <T>(config: Config<T>, model: Model<T>) => {
   return {
     aria: aria(config, model),
     allItems: model.allItems,
-    items: toVisibleItems(config, model),
+    items: toFilteredItems(config, model),
     isOpened: isOpened(model),
     selections: toSelections(model),
     inputValue: toCurrentInputValue(config, model),

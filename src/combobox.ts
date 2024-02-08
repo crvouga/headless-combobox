@@ -42,10 +42,10 @@ export type Config<T> = {
    * This must always be deterministic! That means it must always return the same order and same items for the same input.
    */
   deterministicFilter: (model: Model<T>) => Iterable<T>;
-  deterministicFilterKeyFn: (model: Model<T>) => string;
+  deterministicFilterCacheKeyFn: (model: Model<T>) => string;
   isEmptyItem: (value: T) => boolean;
   namespace: string;
-  visibleItemCache: Map<string, T[]>;
+  filteredItemCache: Map<string, T[]>;
   itemStore?: ItemStore<T>;
 };
 
@@ -55,17 +55,16 @@ export type Config<T> = {
 export const initConfig = <T>({
   namespace,
   isEmptyItem = () => false,
-  visibleItemCacheCapacity = 100,
-
+  filteredItemCacheCapacity = 100,
   ...config
 }: {
   toItemId: (item: T) => string | number;
   toItemInputValue: (item: T) => string;
   isEmptyItem?: (item: T) => boolean;
   deterministicFilter?: (model: Model<T>) => Iterable<T>;
-  deterministicFilterKeyFn?: (model: Model<T>) => string;
+  deterministicFilterCacheKeyFn?: (model: Model<T>) => string;
   namespace?: string;
-  visibleItemCacheCapacity?: number;
+  filteredItemCacheCapacity?: number;
 }): Config<T> => {
   const deterministicFilter: Config<T>["deterministicFilter"] =
     config.deterministicFilter
@@ -76,27 +75,26 @@ export const initConfig = <T>({
    * TODO Caching is not working properly
    * The cache is not invalidated when the input changes
    */
-  const deterministicFilterKeyFn: Config<T>["deterministicFilterKeyFn"] =
-    config.deterministicFilterKeyFn
-      ? config.deterministicFilterKeyFn
+  const deterministicFilterCacheKeyFn: Config<T>["deterministicFilterCacheKeyFn"] =
+    config.deterministicFilterCacheKeyFn
+      ? config.deterministicFilterCacheKeyFn
       : (model) => {
           const inputVal =
             model.inputMode.type === "search-mode"
               ? model.inputMode.inputValue
               : "";
-
-          const key = `${model.inputMode.type}-${model.visibleItemLimit}-${model.allItems.length}-${inputVal}`;
-
+          const selectedItemsHash = model.selectedItems.map(config.toItemId).join(' ')
+          const key = `${model.inputMode.type} ${inputVal} ${model.allItemsHash} ${selectedItemsHash}`;
           return key;
         };
 
   const configFull: Config<T> = {
     ...config,
     isEmptyItem,
-    visibleItemCache: new LRUCache(visibleItemCacheCapacity),
+    filteredItemCache: new LRUCache(filteredItemCacheCapacity),
     namespace: namespace ?? "combobox",
     deterministicFilter,
-    deterministicFilterKeyFn,
+    deterministicFilterCacheKeyFn: deterministicFilterCacheKeyFn,
   };
 
   return configFull;
@@ -137,6 +135,7 @@ export type Model<T> = ModelState & {
    * All items that can be selected. Items must be unique.
    */
   allItems: T[];
+  allItemsHash: string;
   selectedItems: T[];
   skipOnce: Msg<T>["type"][];
   selectMode: SelectMode;
@@ -144,16 +143,25 @@ export type Model<T> = ModelState & {
   highlightMode: HighlightMode;
   /**
    * @description
-   * The `visibleItemLimit` is used to limit the number of items that are visible in the suggestion dropdown.
+   * The `filteredItemLimit` is used to limit the number of items that are filtered in the suggestion dropdown.
    * Good for performance.
    */
-  visibleItemLimit: number;
+  filteredItemLimit: number;
   /**
    * @description
    * When selecting an item from the drop down the combobox will not transition to a closed state.
    */
   disableCloseOnSelect?: boolean;
 };
+
+const toAllItemsHash = <T>(config: Config<T>, allItems: T[]): string => {
+  let hash = "";
+  for (const item of allItems) {
+    hash += `${config.toItemId(item)} `;
+  }
+  return hash
+}
+
 
 /**
  * @group Model
@@ -231,32 +239,33 @@ type ModelState =
  *
  * The init function returns the initial state of the combobox.
  */
-export const init = <T>({
+export const init = <T>(config: Config<T>, {
   allItems,
   selectMode,
   inputMode,
   highlightMode,
-  visibleItemLimit = 500,
+  filteredItemLimit = Infinity,
   disableCloseOnSelect = false,
 }: {
   allItems: T[];
   selectMode?: SelectMode;
   inputMode?: InputMode;
   highlightMode?: HighlightMode;
-  visibleItemLimit?: number;
+  filteredItemLimit?: number;
   disableCloseOnSelect?: boolean;
 }): Model<T> => {
   return {
     type: "blurred",
     selectedItems: [],
     allItems,
+    allItemsHash: toAllItemsHash(config, allItems),
     skipOnce: [],
     inputMode: inputMode
       ? inputMode
       : { type: "search-mode", hasSearched: false, inputValue: "" },
     selectMode: selectMode ? selectMode : { type: "single-select" },
     highlightMode: highlightMode ? highlightMode : { type: "clamp" },
-    visibleItemLimit: Math.abs(visibleItemLimit),
+    filteredItemLimit: Math.abs(filteredItemLimit),
     disableCloseOnSelect,
   };
 };
@@ -540,9 +549,9 @@ const updateMain = <T>(config: Config<T>, input: Input<T>): Output<T> => {
     isHighlighted(output.model) &&
     input.msg.type === "pressed-vertical-arrow-key"
   ) {
-    const visible = toVisibleItemsMemoized(config)(output.model);
+    const filtered = toFilteredItemsMemoized(config)(output.model);
 
-    const highlightedItem = visible[output.model.highlightIndex];
+    const highlightedItem = filtered[output.model.highlightIndex];
 
     if (highlightedItem) {
       output.effects.push({
@@ -646,6 +655,7 @@ const updateSetters = <T>({
     return {
       ...model,
       allItems: allItemsNew,
+      allItemsHash: toAllItemsHash(config, allItemsNew),
     };
   }
 
@@ -659,6 +669,7 @@ const updateSetters = <T>({
       ...model,
       allItems: allItemsNew,
       selectedItems: msg.selectedItems,
+      allItemsHash: toAllItemsHash(config, allItemsNew),
     };
   }
 
@@ -1001,7 +1012,7 @@ const updateModel = <T>(
         }
 
         case "pressed-vertical-arrow-key": {
-          const visible = toVisibleItemsMemoized(config)(model);
+          const filtered = toFilteredItemsMemoized(config)(model);
 
           const selectedItemIndex = toSelectedItemIndex(config, model);
 
@@ -1024,7 +1035,7 @@ const updateModel = <T>(
           const highlightIndex = toNextHighlightIndex(
             model.highlightMode,
             selectedItemIndex + delta,
-            visible.length
+            filtered.length
           );
 
           return {
@@ -1140,12 +1151,12 @@ const updateModel = <T>(
         }
 
         case "pressed-vertical-arrow-key": {
-          const visible = toVisibleItemsMemoized(config)(model);
+          const filtered = toFilteredItemsMemoized(config)(model);
           const delta = msg.key === "arrow-down" ? 1 : -1;
           const highlightIndex = toNextHighlightIndex(
             model.highlightMode,
             model.highlightIndex + delta,
-            visible.length
+            filtered.length
           );
           return { ...model, highlightIndex: highlightIndex, isKeyboardNavigation: true };
         }
@@ -1155,9 +1166,9 @@ const updateModel = <T>(
         }
 
         case "pressed-enter-key": {
-          const visible = toVisibleItemsMemoized(config)(model);
+          const filtered = toFilteredItemsMemoized(config)(model);
 
-          const enteredItem = visible[model.highlightIndex];
+          const enteredItem = filtered[model.highlightIndex];
 
           if (!enteredItem) {
             return { ...model, type: "focused-closed" };
@@ -1535,7 +1546,7 @@ const toSelectedItemIndex = <T>(
   }
 
   let index = 0;
-  for (const item of toVisibleItemsMemoized(config)(model)) {
+  for (const item of toFilteredItemsMemoized(config)(model)) {
     if (selectedItemIdSet.has(config.toItemId(item))) {
       return index;
     }
@@ -1754,14 +1765,14 @@ const toInputValue = <T>({
 export const toNextHighlightIndex = <T>(
   highlightMode: HighlightMode,
   highlightIndexNew: number,
-  visibleItemLength: number
+  filteredItemLength: number
 ): number => {
   if (highlightMode.type === "circular") {
-    return circularIndex(highlightIndexNew, visibleItemLength);
+    return circularIndex(highlightIndexNew, filteredItemLength);
   }
 
   if (highlightMode.type === "clamp") {
-    return clampIndex(highlightIndexNew, visibleItemLength);
+    return clampIndex(highlightIndexNew, filteredItemLength);
   }
 
   return highlightIndexNew;
@@ -1894,7 +1905,7 @@ export const toHighlightedItem = <T>(
 
   let index = 0;
 
-  for (const item of toVisibleItemsMemoized(config)(model)) {
+  for (const item of toFilteredItemsMemoized(config)(model)) {
     if (index === model.highlightIndex) {
       return item;
     }
@@ -2143,7 +2154,7 @@ export const toItemStatus = <T>(
   return "unselected";
 };
 
-export const yieldVisibleItems = function* <T>(
+export const yieldFilteredItems = function* <T>(
   config: Config<T>,
   model: Model<T>
 ): Generator<T> {
@@ -2154,7 +2165,7 @@ export const yieldVisibleItems = function* <T>(
   if (model.inputMode.type === "select-only") {
     let index = 0;
     for (const item of model.allItems) {
-      if (index >= model.visibleItemLimit) {
+      if (index >= model.filteredItemLimit) {
         break;
       }
       yield item;
@@ -2170,7 +2181,7 @@ export const yieldVisibleItems = function* <T>(
   if (model.inputMode.type === "search-mode" && !model.inputMode.hasSearched) {
     let index = 0;
     for (const item of model.allItems) {
-      if (index >= model.visibleItemLimit) {
+      if (index >= model.filteredItemLimit) {
         break;
       }
       yield item;
@@ -2185,7 +2196,7 @@ export const yieldVisibleItems = function* <T>(
 
   let index = 0;
   for (const item of config.deterministicFilter(model)) {
-    if (index >= model.visibleItemLimit) {
+    if (index >= model.filteredItemLimit) {
       break;
     }
     yield item;
@@ -2196,23 +2207,23 @@ export const yieldVisibleItems = function* <T>(
 /**
  * @group Selectors
  *
- * This function returns the all the visible items.
+ * This function returns the all the filtered items.
  */
-export const toVisibleItems = <T>(config: Config<T>, model: Model<T>): T[] => {
-  return Array.from(yieldVisibleItems(config, model));
+export const toFilteredItems = <T>(config: Config<T>, model: Model<T>): T[] => {
+  return Array.from(yieldFilteredItems(config, model));
 };
 
 /**
- * Get visible items memoized
+ * Get filtered items memoized
  */
-export const toVisibleItemsMemoized = <T>(config: Config<T>) => {
+export const toFilteredItemsMemoized = <T>(config: Config<T>) => {
   return memoize(
-    config.visibleItemCache,
+    config.filteredItemCache,
     (model) => {
-      return config.deterministicFilterKeyFn(model);
+      return config.deterministicFilterCacheKeyFn(model);
     },
     (model: Model<T>): T[] => {
-      return toVisibleItems(config, model);
+      return toFilteredItems(config, model);
     }
   );
 };
@@ -2220,7 +2231,7 @@ export const toVisibleItemsMemoized = <T>(config: Config<T>) => {
 /**
  * @group Selectors
  *
- * This function returns the all the visible items with their status.
+ * This function returns the all the filtered items with their status.
  */
 type RenderItem<T> = {
   item: T;
@@ -2242,7 +2253,7 @@ export const yieldRenderItems = function* <T>(
 
   let index = 0;
 
-  for (const item of toVisibleItemsMemoized(config)(model)) {
+  for (const item of toFilteredItemsMemoized(config)(model)) {
     const isSelected = selectedItemIdSet.has(config.toItemId(item));
     const isHighlighted = index === highlightedIndex;
 
@@ -2273,7 +2284,7 @@ export const toRenderItems = <T>(
 /**
  * @group Selectors
  *
- * This function returns the all the visible items with their status.
+ * This function returns the all the filtered items with their status.
  */
 type RenderSelectedItem<T> = {
   item: T;
@@ -2381,6 +2392,7 @@ export const toState = <T>(config: Config<T>, model: Model<T>) => {
   return {
     aria: aria(config, model),
     allItems: model.allItems,
+
     renderItems: toRenderItems(config, model),
     renderSelectedItems: toRenderSelectedItems(config, model),
     isOpened: isOpened(model),

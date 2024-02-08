@@ -6,7 +6,7 @@ import { allItems, config } from "./shared";
 
 describe("combobox plugin toggle on select", () => {
   it('unselects item if selected again', () => {
-    const initial = Combobox.init({
+    const initial = Combobox.init(config, {
       allItems,
       selectMode: { type: "single-select" },
     });

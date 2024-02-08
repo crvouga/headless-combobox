@@ -4,7 +4,7 @@ import { allItems, config } from "./shared";
 
 describe("combobox", () => {
   it("is focused on focus", () => {
-    const initial = Combobox.init({
+    const initial = Combobox.init(config, {
       allItems,
     });
     const focused = Combobox.update(config, {
@@ -16,7 +16,7 @@ describe("combobox", () => {
   });
 
   it("is closed on focus", () => {
-    const initial = Combobox.init({
+    const initial = Combobox.init(config, {
       allItems,
     });
     const focused = Combobox.update(config, {
@@ -28,7 +28,7 @@ describe("combobox", () => {
   });
 
   it("opens on press", () => {
-    const initial = Combobox.init({
+    const initial = Combobox.init(config, {
       allItems,
     });
     const pressed = Combobox.update(config, {
@@ -40,7 +40,7 @@ describe("combobox", () => {
   });
 
   it("is focused on press", () => {
-    const initial = Combobox.init({
+    const initial = Combobox.init(config, {
       allItems,
     });
     const pressed = Combobox.update(config, {
@@ -52,7 +52,7 @@ describe("combobox", () => {
   });
 
   it("outputs focus effect on press", () => {
-    const initial = Combobox.init({
+    const initial = Combobox.init(config, {
       allItems,
     });
     const pressed = Combobox.update(config, {
@@ -63,7 +63,7 @@ describe("combobox", () => {
   });
 
   it("remains focused when focused again after pressed", () => {
-    const initial = Combobox.init({
+    const initial = Combobox.init(config, {
       allItems,
     });
     const pressed = Combobox.update(config, {
@@ -80,7 +80,7 @@ describe("combobox", () => {
   });
 
   it("closes on blur", () => {
-    const initial = Combobox.init({
+    const initial = Combobox.init(config, {
       allItems,
     });
     const pressed = Combobox.update(config, {
@@ -97,7 +97,7 @@ describe("combobox", () => {
   });
 
   it("selects an item on press", () => {
-    const initial = Combobox.init({
+    const initial = Combobox.init(config, {
       allItems,
     });
     const pressed = Combobox.update(config, {
@@ -115,7 +115,7 @@ describe("combobox", () => {
   });
 
   it("closes on selects by default", () => {
-    const initial = Combobox.init({
+    const initial = Combobox.init(config, {
       allItems,
     });
     const pressed = Combobox.update(config, {
@@ -133,7 +133,7 @@ describe("combobox", () => {
   });
 
   it("stays open on selects when configured", () => {
-    const initial = Combobox.init({
+    const initial = Combobox.init(config, {
       allItems,
 
       disableCloseOnSelect: true,
@@ -153,7 +153,7 @@ describe("combobox", () => {
   });
 
   it("closes on select but is still focused", () => {
-    const initial = Combobox.init({
+    const initial = Combobox.init(config, {
       allItems,
     });
     const pressed = Combobox.update(config, {
@@ -173,15 +173,15 @@ describe("combobox", () => {
   });
 
   it("shows all items when input value is empty", () => {
-    const initial = Combobox.init({
+    const initial = Combobox.init(config, {
       allItems,
     });
-    const visibleItems = Combobox.toVisibleItems(config,initial);
-    expect(visibleItems).toEqual(allItems);
+    const FilteredItems = Combobox.toFilteredItems(config,initial);
+    expect(FilteredItems).toEqual(allItems);
   });
 
   it("opens when search is inputted", () => {
-    const initial = Combobox.init({
+    const initial = Combobox.init(config, {
       allItems,
     });
 
@@ -200,7 +200,7 @@ describe("combobox", () => {
   });
 
   it('filters items when search is inputted', () => {
-    const initial = Combobox.init({
+    const initial = Combobox.init(config, {
       allItems,
     });
     const focused = Combobox.update(config, {
@@ -211,13 +211,13 @@ describe("combobox", () => {
       model: focused.model,
       msg: { type: "inputted-value", inputValue: "star wars" },
     });
-    const visibleItems = Combobox.toVisibleItems(config,inputted.model);
+    const FilteredItems = Combobox.toFilteredItems(config,inputted.model);
     const filteredItems = allItems.filter(item => item.label.toLowerCase().includes("star wars"));
-    expect(visibleItems).toEqual(filteredItems);
+    expect(FilteredItems).toEqual(filteredItems);
   })
 
   it('should reset highlighted index when search is inputted', () => {
-    const initial = Combobox.init({
+    const initial = Combobox.init(config, {
       allItems,
     });
     const pressedInput = Combobox.update(config, {
@@ -241,7 +241,7 @@ describe("combobox", () => {
   })
 
   it('scrolls item into view when opened', () => {
-    const initial = Combobox.init({
+    const initial = Combobox.init(config, {
       allItems,
     });
     const pressedInput = Combobox.update(config, {

@@ -11,7 +11,7 @@ const test = (description: string, fn: Function) => {
 };
 
 test("combobox", () => {
-  const _model = Combobox.init({
+  const _model = Combobox.init(config, {
     allItems: top100Films,
     inputMode: {
       type: "select-only",

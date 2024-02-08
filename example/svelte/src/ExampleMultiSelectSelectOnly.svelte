@@ -48,7 +48,7 @@
 
   */
 
-  let model = Combobox.init({
+  let model = Combobox.init(config, {
     allItems: fruits,
     selectMode: {
       type: "multi-select",

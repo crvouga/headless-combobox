@@ -47,7 +47,7 @@
 
   */
 
-  let model = Combobox.init({
+  let model = Combobox.init(config, {
     allItems: fruits,
     inputMode: {
       type: "search-mode",

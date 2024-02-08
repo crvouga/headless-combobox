@@ -324,6 +324,37 @@ describe("combobox", () => {
     
     expect(Combobox.toCurrentInputValue(config, pressedInput.model)).toEqual("");
     expect(Combobox.toCurrentInputValue(config, selectedItem.model)).toEqual(config.toItemInputValue(randomItem));
+    expect(Combobox.toSearchValue(selectedItem.model)).toEqual(config.toItemInputValue(randomItem));
+  })
+
+
+  it('should keep search value the same as input value when opened after select', () => {
+    const initial = Combobox.init(config, {
+      allItems,
+    });
+    
+    const pressedInput = Combobox.update(config, {
+      model: initial,
+      msg: { type: "pressed-input" },
+    });
+    
+    const randomItem = allItems[Math.floor(Math.random() * allItems.length)];
+    
+    const selectedItem = Combobox.update(config, {
+      model: pressedInput.model,
+      msg: { type: "pressed-item", item:  randomItem },
+    });
+
+
+    const pressedInputAfterSelect = Combobox.update(config, {
+      model: selectedItem.model,
+      msg: { type: "pressed-input", },
+    });
+
+    
+    expect(Combobox.toCurrentInputValue(config, pressedInput.model)).toEqual("");
+    expect(Combobox.toCurrentInputValue(config, pressedInputAfterSelect.model)).toEqual(config.toItemInputValue(randomItem));
+    expect(Combobox.toSearchValue(pressedInputAfterSelect.model)).toEqual(config.toItemInputValue(randomItem));
   })
 
 });

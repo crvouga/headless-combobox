@@ -1598,7 +1598,7 @@ export const clearInputValue = <T>(model: Model<T>): Model<T> => {
   return setInputValue(model, "");
 };
 
-const toSearchValue = <T>(model: Model<T>): string => {
+export const toSearchValue = <T>(model: Model<T>): string => {
   return model.inputMode.type === "search-mode"
     ? model.inputMode.inputValue
     : "";

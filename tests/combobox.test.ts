@@ -273,4 +273,35 @@ describe("combobox", () => {
     });
     expect(Combobox.toCurrentInputValue(config, pressedItem.model)).toEqual(config.toItemInputValue(randomItem));
   })
+
+
+  it('should unselect an item if its not part of all items', () => {
+    const initial = Combobox.init(config, {
+      allItems,
+    });
+    
+    const pressedInput = Combobox.update(config, {
+      model: initial,
+      msg: { type: "pressed-input" },
+    });
+    
+    const randomItem = allItems[Math.floor(Math.random() * allItems.length)];
+    
+    const selectedItem = Combobox.update(config, {
+      model: pressedInput.model,
+      msg: { type: "pressed-item", item:  randomItem },
+    });
+    
+    // 
+    const removeSelectedItem = Combobox.update(config, {
+      model: selectedItem.model,
+      msg: { type: "set-all-items", allItems: allItems.filter(item => config.toItemId(item) !== config.toItemId(randomItem)) },
+    });
+
+    expect(Combobox.toSelectedItem(selectedItem.model)).toEqual(randomItem); 
+    expect(Combobox.toCurrentInputValue(config, selectedItem.model)).toEqual(config.toItemInputValue(randomItem));
+
+    expect(Combobox.toSelectedItem(removeSelectedItem.model)).toEqual(null);
+    // expect(Combobox.toCurrentInputValue(config, removeSelectedItem.model)).toEqual("");
+  })
 });

@@ -645,17 +645,20 @@ const updateSetters = <T>({
   model: Model<T>;
   msg: Msg<T>;
 }): Model<T> => {
+  // TODO change this to switch for performance
+
   if (msg.type === "set-all-items") {
-    const allItemsNew = toNextAllItems(
-      config,
-      msg.allItems,
-      model.selectedItems
-    );
+    const selectedItemsNew = intersectionLeft(
+      config.toItemId,
+      model.selectedItems,
+      msg.allItems
+    )
 
     return {
       ...model,
-      allItems: allItemsNew,
-      allItemsHash: toAllItemsHash(config, allItemsNew),
+      allItems: msg.allItems,
+      allItemsHash: toAllItemsHash(config, msg.allItems),
+      selectedItems: selectedItemsNew,
     };
   }
 

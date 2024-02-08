@@ -328,7 +328,7 @@ describe("combobox", () => {
   })
 
 
-  it('should keep search value the same as input value when opened after select', () => {
+  it('should set search value to input value when selected item is set', () => {
     const initial = Combobox.init(config, {
       allItems,
     });
@@ -342,7 +342,7 @@ describe("combobox", () => {
     
     const selectedItem = Combobox.update(config, {
       model: pressedInput.model,
-      msg: { type: "pressed-item", item:  randomItem },
+      msg: { type: "set-selected-items", selectedItems: [randomItem] },
     });
 
 

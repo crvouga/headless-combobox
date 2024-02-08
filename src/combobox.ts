@@ -1,6 +1,6 @@
 // Links
 // https://github.com/mui/material-ui/blob/master/packages/mui-base/src/useAutocomplete/useAutocomplete.js#L332
-// 
+//
 import {
   aria,
   ariaItem,
@@ -83,7 +83,9 @@ export const initConfig = <T>({
             model.inputMode.type === "search-mode"
               ? model.inputMode.inputValue
               : "";
-          const selectedItemsHash = model.selectedItems.map(config.toItemId).join(' ')
+          const selectedItemsHash = model.selectedItems
+            .map(config.toItemId)
+            .join(" ");
           const key = `${model.inputMode.type} ${inputVal} ${model.allItemsHash} ${selectedItemsHash}`;
           return key;
         };
@@ -159,9 +161,8 @@ const toAllItemsHash = <T>(config: Config<T>, allItems: T[]): string => {
   for (const item of allItems) {
     hash += `${config.toItemId(item)} `;
   }
-  return hash
-}
-
+  return hash;
+};
 
 /**
  * @group Model
@@ -239,21 +240,24 @@ type ModelState =
  *
  * The init function returns the initial state of the combobox.
  */
-export const init = <T>(config: Config<T>, {
-  allItems,
-  selectMode,
-  inputMode,
-  highlightMode,
-  filteredItemLimit = Infinity,
-  disableCloseOnSelect = false,
-}: {
-  allItems: T[];
-  selectMode?: SelectMode;
-  inputMode?: InputMode;
-  highlightMode?: HighlightMode;
-  filteredItemLimit?: number;
-  disableCloseOnSelect?: boolean;
-}): Model<T> => {
+export const init = <T>(
+  config: Config<T>,
+  {
+    allItems,
+    selectMode,
+    inputMode,
+    highlightMode,
+    filteredItemLimit = Infinity,
+    disableCloseOnSelect = false,
+  }: {
+    allItems: T[];
+    selectMode?: SelectMode;
+    inputMode?: InputMode;
+    highlightMode?: HighlightMode;
+    filteredItemLimit?: number;
+    disableCloseOnSelect?: boolean;
+  }
+): Model<T> => {
   return {
     type: "blurred",
     selectedItems: [],
@@ -372,7 +376,7 @@ export type Effect<T> =
   | {
       type: "scroll-item-into-view";
       item: T;
-      index: number
+      index: number;
     }
   | {
       type: "focus-selected-item";
@@ -616,8 +620,8 @@ const updateMain = <T>(config: Config<T>, input: Input<T>): Output<T> => {
     output.events.push({ type: "selected-items-changed" });
 
     // TODO move this somewhere else
-    if(toSelectedItems(output.model).length === 0) {
-      output.model = clearInputValue(output.model)
+    if (toSelectedItems(output.model).length === 0) {
+      output.model = clearInputValue(output.model);
     }
   }
 
@@ -657,7 +661,7 @@ const updateSetters = <T>({
       config.toItemId,
       model.selectedItems,
       msg.allItems
-    )
+    );
 
     return {
       ...model,
@@ -673,12 +677,16 @@ const updateSetters = <T>({
       model.allItems,
       msg.selectedItems
     );
-    return {
-      ...model,
-      allItems: allItemsNew,
-      selectedItems: msg.selectedItems,
-      allItemsHash: toAllItemsHash(config, allItemsNew),
-    };
+
+    return resetInputValue({
+      config,
+      model: {
+        ...model,
+        allItems: allItemsNew,
+        selectedItems: msg.selectedItems,
+        allItemsHash: toAllItemsHash(config, allItemsNew),
+      },
+    });
   }
 
   if (msg.type === "set-input-value") {
@@ -785,7 +793,7 @@ const updateModel = <T>(
           return {
             ...model,
             type: "focused-opened",
-          }
+          };
         }
 
         case "pressed-unselect-all-button": {
@@ -1114,7 +1122,11 @@ const updateModel = <T>(
         }
 
         case "hovered-over-item": {
-          return { ...model, highlightIndex: msg.index, isKeyboardNavigation: false };
+          return {
+            ...model,
+            highlightIndex: msg.index,
+            isKeyboardNavigation: false,
+          };
         }
 
         case "blurred-input": {
@@ -1155,7 +1167,10 @@ const updateModel = <T>(
               type: "focused-opened",
             });
           }
-          return setHasSearched(setInputValue({...model, type: 'focused-opened'}, msg.inputValue), true);
+          return setHasSearched(
+            setInputValue({ ...model, type: "focused-opened" }, msg.inputValue),
+            true
+          );
         }
 
         case "pressed-vertical-arrow-key": {
@@ -1166,7 +1181,11 @@ const updateModel = <T>(
             model.highlightIndex + delta,
             filtered.length
           );
-          return { ...model, highlightIndex: highlightIndex, isKeyboardNavigation: true };
+          return {
+            ...model,
+            highlightIndex: highlightIndex,
+            isKeyboardNavigation: true,
+          };
         }
 
         case "pressed-horizontal-arrow-key": {
@@ -1923,13 +1942,13 @@ export const toHighlightedItem = <T>(
   return null;
 };
 
-export const toHighlightedIndex = <T>(model: Model<T>): number  => {
+export const toHighlightedIndex = <T>(model: Model<T>): number => {
   if (model.type !== "focused-opened-highlighted") {
     return -1;
   }
 
   return model.highlightIndex;
-}
+};
 
 /**
  * @group Selectors

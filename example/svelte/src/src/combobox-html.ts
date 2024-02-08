@@ -1,4 +1,4 @@
-import { Config, Effect, Model, isItemSelected, isSelected } from "./combobox";
+import { Config, Effect, Model, Msg, isItemSelected, isSelected } from "./combobox";
 
 export const handleEffects = <T>(
   config: Config<T>,
@@ -16,27 +16,6 @@ export const toInputProps = <T>(config: Config<T>, model: Model<T>) => {
   };
 };
 
-export const toOptionProps = <T>({
-  config,
-  index,
-  model,
-  option,
-}: {
-  config: Config<T>;
-  model: Model<T>;
-  option: T;
-  index: number;
-}) => {
-  return {
-    id: `${config.namespace}-combobox-option-${config.toItemId(option)}`,
-    key: config.toItemId(option),
-    tabIndex: -1,
-    role: "option",
-    "aria-selected": isItemSelected(config, model, option),
-    "aria-disabled": false,
-    "data-option-index": index,
-  };
-};
 
 export const toListBoxProps = <T>(config: Config<T>) => {
   return {

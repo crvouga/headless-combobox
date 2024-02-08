@@ -42,10 +42,10 @@ export type Config<T> = {
    * This must always be deterministic! That means it must always return the same order and same items for the same input.
    */
   deterministicFilter: (model: Model<T>) => Iterable<T>;
-  deterministicFilterKeyFn: (model: Model<T>) => string;
+  deterministicFilterCacheKeyFn: (model: Model<T>) => string;
   isEmptyItem: (value: T) => boolean;
   namespace: string;
-  visibleItemCache: Map<string, T[]>;
+  filteredItemCache: Map<string, T[]>;
   itemStore?: ItemStore<T>;
 };
 
@@ -55,17 +55,16 @@ export type Config<T> = {
 export const initConfig = <T>({
   namespace,
   isEmptyItem = () => false,
-  visibleItemCacheCapacity = 100,
-
+  filteredItemCacheCapacity = 100,
   ...config
 }: {
   toItemId: (item: T) => string | number;
   toItemInputValue: (item: T) => string;
   isEmptyItem?: (item: T) => boolean;
   deterministicFilter?: (model: Model<T>) => Iterable<T>;
-  deterministicFilterKeyFn?: (model: Model<T>) => string;
+  deterministicFilterCacheKeyFn?: (model: Model<T>) => string;
   namespace?: string;
-  visibleItemCacheCapacity?: number;
+  filteredItemCacheCapacity?: number;
 }): Config<T> => {
   const deterministicFilter: Config<T>["deterministicFilter"] =
     config.deterministicFilter
@@ -76,27 +75,26 @@ export const initConfig = <T>({
    * TODO Caching is not working properly
    * The cache is not invalidated when the input changes
    */
-  const deterministicFilterKeyFn: Config<T>["deterministicFilterKeyFn"] =
-    config.deterministicFilterKeyFn
-      ? config.deterministicFilterKeyFn
+  const deterministicFilterCacheKeyFn: Config<T>["deterministicFilterCacheKeyFn"] =
+    config.deterministicFilterCacheKeyFn
+      ? config.deterministicFilterCacheKeyFn
       : (model) => {
           const inputVal =
             model.inputMode.type === "search-mode"
               ? model.inputMode.inputValue
               : "";
-
-          const key = `${model.inputMode.type}-${model.visibleItemLimit}-${model.allItems.length}-${inputVal}`;
-
+          const selectedItemsHash = model.selectedItems.map(config.toItemId).join(' ')
+          const key = `${model.inputMode.type} ${inputVal} ${model.allItemsHash} ${selectedItemsHash}`;
           return key;
         };
 
   const configFull: Config<T> = {
     ...config,
     isEmptyItem,
-    visibleItemCache: new LRUCache(visibleItemCacheCapacity),
+    filteredItemCache: new LRUCache(filteredItemCacheCapacity),
     namespace: namespace ?? "combobox",
     deterministicFilter,
-    deterministicFilterKeyFn,
+    deterministicFilterCacheKeyFn: deterministicFilterCacheKeyFn,
   };
 
   return configFull;
@@ -137,6 +135,7 @@ export type Model<T> = ModelState & {
    * All items that can be selected. Items must be unique.
    */
   allItems: T[];
+  allItemsHash: string;
   selectedItems: T[];
   skipOnce: Msg<T>["type"][];
   selectMode: SelectMode;
@@ -144,16 +143,25 @@ export type Model<T> = ModelState & {
   highlightMode: HighlightMode;
   /**
    * @description
-   * The `visibleItemLimit` is used to limit the number of items that are visible in the suggestion dropdown.
+   * The `filteredItemLimit` is used to limit the number of items that are filtered in the suggestion dropdown.
    * Good for performance.
    */
-  visibleItemLimit: number;
+  filteredItemLimit: number;
   /**
    * @description
    * When selecting an item from the drop down the combobox will not transition to a closed state.
    */
   disableCloseOnSelect?: boolean;
 };
+
+const toAllItemsHash = <T>(config: Config<T>, allItems: T[]): string => {
+  let hash = "";
+  for (const item of allItems) {
+    hash += `${config.toItemId(item)} `;
+  }
+  return hash
+}
+
 
 /**
  * @group Model
@@ -201,21 +209,21 @@ type Blurred = {
 };
 
 type FocusedClosed = {
-  type: "focused__closed";
+  type: "focused-closed";
 };
 
 type FocusedOpened = {
-  type: "focused__opened";
+  type: "focused-opened";
 };
 
 type FocusedOpenedHighlighted = {
-  type: "focused__opened__highlighted";
+  type: "focused-opened-highlighted";
   highlightIndex: number;
   isKeyboardNavigation: boolean;
 };
 
-type SelectedItemHighlighted = {
-  type: "selected-item-highlighted";
+type HighlightedSelected = {
+  type: "highlighted-selected";
   focusedIndex: number;
 };
 
@@ -224,39 +232,40 @@ type ModelState =
   | FocusedClosed
   | FocusedOpened
   | FocusedOpenedHighlighted
-  | SelectedItemHighlighted;
+  | HighlightedSelected;
 
 /**
  * @group Model
  *
  * The init function returns the initial state of the combobox.
  */
-export const init = <T>({
+export const init = <T>(config: Config<T>, {
   allItems,
   selectMode,
   inputMode,
   highlightMode,
-  visibleItemLimit = 500,
+  filteredItemLimit = Infinity,
   disableCloseOnSelect = false,
 }: {
   allItems: T[];
   selectMode?: SelectMode;
   inputMode?: InputMode;
   highlightMode?: HighlightMode;
-  visibleItemLimit?: number;
+  filteredItemLimit?: number;
   disableCloseOnSelect?: boolean;
 }): Model<T> => {
   return {
     type: "blurred",
     selectedItems: [],
     allItems,
+    allItemsHash: toAllItemsHash(config, allItems),
     skipOnce: [],
     inputMode: inputMode
       ? inputMode
       : { type: "search-mode", hasSearched: false, inputValue: "" },
     selectMode: selectMode ? selectMode : { type: "single-select" },
     highlightMode: highlightMode ? highlightMode : { type: "clamp" },
-    visibleItemLimit: Math.abs(visibleItemLimit),
+    filteredItemLimit: Math.abs(filteredItemLimit),
     disableCloseOnSelect,
   };
 };
@@ -540,9 +549,9 @@ const updateMain = <T>(config: Config<T>, input: Input<T>): Output<T> => {
     isHighlighted(output.model) &&
     input.msg.type === "pressed-vertical-arrow-key"
   ) {
-    const visible = toFilteredItemsMemoized(config)(output.model);
+    const filtered = toFilteredItemsMemoized(config)(output.model);
 
-    const highlightedItem = visible[output.model.highlightIndex];
+    const highlightedItem = filtered[output.model.highlightIndex];
 
     if (highlightedItem) {
       output.effects.push({
@@ -572,8 +581,8 @@ const updateMain = <T>(config: Config<T>, input: Input<T>): Output<T> => {
 
   // focus on input when navigating from selected item list to input
   if (
-    input.model.type === "selected-item-highlighted" &&
-    output.model.type === "focused__closed"
+    input.model.type === "highlighted-selected" &&
+    output.model.type === "focused-closed"
   ) {
     output.effects.push({
       type: "focus-input",
@@ -605,6 +614,11 @@ const updateMain = <T>(config: Config<T>, input: Input<T>): Output<T> => {
 
   if (didSelectedItemsChange(config, input.model, output.model)) {
     output.events.push({ type: "selected-items-changed" });
+
+    // TODO move this somewhere else
+    if(toSelectedItems(output.model).length === 0) {
+      output.model = clearInputValue(output.model)
+    }
   }
 
   return output;
@@ -636,16 +650,20 @@ const updateSetters = <T>({
   model: Model<T>;
   msg: Msg<T>;
 }): Model<T> => {
+  // TODO change this to switch for performance
+
   if (msg.type === "set-all-items") {
-    const allItemsNew = toNextAllItems(
-      config,
-      msg.allItems,
-      model.selectedItems
-    );
+    const selectedItemsNew = intersectionLeft(
+      config.toItemId,
+      model.selectedItems,
+      msg.allItems
+    )
 
     return {
       ...model,
-      allItems: allItemsNew,
+      allItems: msg.allItems,
+      allItemsHash: toAllItemsHash(config, msg.allItems),
+      selectedItems: selectedItemsNew,
     };
   }
 
@@ -659,6 +677,7 @@ const updateSetters = <T>({
       ...model,
       allItems: allItemsNew,
       selectedItems: msg.selectedItems,
+      allItemsHash: toAllItemsHash(config, allItemsNew),
     };
   }
 
@@ -748,7 +767,7 @@ const updateModel = <T>(
         case "toggle-opened": {
           return {
             ...model,
-            type: "focused__opened",
+            type: "focused-opened",
           };
         }
 
@@ -757,7 +776,7 @@ const updateModel = <T>(
             config,
             model: {
               ...model,
-              type: "focused__closed",
+              type: "focused-closed",
             },
           });
         }
@@ -765,7 +784,7 @@ const updateModel = <T>(
         case "pressed-input": {
           return {
             ...model,
-            type: "focused__opened",
+            type: "focused-opened",
           }
         }
 
@@ -787,7 +806,7 @@ const updateModel = <T>(
         case "focused-selected-item": {
           return {
             ...model,
-            type: "selected-item-highlighted",
+            type: "highlighted-selected",
             focusedIndex:
               findIndex(
                 (item) => toItemId(item) === toItemId(msg.item),
@@ -802,12 +821,12 @@ const updateModel = <T>(
       }
     }
 
-    case "focused__closed": {
+    case "focused-closed": {
       switch (msg.type) {
         case "toggle-opened": {
           return {
             ...model,
-            type: "focused__opened",
+            type: "focused-opened",
           };
         }
         case "pressed-input": {
@@ -854,7 +873,7 @@ const updateModel = <T>(
           return {
             ...closedToOpened(model),
             highlightIndex: selectedItemIndex ? selectedItemIndex : 0,
-            type: "focused__opened__highlighted",
+            type: "focused-opened-highlighted",
             isKeyboardNavigation: true,
           };
         }
@@ -874,7 +893,7 @@ const updateModel = <T>(
         case "focused-selected-item": {
           return {
             ...model,
-            type: "selected-item-highlighted",
+            type: "highlighted-selected",
             focusedIndex:
               findIndex(
                 (item) => toItemId(item) === toItemId(msg.item),
@@ -918,7 +937,7 @@ const updateModel = <T>(
           return {
             ...model,
             selectedItems: [],
-            type: "focused__closed",
+            type: "focused-closed",
           };
         }
 
@@ -928,19 +947,19 @@ const updateModel = <T>(
       }
     }
 
-    case "focused__opened": {
+    case "focused-opened": {
       switch (msg.type) {
         case "toggle-opened": {
           return {
             ...model,
-            type: "focused__closed",
+            type: "focused-closed",
           };
         }
 
         case "hovered-over-item": {
           return {
             ...model,
-            type: "focused__opened__highlighted",
+            type: "focused-opened-highlighted",
             highlightIndex: msg.index,
             isKeyboardNavigation: false,
           };
@@ -960,7 +979,7 @@ const updateModel = <T>(
           if (config.isEmptyItem(pressedItem)) {
             return {
               ...model,
-              type: "focused__closed",
+              type: "focused-closed",
             };
           }
 
@@ -983,7 +1002,7 @@ const updateModel = <T>(
             return clearInputValue({
               ...model,
               selectedItems: [],
-              type: "focused__opened",
+              type: "focused-opened",
             });
           }
 
@@ -995,13 +1014,13 @@ const updateModel = <T>(
             config,
             model: {
               ...model,
-              type: "focused__closed",
+              type: "focused-closed",
             },
           });
         }
 
         case "pressed-vertical-arrow-key": {
-          const visible = toFilteredItemsMemoized(config)(model);
+          const filtered = toFilteredItemsMemoized(config)(model);
 
           const selectedItemIndex = toSelectedItemIndex(config, model);
 
@@ -1009,7 +1028,7 @@ const updateModel = <T>(
             return {
               ...model,
               highlightIndex: 0,
-              type: "focused__opened__highlighted",
+              type: "focused-opened-highlighted",
               isKeyboardNavigation: true,
             };
           }
@@ -1024,13 +1043,13 @@ const updateModel = <T>(
           const highlightIndex = toNextHighlightIndex(
             model.highlightMode,
             selectedItemIndex + delta,
-            visible.length
+            filtered.length
           );
 
           return {
             ...model,
             highlightIndex,
-            type: "focused__opened__highlighted",
+            type: "focused-opened-highlighted",
             isKeyboardNavigation: true,
           };
         }
@@ -1038,7 +1057,7 @@ const updateModel = <T>(
         case "pressed-escape-key": {
           return {
             ...model,
-            type: "focused__closed",
+            type: "focused-closed",
           };
         }
 
@@ -1075,7 +1094,7 @@ const updateModel = <T>(
           return {
             ...model,
             selectedItems: [],
-            type: "focused__opened",
+            type: "focused-opened",
           };
         }
 
@@ -1085,12 +1104,12 @@ const updateModel = <T>(
       }
     }
 
-    case "focused__opened__highlighted": {
+    case "focused-opened-highlighted": {
       switch (msg.type) {
         case "toggle-opened": {
           return {
             ...model,
-            type: "focused__closed",
+            type: "focused-closed",
           };
         }
 
@@ -1122,7 +1141,7 @@ const updateModel = <T>(
               config,
               model: {
                 ...model,
-                type: "focused__opened",
+                type: "focused-opened",
               },
             });
           }
@@ -1133,19 +1152,19 @@ const updateModel = <T>(
             return clearInputValue({
               ...model,
               selectedItems: [],
-              type: "focused__opened",
+              type: "focused-opened",
             });
           }
-          return setHasSearched(setInputValue({...model, type: 'focused__opened'}, msg.inputValue), true);
+          return setHasSearched(setInputValue({...model, type: 'focused-opened'}, msg.inputValue), true);
         }
 
         case "pressed-vertical-arrow-key": {
-          const visible = toFilteredItemsMemoized(config)(model);
+          const filtered = toFilteredItemsMemoized(config)(model);
           const delta = msg.key === "arrow-down" ? 1 : -1;
           const highlightIndex = toNextHighlightIndex(
             model.highlightMode,
             model.highlightIndex + delta,
-            visible.length
+            filtered.length
           );
           return { ...model, highlightIndex: highlightIndex, isKeyboardNavigation: true };
         }
@@ -1155,12 +1174,12 @@ const updateModel = <T>(
         }
 
         case "pressed-enter-key": {
-          const visible = toFilteredItemsMemoized(config)(model);
+          const filtered = toFilteredItemsMemoized(config)(model);
 
-          const enteredItem = visible[model.highlightIndex];
+          const enteredItem = filtered[model.highlightIndex];
 
           if (!enteredItem) {
-            return { ...model, type: "focused__closed" };
+            return { ...model, type: "focused-closed" };
           }
 
           return toggleSelected({
@@ -1171,7 +1190,7 @@ const updateModel = <T>(
         }
 
         case "pressed-escape-key": {
-          return { ...model, type: "focused__closed" };
+          return { ...model, type: "focused-closed" };
         }
 
         case "pressed-unselect-button": {
@@ -1189,7 +1208,7 @@ const updateModel = <T>(
           const selectedItemIndex = toSelectedItemIndex(config, model);
           return {
             ...model,
-            type: "selected-item-highlighted",
+            type: "highlighted-selected",
             focusedIndex: selectedItemIndex ?? 0,
           };
         }
@@ -1200,7 +1219,7 @@ const updateModel = <T>(
             if (isNonEmpty(removed)) {
               return { ...model, selectedItems: removed };
             }
-            return { ...model, type: "focused__opened" };
+            return { ...model, type: "focused-opened" };
           }
           return model;
         }
@@ -1209,7 +1228,7 @@ const updateModel = <T>(
           return {
             ...model,
             selectedItems: [],
-            type: "focused__opened",
+            type: "focused-opened",
           };
         }
 
@@ -1219,13 +1238,13 @@ const updateModel = <T>(
       }
     }
 
-    case "selected-item-highlighted": {
+    case "highlighted-selected": {
       switch (msg.type) {
         case "pressed-horizontal-arrow-key": {
           if (model.selectMode.type !== "multi-select") {
             return clearInputValue({
               ...model,
-              type: "focused__closed",
+              type: "focused-closed",
             });
           }
 
@@ -1236,7 +1255,7 @@ const updateModel = <T>(
           ) {
             return clearInputValue({
               ...model,
-              type: "focused__closed",
+              type: "focused-closed",
             });
           }
 
@@ -1247,7 +1266,7 @@ const updateModel = <T>(
           ) {
             return clearInputValue({
               ...model,
-              type: "focused__closed",
+              type: "focused-closed",
             });
           }
 
@@ -1278,7 +1297,7 @@ const updateModel = <T>(
               config,
               model: {
                 ...model,
-                type: "focused__opened",
+                type: "focused-opened",
               },
             });
           }
@@ -1290,7 +1309,7 @@ const updateModel = <T>(
             model: {
               ...model,
               highlightIndex: selectedItemIndex ? selectedItemIndex : 0,
-              type: "focused__opened__highlighted",
+              type: "focused-opened-highlighted",
               isKeyboardNavigation: true,
             },
           });
@@ -1301,7 +1320,7 @@ const updateModel = <T>(
             return setInputValue(
               {
                 ...model,
-                type: "focused__opened",
+                type: "focused-opened",
               },
               toInputValue({ config, model })
             );
@@ -1311,7 +1330,7 @@ const updateModel = <T>(
               {
                 ...model,
                 selectedItems: [],
-                type: "focused__opened",
+                type: "focused-opened",
               },
               msg.inputValue
             );
@@ -1320,7 +1339,7 @@ const updateModel = <T>(
             {
               ...model,
 
-              type: "focused__opened",
+              type: "focused-opened",
             },
             msg.inputValue
           );
@@ -1329,7 +1348,7 @@ const updateModel = <T>(
         case "pressed-key":
         case "pressed-enter-key":
         case "pressed-escape-key": {
-          return clearInputValue({ ...model, type: "focused__closed" });
+          return clearInputValue({ ...model, type: "focused-closed" });
         }
 
         case "pressed-backspace-key": {
@@ -1343,7 +1362,7 @@ const updateModel = <T>(
           return clearInputValue({
             ...model,
             selectedItems: removedHighlightedIndex,
-            type: "focused__closed",
+            type: "focused-closed",
           });
         }
 
@@ -1369,14 +1388,14 @@ const updateModel = <T>(
           return clearInputValue({
             ...model,
             selectedItems: removedOne,
-            type: "focused__closed",
+            type: "focused-closed",
           });
         }
 
         case "focused-selected-item": {
           return {
             ...model,
-            type: "selected-item-highlighted",
+            type: "highlighted-selected",
             focusedIndex:
               findIndex(
                 (item) => toItemId(item) === toItemId(msg.item),
@@ -1395,7 +1414,7 @@ const updateModel = <T>(
         case "focused-input": {
           return clearInputValue({
             ...model,
-            type: "focused__opened",
+            type: "focused-opened",
           });
         }
 
@@ -1403,12 +1422,12 @@ const updateModel = <T>(
           return clearInputValue({
             ...model,
             selectedItems: [],
-            type: "focused__opened",
+            type: "focused-opened",
           });
         }
 
         case "pressed-input": {
-          return clearInputValue({ ...model, type: "focused__opened" });
+          return clearInputValue({ ...model, type: "focused-opened" });
         }
 
         default: {
@@ -1432,12 +1451,12 @@ const closedToOpened = <T>(model: Model<T>): Model<T> => {
     return setHasSearched(
       {
         ...model,
-        type: "focused__opened",
+        type: "focused-opened",
       },
       false
     );
   }
-  return { ...model, type: "focused__opened" };
+  return { ...model, type: "focused-opened" };
 };
 
 const focusedToBlurred = <T>(model: Model<T>): Model<T> => {
@@ -1463,14 +1482,14 @@ const handlePressedInputWhenOpened = <T>(model: Model<T>): Model<T> => {
   ) {
     return {
       ...model,
-      type: "focused__closed",
+      type: "focused-closed",
     };
   }
 
   if (model.inputMode.type === "select-only") {
     return {
       ...model,
-      type: "focused__closed",
+      type: "focused-closed",
     };
   }
 
@@ -1493,13 +1512,13 @@ const toggleSelected = <T>({
     return {
       ...model,
       selectedItems: [],
-      type: "focused__closed",
+      type: "focused-closed",
     };
   }
 
   const transitioned: Model<T> = model.disableCloseOnSelect
     ? model
-    : { ...model, type: "focused__closed" };
+    : { ...model, type: "focused-closed" };
 
   if (
     isItemSelected(config, model, item) &&
@@ -1667,7 +1686,7 @@ const updateSelectedItemKeyboardNavigation = <T>({
   ) {
     return {
       ...model,
-      type: "selected-item-highlighted",
+      type: "highlighted-selected",
       focusedIndex: 0,
     };
   }
@@ -1678,7 +1697,7 @@ const updateSelectedItemKeyboardNavigation = <T>({
   ) {
     return {
       ...model,
-      type: "selected-item-highlighted",
+      type: "highlighted-selected",
       focusedIndex: 0,
     };
   }
@@ -1754,14 +1773,14 @@ const toInputValue = <T>({
 export const toNextHighlightIndex = <T>(
   highlightMode: HighlightMode,
   highlightIndexNew: number,
-  visibleItemLength: number
+  filteredItemLength: number
 ): number => {
   if (highlightMode.type === "circular") {
-    return circularIndex(highlightIndexNew, visibleItemLength);
+    return circularIndex(highlightIndexNew, filteredItemLength);
   }
 
   if (highlightMode.type === "clamp") {
-    return clampIndex(highlightIndexNew, visibleItemLength);
+    return clampIndex(highlightIndexNew, filteredItemLength);
   }
 
   return highlightIndexNew;
@@ -1788,10 +1807,10 @@ export const isUnselected = <T>(
   model: ModelState
 ): model is UnselectedState<T> => {
   return (
-    model.type === "focused__opened" ||
-    model.type === "focused__opened__highlighted" ||
+    model.type === "focused-opened" ||
+    model.type === "focused-opened-highlighted" ||
     model.type === "blurred" ||
-    model.type === "focused__closed"
+    model.type === "focused-closed"
   );
 };
 export type UnselectedState<T> = Exclude<ModelState, SelectedState<T>>;
@@ -1803,8 +1822,8 @@ export type UnselectedState<T> = Exclude<ModelState, SelectedState<T>>;
  */
 export const isOpened = (model: ModelState): model is OpenedState => {
   return (
-    model.type === "focused__opened" ||
-    model.type === "focused__opened__highlighted"
+    model.type === "focused-opened" ||
+    model.type === "focused-opened-highlighted"
   );
 };
 export type OpenedState = FocusedOpened | FocusedOpenedHighlighted;
@@ -1827,7 +1846,7 @@ export type ClosedState = Exclude<ModelState, OpenedState>;
 export const isHighlighted = (
   model: ModelState
 ): model is FocusedOpenedHighlighted => {
-  return model.type === "focused__opened__highlighted";
+  return model.type === "focused-opened-highlighted";
 };
 
 /**
@@ -1845,8 +1864,8 @@ export const isBlurred = (model: ModelState): model is Blurred => {
  */
 export const isSelectedItemHighlighted = (
   model: ModelState
-): model is SelectedItemHighlighted => {
-  return model.type === "selected-item-highlighted";
+): model is HighlightedSelected => {
+  return model.type === "highlighted-selected";
 };
 
 /**
@@ -1888,7 +1907,7 @@ export const toHighlightedItem = <T>(
   config: Config<T>,
   model: Model<T>
 ): T | null => {
-  if (model.type !== "focused__opened__highlighted") {
+  if (model.type !== "focused-opened-highlighted") {
     return null;
   }
 
@@ -1905,7 +1924,7 @@ export const toHighlightedItem = <T>(
 };
 
 export const toHighlightedIndex = <T>(model: Model<T>): number  => {
-  if (model.type !== "focused__opened__highlighted") {
+  if (model.type !== "focused-opened-highlighted") {
     return -1;
   }
 
@@ -1992,7 +2011,7 @@ export const isItemIndexHighlighted = <T>(
   index: number
 ): boolean => {
   switch (model.type) {
-    case "focused__opened__highlighted": {
+    case "focused-opened-highlighted": {
       return model.highlightIndex === index;
     }
     default: {
@@ -2073,7 +2092,7 @@ export type ItemStatus =
 
 export const isNavigatingWithKeyboard = <T>(model: Model<T>): boolean => {
   return (
-    model.type === "focused__opened__highlighted" && model.isKeyboardNavigation
+    model.type === "focused-opened-highlighted" && model.isKeyboardNavigation
   );
 };
 
@@ -2154,7 +2173,7 @@ export const yieldFilteredItems = function* <T>(
   if (model.inputMode.type === "select-only") {
     let index = 0;
     for (const item of model.allItems) {
-      if (index >= model.visibleItemLimit) {
+      if (index >= model.filteredItemLimit) {
         break;
       }
       yield item;
@@ -2170,7 +2189,7 @@ export const yieldFilteredItems = function* <T>(
   if (model.inputMode.type === "search-mode" && !model.inputMode.hasSearched) {
     let index = 0;
     for (const item of model.allItems) {
-      if (index >= model.visibleItemLimit) {
+      if (index >= model.filteredItemLimit) {
         break;
       }
       yield item;
@@ -2185,7 +2204,7 @@ export const yieldFilteredItems = function* <T>(
 
   let index = 0;
   for (const item of config.deterministicFilter(model)) {
-    if (index >= model.visibleItemLimit) {
+    if (index >= model.filteredItemLimit) {
       break;
     }
     yield item;
@@ -2196,20 +2215,20 @@ export const yieldFilteredItems = function* <T>(
 /**
  * @group Selectors
  *
- * This function returns the all the visible items.
+ * This function returns the all the filtered items.
  */
 export const toFilteredItems = <T>(config: Config<T>, model: Model<T>): T[] => {
   return Array.from(yieldFilteredItems(config, model));
 };
 
 /**
- * Get visible items memoized
+ * Get filtered items memoized
  */
 export const toFilteredItemsMemoized = <T>(config: Config<T>) => {
   return memoize(
-    config.visibleItemCache,
+    config.filteredItemCache,
     (model) => {
-      return config.deterministicFilterKeyFn(model);
+      return config.deterministicFilterCacheKeyFn(model);
     },
     (model: Model<T>): T[] => {
       return toFilteredItems(config, model);
@@ -2220,7 +2239,7 @@ export const toFilteredItemsMemoized = <T>(config: Config<T>) => {
 /**
  * @group Selectors
  *
- * This function returns the all the visible items with their status.
+ * This function returns the all the filtered items with their status.
  */
 type RenderItem<T> = {
   item: T;
@@ -2238,7 +2257,7 @@ export const yieldRenderItems = function* <T>(
   }
 
   const highlightedIndex =
-    model.type === "focused__opened__highlighted" ? model.highlightIndex : null;
+    model.type === "focused-opened-highlighted" ? model.highlightIndex : null;
 
   let index = 0;
 
@@ -2273,7 +2292,7 @@ export const toRenderItems = <T>(
 /**
  * @group Selectors
  *
- * This function returns the all the visible items with their status.
+ * This function returns the all the filtered items with their status.
  */
 type RenderSelectedItem<T> = {
   item: T;
@@ -2381,6 +2400,7 @@ export const toState = <T>(config: Config<T>, model: Model<T>) => {
   return {
     aria: aria(config, model),
     allItems: model.allItems,
+
     renderItems: toRenderItems(config, model),
     renderSelectedItems: toRenderSelectedItems(config, model),
     isOpened: isOpened(model),

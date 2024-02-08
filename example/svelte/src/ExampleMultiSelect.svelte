@@ -47,7 +47,7 @@
       type: "multi-select",
       selectedItemListDirection: "right-to-left",
     },
-    visibleItemLimit: 100,
+    filteredItemLimit: 1000,
     highlightMode: {
       type: "circular",
     },

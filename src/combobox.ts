@@ -704,9 +704,10 @@ const updateSetters = <T>({
       allItemsHash: toAllItemsHash(config, allItemsNew),
     };
 
-    if (model.selectMode.type === "single-select") {
+    if (modelNew.selectMode.type === "single-select" && modelNew.selectedItems.length > 0) {
       return resetInputValue({ config, model: modelNew });
     }
+    
     return modelNew;
   }
 

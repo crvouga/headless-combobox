@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import * as Combobox from "../src";
-import { allItems, config } from "./shared";
+import {
+  allItems,
+  config,
+  inputValue,
+  pressInput,
+  setAllItems,
+  setSelectedItems,
+} from "./shared";
 
 describe("combobox", () => {
   it("is focused on focus", () => {
@@ -176,7 +183,7 @@ describe("combobox", () => {
     const initial = Combobox.init(config, {
       allItems,
     });
-    const FilteredItems = Combobox.toFilteredItems(config,initial);
+    const FilteredItems = Combobox.toFilteredItems(config, initial);
     expect(FilteredItems).toEqual(allItems);
   });
 
@@ -196,10 +203,10 @@ describe("combobox", () => {
     });
 
     expect(Combobox.isClosed(initial)).toEqual(true);
-    expect(Combobox.isOpened(inputted.model)).toEqual(true);  
+    expect(Combobox.isOpened(inputted.model)).toEqual(true);
   });
 
-  it('filters items when search is inputted', () => {
+  it("filters items when search is inputted", () => {
     const initial = Combobox.init(config, {
       allItems,
     });
@@ -211,12 +218,14 @@ describe("combobox", () => {
       model: focused.model,
       msg: { type: "inputted-value", inputValue: "star wars" },
     });
-    const FilteredItems = Combobox.toFilteredItems(config,inputted.model);
-    const filteredItems = allItems.filter(item => item.label.toLowerCase().includes("star wars"));
+    const FilteredItems = Combobox.toFilteredItems(config, inputted.model);
+    const filteredItems = allItems.filter((item) =>
+      item.label.toLowerCase().includes("star wars")
+    );
     expect(FilteredItems).toEqual(filteredItems);
-  })
+  });
 
-  it('should reset highlighted index when search is inputted', () => {
+  it("should reset highlighted index when search is inputted", () => {
     const initial = Combobox.init(config, {
       allItems,
     });
@@ -224,7 +233,7 @@ describe("combobox", () => {
       model: initial,
       msg: { type: "pressed-input" },
     });
-    
+
     const hovered = Combobox.update(config, {
       model: pressedInput.model,
       msg: { type: "hovered-over-item", index: 2 },
@@ -238,9 +247,9 @@ describe("combobox", () => {
     expect(Combobox.toHighlightedIndex(pressedInput.model)).toEqual(-1);
     expect(Combobox.toHighlightedIndex(hovered.model)).toEqual(2);
     expect(Combobox.toHighlightedIndex(inputted.model)).toEqual(-1);
-  })
+  });
 
-  it('scrolls item into view when opened', () => {
+  it("scrolls item into view when opened", () => {
     const initial = Combobox.init(config, {
       allItems,
     });
@@ -251,14 +260,14 @@ describe("combobox", () => {
     const randomItem = allItems[Math.floor(Math.random() * allItems.length)];
     const pressedItem = Combobox.update(config, {
       model: pressedInput.model,
-      msg: { type: "pressed-item", item:  randomItem },
+      msg: { type: "pressed-item", item: randomItem },
     });
     expect(Combobox.isClosed(initial)).toEqual(true);
     expect(Combobox.isOpened(pressedInput.model)).toEqual(true);
     // expect(pressedInput.effects).toContainEqual({ type: "scroll-into-view", index: 0 });
-  })
+  });
 
-  it('sets input value to selected item name on select', () => {
+  it("sets input value to selected item name on select", () => {
     const initial = Combobox.init(config, {
       allItems,
     });
@@ -269,92 +278,140 @@ describe("combobox", () => {
     const randomItem = allItems[Math.floor(Math.random() * allItems.length)];
     const pressedItem = Combobox.update(config, {
       model: pressedInput.model,
-      msg: { type: "pressed-item", item:  randomItem },
+      msg: { type: "pressed-item", item: randomItem },
     });
-    expect(Combobox.toCurrentInputValue(config, pressedItem.model)).toEqual(config.toItemInputValue(randomItem));
-  })
+    expect(Combobox.toCurrentInputValue(config, pressedItem.model)).toEqual(
+      config.toItemInputValue(randomItem)
+    );
+  });
 
-
-  it('should unselect an item if its not part of all items', () => {
+  it("should unselect an item if its not part of all items", () => {
     const initial = Combobox.init(config, {
       allItems,
     });
-    
+
     const pressedInput = Combobox.update(config, {
       model: initial,
       msg: { type: "pressed-input" },
     });
-    
+
     const randomItem = allItems[Math.floor(Math.random() * allItems.length)];
-    
+
     const selectedItem = Combobox.update(config, {
       model: pressedInput.model,
-      msg: { type: "pressed-item", item:  randomItem },
+      msg: { type: "pressed-item", item: randomItem },
     });
-    
-    // 
+
+    //
     const removeSelectedItem = Combobox.update(config, {
       model: selectedItem.model,
-      msg: { type: "set-all-items", allItems: allItems.filter(item => config.toItemId(item) !== config.toItemId(randomItem)) },
+      msg: {
+        type: "set-all-items",
+        allItems: allItems.filter(
+          (item) => config.toItemId(item) !== config.toItemId(randomItem)
+        ),
+      },
     });
 
-    expect(Combobox.toSelectedItem(selectedItem.model)).toEqual(randomItem); 
-    expect(Combobox.toCurrentInputValue(config, selectedItem.model)).toEqual(config.toItemInputValue(randomItem));
+    expect(Combobox.toSelectedItem(selectedItem.model)).toEqual(randomItem);
+    expect(Combobox.toCurrentInputValue(config, selectedItem.model)).toEqual(
+      config.toItemInputValue(randomItem)
+    );
 
     expect(Combobox.toSelectedItem(removeSelectedItem.model)).toEqual(null);
-    expect(Combobox.toCurrentInputValue(config, removeSelectedItem.model)).toEqual("");
-  })
+    expect(
+      Combobox.toCurrentInputValue(config, removeSelectedItem.model)
+    ).toEqual("");
+  });
 
-  it('should set input value to selected item name on select', () => {
+  it("should set input value to selected item name on select", () => {
     const initial = Combobox.init(config, {
       allItems,
     });
-    
+
     const pressedInput = Combobox.update(config, {
       model: initial,
       msg: { type: "pressed-input" },
     });
-    
+
     const randomItem = allItems[Math.floor(Math.random() * allItems.length)];
-    
+
     const selectedItem = Combobox.update(config, {
       model: pressedInput.model,
-      msg: { type: "pressed-item", item:  randomItem },
+      msg: { type: "pressed-item", item: randomItem },
     });
-    
-    expect(Combobox.toCurrentInputValue(config, pressedInput.model)).toEqual("");
-    expect(Combobox.toCurrentInputValue(config, selectedItem.model)).toEqual(config.toItemInputValue(randomItem));
-    expect(Combobox.toSearchValue(selectedItem.model)).toEqual(config.toItemInputValue(randomItem));
-  })
 
+    expect(Combobox.toCurrentInputValue(config, pressedInput.model)).toEqual(
+      ""
+    );
+    expect(Combobox.toCurrentInputValue(config, selectedItem.model)).toEqual(
+      config.toItemInputValue(randomItem)
+    );
+    expect(Combobox.toSearchValue(selectedItem.model)).toEqual(
+      config.toItemInputValue(randomItem)
+    );
+  });
 
-  it('should set search value to input value when selected item is set', () => {
+  it("should set search value to input value when selected item is set", () => {
     const initial = Combobox.init(config, {
       allItems,
     });
-    
+
     const pressedInput = Combobox.update(config, {
       model: initial,
       msg: { type: "pressed-input" },
     });
-    
+
     const randomItem = allItems[Math.floor(Math.random() * allItems.length)];
-    
+
     const selectedItem = Combobox.update(config, {
       model: pressedInput.model,
       msg: { type: "set-selected-items", selectedItems: [randomItem] },
     });
 
-
     const pressedInputAfterSelect = Combobox.update(config, {
       model: selectedItem.model,
-      msg: { type: "pressed-input", },
+      msg: { type: "pressed-input" },
     });
 
-    
-    expect(Combobox.toCurrentInputValue(config, pressedInput.model)).toEqual("");
-    expect(Combobox.toCurrentInputValue(config, pressedInputAfterSelect.model)).toEqual(config.toItemInputValue(randomItem));
-    expect(Combobox.toSearchValue(pressedInputAfterSelect.model)).toEqual(config.toItemInputValue(randomItem));
-  })
+    expect(Combobox.toCurrentInputValue(config, pressedInput.model)).toEqual(
+      ""
+    );
+    expect(
+      Combobox.toCurrentInputValue(config, pressedInputAfterSelect.model)
+    ).toEqual(config.toItemInputValue(randomItem));
+    expect(Combobox.toSearchValue(pressedInputAfterSelect.model)).toEqual(
+      config.toItemInputValue(randomItem)
+    );
+  });
 
+  it("should not clear input when all items are set", () => {
+    const initial = Combobox.init(config, { allItems });
+    const output = Combobox.chainUpdates(
+      { model: initial, effects: [], events: [] },
+      (model) => pressInput(model),
+      (model) => inputValue(model, "star wars"),
+      (model) => setAllItems(model, [{ label: "some movie", year: 2020 }])
+    );
+
+    expect(Combobox.toCurrentInputValue(config, output.model)).toEqual(
+      "star wars"
+    );
+  });
+
+  it("should not clear input when selected items are set to nothing", () => {
+    const initial = Combobox.init(config, { allItems });
+    const output = Combobox.chainUpdates(
+      { model: initial, effects: [], events: [] },
+      (model) => pressInput(model),
+      (model) => inputValue(model, "star wars"),
+      (model) => setSelectedItems(model, [])
+    );
+
+    expect(Combobox.toCurrentInputValue(config, output.model)).toEqual(
+      "star wars"
+    );
+  });
+
+  
 });

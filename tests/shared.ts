@@ -262,3 +262,18 @@ export const pressBackspace = (model: Combobox.Model<Item>) => {
     msg: { type: "pressed-backspace-key" },
   });
 }
+
+
+export const setAllItems = (model: Combobox.Model<Item>, allItems: Item[]) => {
+  return Combobox.update(config, {
+    model,
+    msg: { type: "set-all-items", allItems },
+  });
+}
+
+export const setSelectedItems = (model: Combobox.Model<Item>, selectedItems: Item[]) => {
+  return Combobox.update(config, {
+    model,
+    msg: { type: "set-selected-items", selectedItems },
+  });
+}

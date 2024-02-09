@@ -339,6 +339,9 @@ export type Msg<T> =
   | {
       type: "toggle-opened";
     }
+  | {
+      type: "pressed-clear-button";
+    }
   //
   // Setters
   //
@@ -417,6 +420,14 @@ export type Output<T> = {
   events: Event[];
 };
 
+export const initOutput = <T>(model: Model<T>): Output<T> => {
+  return {
+    model,
+    effects: [],
+    events: [],
+  };
+};
+
 /**
  * A plugin is just a function that takes the previous and next state of the combobox and returns the final next state.
  */
@@ -452,7 +463,7 @@ export const update = <T>(
   input: Input<T>,
   plugins: Plugin<T>[] = []
 ): Output<T> => {
-  const output = updateMain(config, input);
+  const output = updateMain<T>()(config, input);
 
   let runningInput = input;
   let runningOutput = output;
@@ -497,7 +508,41 @@ export const chainUpdates = <T>(
   );
 };
 
-const updateMain = <T>(config: Config<T>, input: Input<T>): Output<T> => {
+type Update<T> = (config: Config<T>, input: Input<T>) => Output<T>;
+
+const updateClearButton =
+  <T>(): Update<T> =>
+  (config, input) => {
+    if (input.msg.type === "pressed-clear-button") {
+      return chainUpdates(
+        initOutput(input.model),
+        (model) => initOutput(clearInputValue(model)),
+        (model) => {
+          if (model.selectMode.type === "single-select") {
+            return initOutput({ ...model, selectedItems: [] });
+          }
+          return initOutput(model);
+        }
+      );
+    }
+
+    return initOutput(input.model);
+  };
+
+const updateMain =
+  <T>(): Update<T> =>
+  (config, input) => {
+    return chainUpdates(
+      { model: input.model, effects: [], events: [] },
+      (model) => updateClearButton<T>()(config, { model, msg: input.msg }),
+      (model) => updateMainToBeRefactored(config, { model, msg: input.msg })
+    );
+  };
+
+const updateMainToBeRefactored = <T>(
+  config: Config<T>,
+  input: Input<T>
+): Output<T> => {
   /**
    *
    *
@@ -704,10 +749,13 @@ const updateSetters = <T>({
       allItemsHash: toAllItemsHash(config, allItemsNew),
     };
 
-    if (modelNew.selectMode.type === "single-select" && modelNew.selectedItems.length > 0) {
+    if (
+      modelNew.selectMode.type === "single-select" &&
+      modelNew.selectedItems.length > 0
+    ) {
       return resetInputValue({ config, model: modelNew });
     }
-    
+
     return modelNew;
   }
 

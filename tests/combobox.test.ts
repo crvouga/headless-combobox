@@ -3,8 +3,12 @@ import * as Combobox from "../src";
 import {
   allItems,
   config,
+  init,
   inputValue,
+  pressClearButton,
   pressInput,
+  pressItem,
+  selectFirstThreeVisibleItems,
   setAllItems,
   setSelectedItems,
 } from "./shared";
@@ -412,4 +416,35 @@ describe("combobox", () => {
       "star wars"
     );
   });
+
+  it('presses clear button clears out input value', () => {
+    const output = Combobox.chainUpdates(
+      init(),
+      (model) => pressInput(model),
+      (model) => inputValue(model, "star wars"),
+      (model) => pressClearButton(model),
+    );
+
+    expect(Combobox.toCurrentInputValue(config, output.model)).toEqual("");
+  })
+
+  it('should clear selected value after pressing clear button when single select mode', () => {
+    const output = Combobox.chainUpdates(
+      init(),
+      (model) => pressInput(model),
+      (model) => pressItem(model, Combobox.toFilteredItems(config, model)[0]),
+      (model) => pressClearButton(model),
+    );
+    expect(Combobox.toSelectedItem(output.model)).toEqual(null);
+  })
+
+  it('should NOT clear selected values after pressing clear button when multi select mode', () => {
+    const output = Combobox.chainUpdates(
+      init({type: 'multi-select', selectedItemListDirection: 'left-to-right',}),
+      (model) => selectFirstThreeVisibleItems(model),
+      (model) => pressClearButton(model),
+    );
+    
+    expect(Combobox.toSelectedItems(output.model)).toHaveLength(3)
+  })
 });

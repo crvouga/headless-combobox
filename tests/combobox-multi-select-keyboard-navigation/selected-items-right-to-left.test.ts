@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import * as Combobox from "../../src";
-import { config } from "../shared";
-import { initMultiSelect, pressArrowLeft, selectFirstThreeVisibleItems } from "./shared";
+import { initMultiSelect, pressArrowLeft, selectFirstThreeVisibleItems , config } from "../shared";
 
 describe("combobox multi select keyboard navigation", () => {
   it("highlights first selected item pressing left arrow", () => {

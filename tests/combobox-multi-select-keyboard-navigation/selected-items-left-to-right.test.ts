@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import * as Combobox from "../../src";
-import { config } from "../shared";
-import { initMultiSelect,  pressArrowDown,  pressArrowLeft,  pressArrowRight, pressArrowUp, pressBackspace, pressEscape, selectFirstThreeVisibleItems } from "./shared";
+import { blurInput, config, focusInput, initMultiSelect, inputValue, pressArrowDown, pressArrowLeft, pressArrowRight, pressArrowUp, pressBackspace, pressEscape, pressInput, selectFirstThreeVisibleItems } from "../shared";
 
 const initial = { model: initMultiSelect('left-to-right'), effects: [], events: [] }
 
@@ -107,8 +106,8 @@ describe("combobox multi select keyboard navigation", () => {
     const output = Combobox.chainUpdates(
       initial,
       (model) => selectFirstThreeVisibleItems(model),
-      (model) => pressArrowRight(model),
-      (model) => pressArrowRight(model),
+      (model) => pressArrowDown(model),
+      (model) => pressArrowDown(model),
       (model) => pressArrowDown(model),
     );
     expect(Combobox.isFocused(output.model)).toBe(true);
@@ -142,6 +141,121 @@ describe("combobox multi select keyboard navigation", () => {
     expect(Combobox.toSelectedItems(selectedFirstThree.model)).toHaveLength(3);
     expect(Combobox.toSelectedItems(deletedFirst.model)).toHaveLength(2);
   })
+
+
+  it("deletes first selected item pressing backspace", () => {
+    const selectedThree = Combobox.chainUpdates(initial, (model) => selectFirstThreeVisibleItems(model))
+    const pressedBackspace = Combobox.chainUpdates(
+      selectedThree,
+      (model) => blurInput(model),
+      (model) => pressInput(model),
+      (model) => pressBackspace(model),
+    );
+    expect(Combobox.toSelectedItems(selectedThree.model)).toHaveLength(3);
+    expect(Combobox.toSelectedItems(pressedBackspace.model)).toHaveLength(2);
+  })
+
+  it("deletes first two selected items pressing backspace twice", () => {
+    const selectedThree = Combobox.chainUpdates(
+      initial, 
+      (model) => selectFirstThreeVisibleItems(model)
+    )
+    const pressedBackspaceTwice = Combobox.chainUpdates(
+      selectedThree,
+      (model) => blurInput(model),
+      (model) => pressInput(model),
+      (model) => pressBackspace(model),
+      (model) => pressBackspace(model),
+    );
+    expect(Combobox.toSelectedItems(selectedThree.model)).toHaveLength(3);
+    expect(Combobox.toSelectedItems(pressedBackspaceTwice.model)).toHaveLength(1);
+  })
+
+  it("stays open while deleting with backspace", () => {
+    const selectedThree = Combobox.chainUpdates(
+      initial, 
+      (model) => selectFirstThreeVisibleItems(model),
+      (model) => blurInput(model),
+      (model) => pressInput(model),
+    )
+    const pressedBackspace = Combobox.chainUpdates(
+      selectedThree,
+      (model) => pressBackspace(model),
+    );
+    expect(Combobox.isOpened(selectedThree.model)).toBe(true);
+    expect(Combobox.isOpened(pressedBackspace.model)).toBe(true);
+  })
+
+
+  it("stays closed while deleting with backspace", () => {
+    const selectedThree = Combobox.chainUpdates(
+      initial, 
+      (model) => selectFirstThreeVisibleItems(model),
+      (model) => blurInput(model),
+      (model) => focusInput(model),
+    )
+    const pressedBackspace = Combobox.chainUpdates(
+      selectedThree,
+      (model) => pressBackspace(model),
+    );
+    expect(Combobox.isClosed(selectedThree.model)).toBe(true);
+    expect(Combobox.isClosed(pressedBackspace.model)).toBe(true);
+  })
+
+  it("prevents navigation of selected items when input is not empty", () => {
+    const selectedThree = Combobox.chainUpdates(
+      initial, 
+      (model) => selectFirstThreeVisibleItems(model),
+      (model) => blurInput(model),
+      (model) => focusInput(model),
+      (model) => inputValue(model, 'a'),
+    )
+    const navigatedWithKeyboard = Combobox.chainUpdates(
+      selectedThree,
+      (model) => pressArrowRight(model),
+      (model) => pressArrowRight(model),
+      (model) => pressArrowRight(model),
+    );
+    expect(Combobox.isSelectedItemHighlighted(selectedThree.model)).toBe(false);
+    expect(Combobox.isSelectedItemHighlighted(navigatedWithKeyboard.model)).toBe(false);
+  })
+
+  it("prevents deleting selected item when input is not empty", () => {
+    const selectedThree = Combobox.chainUpdates(
+      initial, 
+      (model) => selectFirstThreeVisibleItems(model),
+      (model) => blurInput(model),
+      (model) => focusInput(model),
+      (model) => inputValue(model, 'foo bar baz'),
+    )
+    const pressedBackspaceALot = Combobox.chainUpdates(
+      selectedThree,
+      (model) => pressBackspace(model),
+      (model) => pressBackspace(model),
+      (model) => pressBackspace(model),
+      (model) => pressBackspace(model),
+      (model) => pressBackspace(model),
+    );
+    expect(Combobox.toSelectedItems(selectedThree.model).length).toBe(3);
+    expect(Combobox.toSelectedItems(pressedBackspaceALot.model).length).toBe(3);
+  })
+
+
+  it("stops navigating selected items with keyboard when something is inputted", () => {
+    const focusedSecondSelectedItem = Combobox.chainUpdates(
+      initial, 
+      (model) => selectFirstThreeVisibleItems(model),
+      (model) => pressArrowRight(model),
+      (model) => pressArrowRight(model),  
+    )
+    const inputtedSomething = Combobox.chainUpdates(
+      focusedSecondSelectedItem,
+      model => inputValue(model, 'a'),
+    );
+    expect(Combobox.isSelectedItemHighlighted(focusedSecondSelectedItem.model)).toBe(true);
+    expect(Combobox.isSelectedItemHighlighted(inputtedSomething.model)).toBe(false);
+  })
+
 
 });
 

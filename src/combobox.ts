@@ -475,6 +475,28 @@ export const update = <T>(
   return runningOutput;
 };
 
+export const chainUpdates = <T>(
+  acc: Output<T>,
+  ...updates: ((model: Model<T>) => Output<T>)[]
+): Output<T> => {
+  const [update, ...rest] = updates;
+
+  if (!update) {
+    return acc;
+  }
+
+  const updated = update(acc.model);
+
+  return chainUpdates(
+    {
+      model: updated.model,
+      effects: acc.effects.concat(updated.effects),
+      events: acc.events.concat(updated.events),
+    },
+    ...rest
+  );
+};
+
 const updateMain = <T>(config: Config<T>, input: Input<T>): Output<T> => {
   /**
    *

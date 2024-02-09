@@ -50,7 +50,7 @@ export type Config<T> = {
 };
 
 export const defaultDeterministicFilterCacheKeyFn = <T>(
-  config: Pick<Config<T>, 'toItemId'>,
+  config: Pick<Config<T>, "toItemId">,
   model: Model<T>
 ): string => {
   const inputVal =
@@ -82,11 +82,10 @@ export const initConfig = <T>({
       ? config.deterministicFilter
       : (model) => simpleFilter(configFull, model);
 
-  
   const deterministicFilterCacheKeyFn: Config<T>["deterministicFilterCacheKeyFn"] =
     config.deterministicFilterCacheKeyFn
       ? config.deterministicFilterCacheKeyFn
-      : (model) => defaultDeterministicFilterCacheKeyFn(config, model)
+      : (model) => defaultDeterministicFilterCacheKeyFn(config, model);
 
   const configFull: Config<T> = {
     ...config,
@@ -676,15 +675,17 @@ const updateSetters = <T>({
       msg.selectedItems
     );
 
-    return resetInputValue({
-      config,
-      model: {
-        ...model,
-        allItems: allItemsNew,
-        selectedItems: msg.selectedItems,
-        allItemsHash: toAllItemsHash(config, allItemsNew),
-      },
-    });
+    const modelNew: Model<T> = {
+      ...model,
+      allItems: allItemsNew,
+      selectedItems: msg.selectedItems,
+      allItemsHash: toAllItemsHash(config, allItemsNew),
+    };
+
+    if (model.selectMode.type === "single-select") {
+      return resetInputValue({ config, model: modelNew });
+    }
+    return modelNew;
   }
 
   if (msg.type === "set-input-value") {

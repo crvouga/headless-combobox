@@ -412,6 +412,4 @@ describe("combobox", () => {
       "star wars"
     );
   });
-
-  
 });

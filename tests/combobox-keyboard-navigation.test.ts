@@ -13,9 +13,9 @@ describe("combobox keyboard navigation", () => {
       model: focused.model,
       msg: { type: "pressed-vertical-arrow-key", key: "arrow-up" },
     });
-    expect(Combobox.isClosed(initial)).toBe(true);
-    expect(Combobox.isClosed(focused.model)).toBe(true);
-    expect(Combobox.isOpened(pressedKey.model)).toBe(true);
+    expect(Combobox.isClosed(initial)).toBeTruthy();
+    expect(Combobox.isClosed(focused.model)).toBeTruthy();
+    expect(Combobox.isOpened(pressedKey.model)).toBeTruthy();
   });
 
   it("opens when focused on and arrow down key is pressed", () => {
@@ -28,9 +28,9 @@ describe("combobox keyboard navigation", () => {
       model: focused.model,
       msg: { type: "pressed-vertical-arrow-key", key: "arrow-down" },
     });
-    expect(Combobox.isClosed(initial)).toBe(true);
-    expect(Combobox.isClosed(focused.model)).toBe(true);
-    expect(Combobox.isOpened(pressedKey.model)).toBe(true);
+    expect(Combobox.isClosed(initial)).toBeTruthy();
+    expect(Combobox.isClosed(focused.model)).toBeTruthy();
+    expect(Combobox.isOpened(pressedKey.model)).toBeTruthy();
   });
 
   it("stays closed when focused on and arrow left key is pressed", () => {
@@ -43,8 +43,8 @@ describe("combobox keyboard navigation", () => {
       model: focused.model,
       msg: { type: "pressed-horizontal-arrow-key", key: 'arrow-left'  },
     });
-    expect(Combobox.isClosed(initial)).toBe(true);
-    expect(Combobox.isClosed(focused.model)).toBe(true);
+    expect(Combobox.isClosed(initial)).toBeTruthy();
+    expect(Combobox.isClosed(focused.model)).toBeTruthy();
     expect(Combobox.isOpened(pressedKey.model)).toBe(false);
   });
 
@@ -58,8 +58,8 @@ describe("combobox keyboard navigation", () => {
       model: focused.model,
       msg: { type: "pressed-horizontal-arrow-key", key: 'arrow-right'  },
     });
-    expect(Combobox.isClosed(initial)).toBe(true);
-    expect(Combobox.isClosed(focused.model)).toBe(true);
+    expect(Combobox.isClosed(initial)).toBeTruthy();
+    expect(Combobox.isClosed(focused.model)).toBeTruthy();
     expect(Combobox.isOpened(pressedKey.model)).toBe(false);
   });
 
@@ -73,9 +73,9 @@ describe("combobox keyboard navigation", () => {
       model: focused.model,
       msg: { type: "pressed-escape-key" },
     });
-    expect(Combobox.isClosed(initial)).toBe(true);
-    expect(Combobox.isClosed(focused.model)).toBe(true);
-    expect(Combobox.isClosed(pressedKey.model)).toBe(true);
+    expect(Combobox.isClosed(initial)).toBeTruthy();
+    expect(Combobox.isClosed(focused.model)).toBeTruthy();
+    expect(Combobox.isClosed(pressedKey.model)).toBeTruthy();
   })
 
   it('opens on when focused and on first arrow down key but does not highlight any item', () => {
@@ -88,9 +88,9 @@ describe("combobox keyboard navigation", () => {
       model: focused.model,
       msg: { type: "pressed-vertical-arrow-key", key: 'arrow-down' },
     });
-    expect(Combobox.isClosed(initial)).toBe(true);
-    expect(Combobox.isClosed(focused.model)).toBe(true);
-    expect(Combobox.isOpened(pressedArrowDown.model)).toBe(true);
+    expect(Combobox.isClosed(initial)).toBeTruthy();
+    expect(Combobox.isClosed(focused.model)).toBeTruthy();
+    expect(Combobox.isOpened(pressedArrowDown.model)).toBeTruthy();
     expect(Combobox.toHighlightedItem(config, pressedArrowDown.model)).toBe(null);
   })
 
@@ -167,8 +167,8 @@ describe("combobox keyboard navigation", () => {
   it('closes when selecting with enter key', () => {
     const initial = Combobox.init(config, {allItems,});
     const {pressedArrowDownAgain,pressedEnterKey} = selectSecondItemWithKeyboard(initial);
-    expect(Combobox.isOpened(pressedArrowDownAgain.model)).toBe(true);
-    expect(Combobox.isClosed(pressedEnterKey.model)).toBe(true);
+    expect(Combobox.isOpened(pressedArrowDownAgain.model)).toBeTruthy();
+    expect(Combobox.isClosed(pressedEnterKey.model)).toBeTruthy();
   })
 
   it('starts highlighed index from selected index - arrow down', () => {

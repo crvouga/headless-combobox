@@ -626,7 +626,7 @@ const updateMain = <T>(config: Config<T>, input: Input<T>): Output<T> => {
   return output;
 };
 
-const didSelectedItemsChange = <T>(
+export const didSelectedItemsChange = <T>(
   config: Config<T>,
   prev: Model<T>,
   next: Model<T>

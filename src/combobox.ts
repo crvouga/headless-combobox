@@ -49,6 +49,17 @@ export type Config<T> = {
   itemStore?: ItemStore<T>;
 };
 
+export const defaultDeterministicFilterCacheKeyFn = <T>(
+  config: Pick<Config<T>, 'toItemId'>,
+  model: Model<T>
+): string => {
+  const inputVal =
+    model.inputMode.type === "search-mode" ? model.inputMode.inputValue : "";
+  const selectedItemsHash = model.selectedItems.map(config.toItemId).join(" ");
+  const key = `${model.inputMode.type} ${inputVal} ${model.allItemsHash} ${selectedItemsHash}`;
+  return key;
+};
+
 /**
  * @group Config
  */
@@ -71,24 +82,11 @@ export const initConfig = <T>({
       ? config.deterministicFilter
       : (model) => simpleFilter(configFull, model);
 
-  /**
-   * TODO Caching is not working properly
-   * The cache is not invalidated when the input changes
-   */
+  
   const deterministicFilterCacheKeyFn: Config<T>["deterministicFilterCacheKeyFn"] =
     config.deterministicFilterCacheKeyFn
       ? config.deterministicFilterCacheKeyFn
-      : (model) => {
-          const inputVal =
-            model.inputMode.type === "search-mode"
-              ? model.inputMode.inputValue
-              : "";
-          const selectedItemsHash = model.selectedItems
-            .map(config.toItemId)
-            .join(" ");
-          const key = `${model.inputMode.type} ${inputVal} ${model.allItemsHash} ${selectedItemsHash}`;
-          return key;
-        };
+      : (model) => defaultDeterministicFilterCacheKeyFn(config, model)
 
   const configFull: Config<T> = {
     ...config,

@@ -1,5 +1,4 @@
 node_modules
-src
 package.json
 package-lock.json
 tsconfig.json
@@ -7,5 +6,5 @@ tsconfig.json
 example
 docs
 .vscode
-test
+tests
 demo.gif

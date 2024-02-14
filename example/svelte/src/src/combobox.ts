@@ -1,6 +1,6 @@
 // Links
 // https://github.com/mui/material-ui/blob/master/packages/mui-base/src/useAutocomplete/useAutocomplete.js#L332
-// 
+//
 import {
   aria,
   ariaItem,
@@ -44,9 +44,21 @@ export type Config<T> = {
   deterministicFilter: (model: Model<T>) => Iterable<T>;
   deterministicFilterCacheKeyFn: (model: Model<T>) => string;
   isEmptyItem: (value: T) => boolean;
+  sortSelectedItems?: (a: T, b: T) => number;
   namespace: string;
   filteredItemCache: Map<string, T[]>;
   itemStore?: ItemStore<T>;
+};
+
+export const defaultDeterministicFilterCacheKeyFn = <T>(
+  config: Pick<Config<T>, "toItemId">,
+  model: Model<T>
+): string => {
+  const inputVal =
+    model.inputMode.type === "search-mode" ? model.inputMode.inputValue : "";
+  const selectedItemsHash = model.selectedItems.map(config.toItemId).join(" ");
+  const key = `${model.inputMode.type} ${inputVal} ${model.allItemsHash} ${selectedItemsHash}`;
+  return key;
 };
 
 /**
@@ -55,6 +67,7 @@ export type Config<T> = {
 export const initConfig = <T>({
   namespace,
   isEmptyItem = () => false,
+  sortSelectedItems,
   filteredItemCacheCapacity = 100,
   ...config
 }: {
@@ -63,6 +76,7 @@ export const initConfig = <T>({
   isEmptyItem?: (item: T) => boolean;
   deterministicFilter?: (model: Model<T>) => Iterable<T>;
   deterministicFilterCacheKeyFn?: (model: Model<T>) => string;
+  sortSelectedItems?: (a: T, b: T) => number;
   namespace?: string;
   filteredItemCacheCapacity?: number;
 }): Config<T> => {
@@ -71,22 +85,10 @@ export const initConfig = <T>({
       ? config.deterministicFilter
       : (model) => simpleFilter(configFull, model);
 
-  /**
-   * TODO Caching is not working properly
-   * The cache is not invalidated when the input changes
-   */
   const deterministicFilterCacheKeyFn: Config<T>["deterministicFilterCacheKeyFn"] =
     config.deterministicFilterCacheKeyFn
       ? config.deterministicFilterCacheKeyFn
-      : (model) => {
-          const inputVal =
-            model.inputMode.type === "search-mode"
-              ? model.inputMode.inputValue
-              : "";
-          const selectedItemsHash = model.selectedItems.map(config.toItemId).join(' ')
-          const key = `${model.inputMode.type} ${inputVal} ${model.allItemsHash} ${selectedItemsHash}`;
-          return key;
-        };
+      : (model) => defaultDeterministicFilterCacheKeyFn(config, model);
 
   const configFull: Config<T> = {
     ...config,
@@ -159,9 +161,8 @@ const toAllItemsHash = <T>(config: Config<T>, allItems: T[]): string => {
   for (const item of allItems) {
     hash += `${config.toItemId(item)} `;
   }
-  return hash
-}
-
+  return hash;
+};
 
 /**
  * @group Model
@@ -239,21 +240,24 @@ type ModelState =
  *
  * The init function returns the initial state of the combobox.
  */
-export const init = <T>(config: Config<T>, {
-  allItems,
-  selectMode,
-  inputMode,
-  highlightMode,
-  filteredItemLimit = Infinity,
-  disableCloseOnSelect = false,
-}: {
-  allItems: T[];
-  selectMode?: SelectMode;
-  inputMode?: InputMode;
-  highlightMode?: HighlightMode;
-  filteredItemLimit?: number;
-  disableCloseOnSelect?: boolean;
-}): Model<T> => {
+export const init = <T>(
+  config: Config<T>,
+  {
+    allItems,
+    selectMode,
+    inputMode,
+    highlightMode,
+    filteredItemLimit = Infinity,
+    disableCloseOnSelect = false,
+  }: {
+    allItems: T[];
+    selectMode?: SelectMode;
+    inputMode?: InputMode;
+    highlightMode?: HighlightMode;
+    filteredItemLimit?: number;
+    disableCloseOnSelect?: boolean;
+  }
+): Model<T> => {
   return {
     type: "blurred",
     selectedItems: [],
@@ -338,6 +342,9 @@ export type Msg<T> =
   | {
       type: "toggle-opened";
     }
+  | {
+      type: "pressed-clear-button";
+    }
   //
   // Setters
   //
@@ -372,7 +379,7 @@ export type Effect<T> =
   | {
       type: "scroll-item-into-view";
       item: T;
-      index: number
+      index: number;
     }
   | {
       type: "focus-selected-item";
@@ -416,6 +423,14 @@ export type Output<T> = {
   events: Event[];
 };
 
+export const initOutput = <T>(model: Model<T>): Output<T> => {
+  return {
+    model,
+    effects: [],
+    events: [],
+  };
+};
+
 /**
  * A plugin is just a function that takes the previous and next state of the combobox and returns the final next state.
  */
@@ -451,7 +466,7 @@ export const update = <T>(
   input: Input<T>,
   plugins: Plugin<T>[] = []
 ): Output<T> => {
-  const output = updateMain(config, input);
+  const output = updateMain<T>()(config, input);
 
   let runningInput = input;
   let runningOutput = output;
@@ -474,7 +489,63 @@ export const update = <T>(
   return runningOutput;
 };
 
-const updateMain = <T>(config: Config<T>, input: Input<T>): Output<T> => {
+export const chainUpdates = <T>(
+  acc: Output<T>,
+  ...updates: ((model: Model<T>) => Output<T>)[]
+): Output<T> => {
+  const [update, ...rest] = updates;
+
+  if (!update) {
+    return acc;
+  }
+
+  const updated = update(acc.model);
+
+  return chainUpdates(
+    {
+      model: updated.model,
+      effects: acc.effects.concat(updated.effects),
+      events: acc.events.concat(updated.events),
+    },
+    ...rest
+  );
+};
+
+type Update<T> = (config: Config<T>, input: Input<T>) => Output<T>;
+
+const updateClearButton =
+  <T>(): Update<T> =>
+  (config, input) => {
+    if (input.msg.type === "pressed-clear-button") {
+      return chainUpdates(
+        initOutput(input.model),
+        (model) => initOutput(clearInputValue(model)),
+        (model) => {
+          if (model.selectMode.type === "single-select") {
+            return initOutput({ ...model, selectedItems: [] });
+          }
+          return initOutput(model);
+        }
+      );
+    }
+
+    return initOutput(input.model);
+  };
+
+const updateMain =
+  <T>(): Update<T> =>
+  (config, input) => {
+    return chainUpdates(
+      { model: input.model, effects: [], events: [] },
+      (model) => updateClearButton<T>()(config, { model, msg: input.msg }),
+      (model) => updateMainToBeRefactored(config, { model, msg: input.msg })
+    );
+  };
+
+const updateMainToBeRefactored = <T>(
+  config: Config<T>,
+  input: Input<T>
+): Output<T> => {
   /**
    *
    *
@@ -525,7 +596,7 @@ const updateMain = <T>(config: Config<T>, input: Input<T>): Output<T> => {
    */
 
   // scroll to selected item into view when state changes from closed to opened
-  const selectedItem = toSelectedItem(output.model);
+  const selectedItem = toSelectedItem(config, output.model);
   if (isClosed(input.model) && isOpened(output.model) && selectedItem) {
     output.effects.push({
       type: "scroll-item-into-view",
@@ -568,7 +639,7 @@ const updateMain = <T>(config: Config<T>, input: Input<T>): Output<T> => {
 
   // focus on selected item when highlighted
   if (isSelectedItemHighlighted(output.model)) {
-    const selectedHighlightedItem = toSelectedItems(output.model)[
+    const selectedHighlightedItem = toSelectedItems(config, output.model)[
       output.model.focusedIndex
     ];
     if (selectedHighlightedItem) {
@@ -616,15 +687,15 @@ const updateMain = <T>(config: Config<T>, input: Input<T>): Output<T> => {
     output.events.push({ type: "selected-items-changed" });
 
     // TODO move this somewhere else
-    if(toSelectedItems(output.model).length === 0) {
-      output.model = clearInputValue(output.model)
+    if (toSelectedItems(config, output.model).length === 0) {
+      output.model = clearInputValue(output.model);
     }
   }
 
   return output;
 };
 
-const didSelectedItemsChange = <T>(
+export const didSelectedItemsChange = <T>(
   config: Config<T>,
   prev: Model<T>,
   next: Model<T>
@@ -657,7 +728,7 @@ const updateSetters = <T>({
       config.toItemId,
       model.selectedItems,
       msg.allItems
-    )
+    );
 
     return {
       ...model,
@@ -673,12 +744,22 @@ const updateSetters = <T>({
       model.allItems,
       msg.selectedItems
     );
-    return {
+
+    const modelNew: Model<T> = {
       ...model,
       allItems: allItemsNew,
       selectedItems: msg.selectedItems,
       allItemsHash: toAllItemsHash(config, allItemsNew),
     };
+
+    if (
+      modelNew.selectMode.type === "single-select" &&
+      modelNew.selectedItems.length > 0
+    ) {
+      return resetInputValue({ config, model: modelNew });
+    }
+
+    return modelNew;
   }
 
   if (msg.type === "set-input-value") {
@@ -785,7 +866,7 @@ const updateModel = <T>(
           return {
             ...model,
             type: "focused-opened",
-          }
+          };
         }
 
         case "pressed-unselect-all-button": {
@@ -810,7 +891,7 @@ const updateModel = <T>(
             focusedIndex:
               findIndex(
                 (item) => toItemId(item) === toItemId(msg.item),
-                yieldSelectedItems(model)
+                yieldSelectedItems(config, model)
               ) ?? 0,
           };
         }
@@ -879,7 +960,7 @@ const updateModel = <T>(
         }
 
         case "pressed-horizontal-arrow-key": {
-          return updateSelectedItemKeyboardNavigation({ model, msg });
+          return updateSelectedItemKeyboardNavigation({ config, model, msg });
         }
 
         case "pressed-unselect-button": {
@@ -897,7 +978,7 @@ const updateModel = <T>(
             focusedIndex:
               findIndex(
                 (item) => toItemId(item) === toItemId(msg.item),
-                yieldSelectedItems(model)
+                yieldSelectedItems(config, model)
               ) ?? 0,
           };
         }
@@ -916,7 +997,7 @@ const updateModel = <T>(
           ) {
             return {
               ...model,
-              selectedItems: toSelectedItems(model).slice(1),
+              selectedItems: toSelectedItems(config, model).slice(1),
             };
           }
 
@@ -926,7 +1007,7 @@ const updateModel = <T>(
           ) {
             return {
               ...model,
-              selectedItems: toSelectedItems(model).slice(1),
+              selectedItems: toSelectedItems(config, model).slice(1),
             };
           }
 
@@ -1062,7 +1143,7 @@ const updateModel = <T>(
         }
 
         case "pressed-horizontal-arrow-key": {
-          return updateSelectedItemKeyboardNavigation({ model, msg });
+          return updateSelectedItemKeyboardNavigation({ config, model, msg });
         }
 
         case "pressed-unselect-button": {
@@ -1084,7 +1165,7 @@ const updateModel = <T>(
           if (toSearchValue(model) === "") {
             return {
               ...model,
-              selectedItems: toSelectedItems(model).slice(1),
+              selectedItems: toSelectedItems(config, model).slice(1),
             };
           }
           return model;
@@ -1114,7 +1195,11 @@ const updateModel = <T>(
         }
 
         case "hovered-over-item": {
-          return { ...model, highlightIndex: msg.index, isKeyboardNavigation: false };
+          return {
+            ...model,
+            highlightIndex: msg.index,
+            isKeyboardNavigation: false,
+          };
         }
 
         case "blurred-input": {
@@ -1155,7 +1240,10 @@ const updateModel = <T>(
               type: "focused-opened",
             });
           }
-          return setHasSearched(setInputValue({...model, type: 'focused-opened'}, msg.inputValue), true);
+          return setHasSearched(
+            setInputValue({ ...model, type: "focused-opened" }, msg.inputValue),
+            true
+          );
         }
 
         case "pressed-vertical-arrow-key": {
@@ -1166,11 +1254,15 @@ const updateModel = <T>(
             model.highlightIndex + delta,
             filtered.length
           );
-          return { ...model, highlightIndex: highlightIndex, isKeyboardNavigation: true };
+          return {
+            ...model,
+            highlightIndex: highlightIndex,
+            isKeyboardNavigation: true,
+          };
         }
 
         case "pressed-horizontal-arrow-key": {
-          return updateSelectedItemKeyboardNavigation({ model, msg });
+          return updateSelectedItemKeyboardNavigation({config, model, msg });
         }
 
         case "pressed-enter-key": {
@@ -1197,7 +1289,7 @@ const updateModel = <T>(
           const removed = Array.from(
             keepIf(
               (x) => toItemId(x) !== toItemId(msg.item),
-              yieldSelectedItems(model)
+              yieldSelectedItems(config, model)
             )
           );
 
@@ -1215,7 +1307,7 @@ const updateModel = <T>(
 
         case "pressed-backspace-key": {
           if (toSearchValue(model) === "") {
-            const removed = toSelectedItems(model).slice(1);
+            const removed = toSelectedItems(config, model).slice(1);
             if (isNonEmpty(removed)) {
               return { ...model, selectedItems: removed };
             }
@@ -1283,7 +1375,7 @@ const updateModel = <T>(
 
           const selectedItemHighlightIndexNew = clampIndex(
             model.focusedIndex + delta,
-            toSelectedItems(model).length
+            toSelectedItems(config, model).length
           );
           return {
             ...model,
@@ -1355,7 +1447,7 @@ const updateModel = <T>(
           const removedHighlightedIndex = Array.from(
             keepIf(
               (_, index) => index !== model.focusedIndex,
-              yieldSelectedItems(model)
+              yieldSelectedItems(config, model)
             )
           );
 
@@ -1370,7 +1462,7 @@ const updateModel = <T>(
           const removedOne = Array.from(
             keepIf(
               (x) => toItemId(x) !== toItemId(msg.item),
-              yieldSelectedItems(model)
+              yieldSelectedItems(config, model)
             )
           );
 
@@ -1399,7 +1491,7 @@ const updateModel = <T>(
             focusedIndex:
               findIndex(
                 (item) => toItemId(item) === toItemId(msg.item),
-                yieldSelectedItems(model)
+                yieldSelectedItems(config, model)
               ) ?? 0,
           };
         }
@@ -1549,7 +1641,7 @@ const toSelectedItemIndex = <T>(
   model: Model<T>
 ): number | null => {
   const selectedItemIdSet = new Set<string | number>();
-  for (const item of yieldSelectedItems(model)) {
+  for (const item of yieldSelectedItems(config, model)) {
     selectedItemIdSet.add(config.toItemId(item));
   }
 
@@ -1598,7 +1690,7 @@ export const clearInputValue = <T>(model: Model<T>): Model<T> => {
   return setInputValue(model, "");
 };
 
-const toSearchValue = <T>(model: Model<T>): string => {
+export const toSearchValue = <T>(model: Model<T>): string => {
   return model.inputMode.type === "search-mode"
     ? model.inputMode.inputValue
     : "";
@@ -1643,7 +1735,7 @@ export const removeSelectedItem = <T>({
   const removed = Array.from(
     keepIf(
       (x) => config.toItemId(x) !== config.toItemId(item),
-      yieldSelectedItems(model)
+      yieldSelectedItems(config, model)
     )
   );
 
@@ -1656,11 +1748,13 @@ export const removeSelectedItem = <T>({
 const updateSelectedItemKeyboardNavigation = <T>({
   model,
   msg,
+  config,
 }: {
+  config: Config<T>;
   model: Model<T> & FocusedState;
   msg: Msg<T>;
 }): Model<T> => {
-  if (!isSelected(model)) {
+  if (!isSelected(config, model)) {
     return model;
   }
 
@@ -1742,7 +1836,7 @@ const toInputValue = <T>({
     model.inputMode.type === "select-only" &&
     model.selectMode.type === "single-select"
   ) {
-    const selectedItem = toSelectedItem(model);
+    const selectedItem = toSelectedItem(config, model);
 
     if (selectedItem) {
       return config.toItemInputValue(selectedItem);
@@ -1762,7 +1856,7 @@ const toInputValue = <T>({
 
     return emptyItem ? config.toItemInputValue(emptyItem) : "";
   }
-  const selectedItem = toSelectedItem(model);
+  const selectedItem = toSelectedItem(config, model);
   if (selectedItem && model.selectMode.type === "single-select") {
     return config.toItemInputValue(selectedItem);
   }
@@ -1793,8 +1887,8 @@ export const toNextHighlightIndex = <T>(
  *
  * Utility function to determine if any item is selected.
  */
-export const isSelected = <T>(model: Model<T>): model is SelectedState<T> => {
-  return isNonEmpty(toSelectedItems(model));
+export const isSelected = <T>(config: Config<T>, model: Model<T>): model is SelectedState<T> => {
+  return isNonEmpty(toSelectedItems(config, model));
 };
 export type SelectedState<T> = Model<T> & { selectedItems: NonEmpty<T> };
 
@@ -1923,13 +2017,13 @@ export const toHighlightedItem = <T>(
   return null;
 };
 
-export const toHighlightedIndex = <T>(model: Model<T>): number  => {
+export const toHighlightedIndex = <T>(model: Model<T>): number => {
   if (model.type !== "focused-opened-highlighted") {
     return -1;
   }
 
   return model.highlightIndex;
-}
+};
 
 /**
  * @group Selectors
@@ -1953,22 +2047,30 @@ export const isItemHighlighted = <T>(
  *
  * This function returns the selected item
  */
-export const toSelectedItems = <T>(model: Model<T>): T[] => {
-  return Array.from(yieldSelectedItems(model));
+export const toSelectedItems = <T>(config: Config<T>, model: Model<T>): T[] => {
+  return Array.from(yieldSelectedItems(config, model));
 };
 
-export const yieldSelectedItems = function* <T>(model: Model<T>): Generator<T> {
+
+const sortSelectedItems = <T>(config: Config<T>, model: Model<T>): T[] => {
+  if(config.sortSelectedItems){ 
+    return [...model.selectedItems].sort(config.sortSelectedItems)
+  }
+  return model.selectedItems;
+}
+
+export const yieldSelectedItems = function* <T>(config: Config<T>, model: Model<T>): Generator<T> {
   if (
     model.selectMode.type === "multi-select" &&
     model.selectMode.selectedItemListDirection === "right-to-left"
   ) {
-    for (const x of model.selectedItems) {
-      yield x;
+    for (const selectedItem of sortSelectedItems(config, model)) {
+      yield selectedItem;
     }
     return;
   }
 
-  yield* yieldReverse(model.selectedItems);
+  yield* yieldReverse(sortSelectedItems(config, model));
 };
 
 /**
@@ -1976,8 +2078,8 @@ export const yieldSelectedItems = function* <T>(model: Model<T>): Generator<T> {
  *
  * This function returns the selected item
  */
-export const toSelectedItem = <T>(model: Model<T>): T | null => {
-  for (const selectedItem of yieldSelectedItems(model)) {
+export const toSelectedItem = <T>(config: Config<T>, model: Model<T>): T | null => {
+  for (const selectedItem of yieldSelectedItems(config, model)) {
     return selectedItem;
   }
   return null;
@@ -1989,12 +2091,12 @@ export const toSelectedItem = <T>(model: Model<T>): T | null => {
  * Utility function to determine if an item is selected.
  */
 export const isItemSelected = <T>(
-  { toItemId }: Pick<Config<T>, "toItemId">,
+  config: Config<T>,
   model: Model<T>,
   item: T
 ): boolean => {
-  for (const selectedItem of yieldSelectedItems(model)) {
-    if (toItemId(selectedItem) === toItemId(item)) {
+  for (const selectedItem of yieldSelectedItems(config, model)) {
+    if (config.toItemId(selectedItem) === config.toItemId(item)) {
       return true;
     }
   }
@@ -2050,7 +2152,7 @@ export const isSelectedItemFocused = <T>(
     isSelectedItemHighlighted(model) &&
     findIndex(
       (item) => config.toItemId(item) === config.toItemId(selectedItem),
-      yieldSelectedItems(model)
+      yieldSelectedItems(config, model)
     ) === model.focusedIndex
   );
 };
@@ -2252,7 +2354,7 @@ export const yieldRenderItems = function* <T>(
   model: Model<T>
 ): Generator<RenderItem<T>> {
   const selectedItemIdSet = new Set<string | number>();
-  for (const item of yieldSelectedItems(model)) {
+  for (const item of yieldSelectedItems(config, model)) {
     selectedItemIdSet.add(config.toItemId(item));
   }
 
@@ -2305,7 +2407,7 @@ export const yieldRenderSelectedItems = function* <T>(
   config: Config<T>,
   model: Model<T>
 ): Generator<RenderSelectedItem<T>> {
-  for (const item of yieldSelectedItems(model)) {
+  for (const item of yieldSelectedItems(config, model)) {
     yield {
       item,
       status: toSelectedItemStatus(config, model, item),
@@ -2404,11 +2506,11 @@ export const toState = <T>(config: Config<T>, model: Model<T>) => {
     renderItems: toRenderItems(config, model),
     renderSelectedItems: toRenderSelectedItems(config, model),
     isOpened: isOpened(model),
-    selectedItems: toSelectedItems(model),
+    selectedItems: toSelectedItems(config, model),
     inputValue: toCurrentInputValue(config, model),
     isBlurred: isBlurred(model),
     isFocused: isFocused(model),
-    selectedItem: toSelectedItem(model),
+    selectedItem: toSelectedItem(config, model),
     highlightedItem: toHighlightedItem(config, model),
     selectedItemDirection: toSelectedItemDirection(model),
     isItemHighlighted: (item: T) => isItemHighlighted<T>(config, model, item),

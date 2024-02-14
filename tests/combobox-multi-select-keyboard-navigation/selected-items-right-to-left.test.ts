@@ -10,7 +10,7 @@ describe("combobox multi select keyboard navigation", () => {
       (model) => pressArrowLeft(model),
     );
     
-    const selectedItems = Combobox.toSelectedItems(output.model);
+    const selectedItems = Combobox.toSelectedItems(config, output.model);
     expect(Combobox.toSelectedItemStatus(config, output.model, selectedItems[0]) === 'focused').toBe(true);
     expect(Combobox.toSelectedItemStatus(config, output.model, selectedItems[1]) === 'blurred').toBe(true);
     expect(Combobox.toSelectedItemStatus(config, output.model, selectedItems[2]) === 'blurred').toBe(true);
@@ -24,7 +24,7 @@ describe("combobox multi select keyboard navigation", () => {
       (model) => pressArrowLeft(model),
     );
     
-    const selectedItems = Combobox.toSelectedItems(output.model);
+    const selectedItems = Combobox.toSelectedItems(config, output.model);
     expect(Combobox.toSelectedItemStatus(config, output.model, selectedItems[0]) === 'blurred').toBe(true);
     expect(Combobox.toSelectedItemStatus(config, output.model, selectedItems[1]) === 'focused').toBe(true);
     expect(Combobox.toSelectedItemStatus(config, output.model, selectedItems[2]) === 'blurred').toBe(true);
@@ -39,7 +39,7 @@ describe("combobox multi select keyboard navigation", () => {
       (model) => pressArrowLeft(model),
     );
     
-    const selectedItems = Combobox.toSelectedItems(output.model);
+    const selectedItems = Combobox.toSelectedItems(config, output.model);
     expect(Combobox.toSelectedItemStatus(config, output.model, selectedItems[0]) === 'blurred').toBe(true);
     expect(Combobox.toSelectedItemStatus(config, output.model, selectedItems[1]) === 'blurred').toBe(true);
     expect(Combobox.toSelectedItemStatus(config, output.model, selectedItems[2]) === 'focused').toBe(true);
@@ -58,7 +58,7 @@ describe("combobox multi select keyboard navigation", () => {
       (model) => pressArrowLeft(model),
     );
     
-    const selectedItems = Combobox.toSelectedItems(output.model);
+    const selectedItems = Combobox.toSelectedItems(config, output.model);
     expect(Combobox.toSelectedItemStatus(config, output.model, selectedItems[0]) === 'blurred').toBe(true);
     expect(Combobox.toSelectedItemStatus(config, output.model, selectedItems[1]) === 'blurred').toBe(true);
     expect(Combobox.toSelectedItemStatus(config, output.model, selectedItems[2]) === 'focused').toBe(true);

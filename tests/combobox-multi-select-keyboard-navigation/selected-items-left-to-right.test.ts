@@ -12,7 +12,7 @@ describe("combobox multi select keyboard navigation", () => {
       (model) => pressArrowRight(model),
     );
     
-    const selectedItems = Combobox.toSelectedItems(output.model);
+    const selectedItems = Combobox.toSelectedItems(config, output.model);
     expect(Combobox.toSelectedItemStatus(config, output.model, selectedItems[0]) === 'focused').toBe(true);
     expect(Combobox.toSelectedItemStatus(config, output.model, selectedItems[1]) === 'blurred').toBe(true);
     expect(Combobox.toSelectedItemStatus(config, output.model, selectedItems[2]) === 'blurred').toBe(true);
@@ -27,7 +27,7 @@ describe("combobox multi select keyboard navigation", () => {
       (model) => pressArrowRight(model),
     );
     
-    const selectedItems = Combobox.toSelectedItems(output.model);
+    const selectedItems = Combobox.toSelectedItems(config, output.model);
     expect(Combobox.toSelectedItemStatus(config, output.model, selectedItems[0]) === 'blurred').toBe(true);
     expect(Combobox.toSelectedItemStatus(config, output.model, selectedItems[1]) === 'focused').toBe(true);
     expect(Combobox.toSelectedItemStatus(config, output.model, selectedItems[2]) === 'blurred').toBe(true);
@@ -43,7 +43,7 @@ describe("combobox multi select keyboard navigation", () => {
       (model) => pressArrowRight(model),
     );
     
-    const selectedItems = Combobox.toSelectedItems(output.model);
+    const selectedItems = Combobox.toSelectedItems(config, output.model);
     expect(Combobox.toSelectedItemStatus(config, output.model, selectedItems[0]) === 'blurred').toBe(true);
     expect(Combobox.toSelectedItemStatus(config, output.model, selectedItems[1]) === 'blurred').toBe(true);
     expect(Combobox.toSelectedItemStatus(config, output.model, selectedItems[2]) === 'focused').toBe(true);
@@ -63,7 +63,7 @@ describe("combobox multi select keyboard navigation", () => {
       (model) => pressArrowRight(model),
     );
     
-    const selectedItems = Combobox.toSelectedItems(output.model);
+    const selectedItems = Combobox.toSelectedItems(config, output.model);
     expect(Combobox.toSelectedItemStatus(config, output.model, selectedItems[0]) === 'blurred').toBe(true);
     expect(Combobox.toSelectedItemStatus(config, output.model, selectedItems[1]) === 'blurred').toBe(true);
     expect(Combobox.toSelectedItemStatus(config, output.model, selectedItems[2]) === 'focused').toBe(true);
@@ -80,7 +80,7 @@ describe("combobox multi select keyboard navigation", () => {
       (model) => pressArrowLeft(model),
     );
     
-    const selectedItems = Combobox.toSelectedItems(output.model);
+    const selectedItems = Combobox.toSelectedItems(config, output.model);
     expect(Combobox.toSelectedItemStatus(config, output.model, selectedItems[0]) === 'blurred').toBe(true);
     expect(Combobox.toSelectedItemStatus(config, output.model, selectedItems[1]) === 'focused').toBe(true);
     expect(Combobox.toSelectedItemStatus(config, output.model, selectedItems[2]) === 'blurred').toBe(true);
@@ -138,8 +138,8 @@ describe("combobox multi select keyboard navigation", () => {
       (model)  => pressArrowRight(model),
       (model)  => pressBackspace(model),
     );
-    expect(Combobox.toSelectedItems(selectedFirstThree.model)).toHaveLength(3);
-    expect(Combobox.toSelectedItems(deletedFirst.model)).toHaveLength(2);
+    expect(Combobox.toSelectedItems(config, selectedFirstThree.model)).toHaveLength(3);
+    expect(Combobox.toSelectedItems(config, deletedFirst.model)).toHaveLength(2);
   })
 
 
@@ -151,8 +151,8 @@ describe("combobox multi select keyboard navigation", () => {
       (model) => pressInput(model),
       (model) => pressBackspace(model),
     );
-    expect(Combobox.toSelectedItems(selectedThree.model)).toHaveLength(3);
-    expect(Combobox.toSelectedItems(pressedBackspace.model)).toHaveLength(2);
+    expect(Combobox.toSelectedItems(config, selectedThree.model)).toHaveLength(3);
+    expect(Combobox.toSelectedItems(config, pressedBackspace.model)).toHaveLength(2);
   })
 
   it("deletes first two selected items pressing backspace twice", () => {
@@ -167,8 +167,8 @@ describe("combobox multi select keyboard navigation", () => {
       (model) => pressBackspace(model),
       (model) => pressBackspace(model),
     );
-    expect(Combobox.toSelectedItems(selectedThree.model)).toHaveLength(3);
-    expect(Combobox.toSelectedItems(pressedBackspaceTwice.model)).toHaveLength(1);
+    expect(Combobox.toSelectedItems(config, selectedThree.model)).toHaveLength(3);
+    expect(Combobox.toSelectedItems(config, pressedBackspaceTwice.model)).toHaveLength(1);
   })
 
   it("stays open while deleting with backspace", () => {
@@ -236,8 +236,8 @@ describe("combobox multi select keyboard navigation", () => {
       (model) => pressBackspace(model),
       (model) => pressBackspace(model),
     );
-    expect(Combobox.toSelectedItems(selectedThree.model).length).toBe(3);
-    expect(Combobox.toSelectedItems(pressedBackspaceALot.model).length).toBe(3);
+    expect(Combobox.toSelectedItems(config, selectedThree.model).length).toBe(3);
+    expect(Combobox.toSelectedItems(config, pressedBackspaceALot.model).length).toBe(3);
   })
 
 

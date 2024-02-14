@@ -120,9 +120,9 @@ describe("combobox", () => {
       model: pressed.model,
       msg: { type: "pressed-item", item },
     });
-    expect(Combobox.toSelectedItem(initial)).toEqual(null);
-    expect(Combobox.toSelectedItem(pressed.model)).toEqual(null);
-    expect(Combobox.toSelectedItem(selected.model)).toEqual(item);
+    expect(Combobox.toSelectedItem(config, initial)).toEqual(null);
+    expect(Combobox.toSelectedItem(config, pressed.model)).toEqual(null);
+    expect(Combobox.toSelectedItem(config, selected.model)).toEqual(item);
   });
 
   it("closes on selects by default", () => {
@@ -317,12 +317,12 @@ describe("combobox", () => {
       },
     });
 
-    expect(Combobox.toSelectedItem(selectedItem.model)).toEqual(randomItem);
+    expect(Combobox.toSelectedItem(config, selectedItem.model)).toEqual(randomItem);
     expect(Combobox.toCurrentInputValue(config, selectedItem.model)).toEqual(
       config.toItemInputValue(randomItem)
     );
 
-    expect(Combobox.toSelectedItem(removeSelectedItem.model)).toEqual(null);
+    expect(Combobox.toSelectedItem(config, removeSelectedItem.model)).toEqual(null);
     expect(
       Combobox.toCurrentInputValue(config, removeSelectedItem.model)
     ).toEqual("");
@@ -435,7 +435,7 @@ describe("combobox", () => {
       (model) => pressItem(model, Combobox.toFilteredItems(config, model)[0]),
       (model) => pressClearButton(model),
     );
-    expect(Combobox.toSelectedItem(output.model)).toEqual(null);
+    expect(Combobox.toSelectedItem(config, output.model)).toEqual(null);
   })
 
   it('should NOT clear selected values after pressing clear button when multi select mode', () => {
@@ -445,6 +445,6 @@ describe("combobox", () => {
       (model) => pressClearButton(model),
     );
     
-    expect(Combobox.toSelectedItems(output.model)).toHaveLength(3)
+    expect(Combobox.toSelectedItems(config, output.model)).toHaveLength(3)
   })
 });

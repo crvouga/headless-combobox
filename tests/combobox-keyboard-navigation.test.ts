@@ -160,8 +160,8 @@ describe("combobox keyboard navigation", () => {
   it('selects highlighted index when enter key is pressed', () => {
     const initial = Combobox.init(config, {allItems,});
     const {pressedArrowDownAgain,pressedEnterKey} = selectSecondItemWithKeyboard(initial);
-    expect(Combobox.toSelectedItem(pressedArrowDownAgain.model)).toBe(null);
-    expect(Combobox.toSelectedItem(pressedEnterKey.model)).toBe(allItems[1]);
+    expect(Combobox.toSelectedItem(config, pressedArrowDownAgain.model)).toBe(null);
+    expect(Combobox.toSelectedItem(config, pressedEnterKey.model)).toBe(allItems[1]);
   })
 
   it('closes when selecting with enter key', () => {
@@ -206,7 +206,7 @@ describe("combobox keyboard navigation", () => {
     const initial = Combobox.init(config, {allItems,});
     const {pressedArrowDownAgain, pressedEnterKey} = selectSecondItemWithKeyboard(initial);
     expect(Combobox.toCurrentInputValue(config, pressedArrowDownAgain.model)).toBe('');
-    const selectedItem = Combobox.toSelectedItem(pressedEnterKey.model);
+    const selectedItem = Combobox.toSelectedItem(config, pressedEnterKey.model);
     if(selectedItem === null) throw new Error('selectedItem is null')
     expect(Combobox.toCurrentInputValue(config,pressedEnterKey.model)).toBe(config.toItemInputValue(selectedItem));
   })

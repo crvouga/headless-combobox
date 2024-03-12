@@ -317,12 +317,16 @@ describe("combobox", () => {
       },
     });
 
-    expect(Combobox.toSelectedItem(config, selectedItem.model)).toEqual(randomItem);
+    expect(Combobox.toSelectedItem(config, selectedItem.model)).toEqual(
+      randomItem
+    );
     expect(Combobox.toCurrentInputValue(config, selectedItem.model)).toEqual(
       config.toItemInputValue(randomItem)
     );
 
-    expect(Combobox.toSelectedItem(config, removeSelectedItem.model)).toEqual(null);
+    expect(Combobox.toSelectedItem(config, removeSelectedItem.model)).toEqual(
+      null
+    );
     expect(
       Combobox.toCurrentInputValue(config, removeSelectedItem.model)
     ).toEqual("");
@@ -417,34 +421,73 @@ describe("combobox", () => {
     );
   });
 
-  it('presses clear button clears out input value', () => {
+  it("presses clear button clears out input value", () => {
     const output = Combobox.chainUpdates(
       init(),
       (model) => pressInput(model),
       (model) => inputValue(model, "star wars"),
-      (model) => pressClearButton(model),
+      (model) => pressClearButton(model)
     );
 
     expect(Combobox.toCurrentInputValue(config, output.model)).toEqual("");
-  })
+  });
 
-  it('should clear selected value after pressing clear button when single select mode', () => {
+  it("should clear selected value after pressing clear button when single select mode", () => {
     const output = Combobox.chainUpdates(
       init(),
       (model) => pressInput(model),
       (model) => pressItem(model, Combobox.toFilteredItems(config, model)[0]),
-      (model) => pressClearButton(model),
+      (model) => pressClearButton(model)
     );
     expect(Combobox.toSelectedItem(config, output.model)).toEqual(null);
-  })
+  });
 
-  it('should NOT clear selected values after pressing clear button when multi select mode', () => {
+  it("should NOT clear selected values after pressing clear button when multi select mode", () => {
     const output = Combobox.chainUpdates(
-      init({type: 'multi-select', selectedItemListDirection: 'left-to-right',}),
+      init({
+        type: "multi-select",
+        selectedItemListDirection: "left-to-right",
+      }),
       (model) => selectFirstThreeVisibleItems(model),
-      (model) => pressClearButton(model),
+      (model) => pressClearButton(model)
     );
-    
-    expect(Combobox.toSelectedItems(config, output.model)).toHaveLength(3)
-  })
+
+    expect(Combobox.toSelectedItems(config, output.model)).toHaveLength(3);
+  });
+
+  it("should NOT clear input value when setting all items", () => {
+    const initial = Combobox.init(config, {
+      allItems,
+    });
+
+    const output = Combobox.chainUpdates(
+      { model: initial, effects: [], events: [] },
+      (model) => pressInput(model),
+      (model) => inputValue(model, "12"),
+      (model) => setAllItems(model, []),
+      (model) => inputValue(model, "123")
+    );
+
+    expect(
+      Combobox.toCurrentInputValue(config, output.model) === "123"
+    ).toBeTruthy();
+  });
+
+  it("should NOT clear input value when setting selected items items", () => {
+    const initial = Combobox.init(config, {
+      allItems,
+    });
+
+    const output = Combobox.chainUpdates(
+      { model: initial, effects: [], events: [] },
+      (model) => pressInput(model),
+      (model) => inputValue(model, "12"),
+      (model) => setSelectedItems(model, []),
+      (model) => inputValue(model, "123")
+    );
+
+    expect(
+      Combobox.toCurrentInputValue(config, output.model) === "123"
+    ).toBeTruthy();
+  });
 });

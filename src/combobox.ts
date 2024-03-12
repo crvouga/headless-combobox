@@ -2384,6 +2384,11 @@ export const yieldRenderItemsMemoized = function* <T>(
   }
 };
 
+/**
+ * @group Selectors
+ *
+ * This function returns the all the filtered items with their status.
+ */
 export const yieldRenderItems = function* <T>(
   config: Config<T>,
   model: Model<T>
@@ -2398,7 +2403,7 @@ export const yieldRenderItems = function* <T>(
 
   let index = 0;
 
-  for (const item of toFilteredItemsMemoized(config)(model)) {
+  for (const item of toFilteredItems(config, model)) {
     const isSelected = selectedItemIdSet.has(config.toItemId(item));
     const isHighlighted = index === highlightedIndex;
 

@@ -54,7 +54,7 @@
       type: "multi-select",
       selectedItemListDirection: "right-to-left",
     },
-    inputMode: { type: "select-only" },
+    inputMode: { type: "select-only" }, 
   });
 
   /*

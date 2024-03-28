@@ -2349,7 +2349,7 @@ type RenderItem<T> = {
   inputValue: string;
   aria: ReturnType<typeof ariaItem>;
 };
-export const yieldRenderItems = function* <T>(
+export const yieldRenderItemsMemoized = function* <T>(
   config: Config<T>,
   model: Model<T>
 ): Generator<RenderItem<T>> {
@@ -2384,13 +2384,60 @@ export const yieldRenderItems = function* <T>(
   }
 };
 
+/**
+ * @group Selectors
+ *
+ * This function returns the all the filtered items with their status.
+ */
+export const yieldRenderItems = function* <T>(
+  config: Config<T>,
+  model: Model<T>
+): Generator<RenderItem<T>> {
+  const selectedItemIdSet = new Set<string | number>();
+  for (const item of yieldSelectedItems(config, model)) {
+    selectedItemIdSet.add(config.toItemId(item));
+  }
+
+  const highlightedIndex =
+    model.type === "focused-opened-highlighted" ? model.highlightIndex : null;
+
+  let index = 0;
+
+  for (const item of toFilteredItems(config, model)) {
+    const isSelected = selectedItemIdSet.has(config.toItemId(item));
+    const isHighlighted = index === highlightedIndex;
+
+    yield {
+      item,
+      status:
+        isSelected && isHighlighted
+          ? "selected-and-highlighted"
+          : isSelected
+          ? "selected"
+          : isHighlighted
+          ? "highlighted"
+          : "unselected",
+      inputValue: config.toItemInputValue(item),
+      aria: ariaItem(config, model, item),
+    };
+    index++;
+  }
+};
+
+export const toRenderItemsMemozied = <T>(
+  config: Config<T>,
+  model: Model<T>
+): RenderItem<T>[] => {
+  return Array.from(yieldRenderItemsMemoized(config, model));
+};
+
+
 export const toRenderItems = <T>(
   config: Config<T>,
   model: Model<T>
 ): RenderItem<T>[] => {
   return Array.from(yieldRenderItems(config, model));
 };
-
 /**
  * @group Selectors
  *
@@ -2503,7 +2550,7 @@ export const toState = <T>(config: Config<T>, model: Model<T>) => {
     aria: aria(config, model),
     allItems: model.allItems,
 
-    renderItems: toRenderItems(config, model),
+    renderItems: toRenderItemsMemozied(config, model),
     renderSelectedItems: toRenderSelectedItems(config, model),
     isOpened: isOpened(model),
     selectedItems: toSelectedItems(config, model),

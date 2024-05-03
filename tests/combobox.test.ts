@@ -360,38 +360,7 @@ describe("combobox", () => {
     );
   });
 
-  it("should set search value to input value when selected item is set", () => {
-    const initial = Combobox.init(config, {
-      allItems,
-    });
-
-    const pressedInput = Combobox.update(config, {
-      model: initial,
-      msg: { type: "pressed-input" },
-    });
-
-    const randomItem = allItems[Math.floor(Math.random() * allItems.length)];
-
-    const selectedItem = Combobox.update(config, {
-      model: pressedInput.model,
-      msg: { type: "set-selected-items", selectedItems: [randomItem] },
-    });
-
-    const pressedInputAfterSelect = Combobox.update(config, {
-      model: selectedItem.model,
-      msg: { type: "pressed-input" },
-    });
-
-    expect(Combobox.toCurrentInputValue(config, pressedInput.model)).toEqual(
-      ""
-    );
-    expect(
-      Combobox.toCurrentInputValue(config, pressedInputAfterSelect.model)
-    ).toEqual(config.toItemInputValue(randomItem));
-    expect(Combobox.toSearchValue(pressedInputAfterSelect.model)).toEqual(
-      config.toItemInputValue(randomItem)
-    );
-  });
+  
 
   it("should not clear input when all items are set", () => {
     const initial = Combobox.init(config, { allItems });

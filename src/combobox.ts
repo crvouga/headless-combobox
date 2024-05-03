@@ -721,79 +721,82 @@ const updateSetters = <T>({
   model: Model<T>;
   msg: Msg<T>;
 }): Model<T> => {
-  // TODO change this to switch for performance
+  switch (msg.type) {
+    case "set-all-items": {
+      const selectedItemsNew = intersectionLeft(
+        config.toItemId,
+        model.selectedItems,
+        msg.allItems
+      );
 
-  if (msg.type === "set-all-items") {
-    const selectedItemsNew = intersectionLeft(
-      config.toItemId,
-      model.selectedItems,
-      msg.allItems
-    );
-
-    return {
-      ...model,
-      allItems: msg.allItems,
-      allItemsHash: toAllItemsHash(config, msg.allItems),
-      selectedItems: selectedItemsNew,
-    };
-  }
-
-  if (msg.type === "set-selected-items") {
-    const allItemsNew = toNextAllItems(
-      config,
-      model.allItems,
-      msg.selectedItems
-    );
-
-    const modelNew: Model<T> = {
-      ...model,
-      allItems: allItemsNew,
-      selectedItems: msg.selectedItems,
-      allItemsHash: toAllItemsHash(config, allItemsNew),
-    };
-
-    if (
-      modelNew.selectMode.type === "single-select" &&
-      modelNew.selectedItems.length > 0
-    ) {
-      return resetInputValue({ config, model: modelNew });
-    }
-
-    return modelNew;
-  }
-
-  if (msg.type === "set-input-value") {
-    if (model.inputMode.type === "search-mode") {
       return {
         ...model,
-        inputMode: {
-          type: "search-mode",
-          inputValue: msg.inputValue,
-          hasSearched: false,
-        },
+        allItems: msg.allItems,
+        allItemsHash: toAllItemsHash(config, msg.allItems),
+        selectedItems: selectedItemsNew,
       };
     }
-    return model;
-  }
 
-  if (msg.type === "set-highlight-index") {
-    if (isHighlighted(model)) {
+    case "set-selected-items": {
+      const allItemsNew = toNextAllItems(
+        config,
+        model.allItems,
+        msg.selectedItems
+      );
+
+      const modelNew: Model<T> = {
+        ...model,
+        allItems: allItemsNew,
+        selectedItems: msg.selectedItems,
+        allItemsHash: toAllItemsHash(config, allItemsNew),
+      };
+
+      if (
+        modelNew.selectMode.type === "single-select" &&
+        model.selectedItems.length === 0 &&
+        modelNew.selectedItems.length > 0
+      ) {
+        return resetInputValue({ config, model: modelNew });
+  
+      }
+
+      return modelNew;
+    }
+
+    case "set-input-value": {
+      if (model.inputMode.type === "search-mode") {
+        return {
+          ...model,
+          inputMode: {
+            type: "search-mode",
+            inputValue: msg.inputValue,
+            hasSearched: false,
+          },
+        };
+      }
+      return model;
+    }
+
+    case "set-highlight-index": {
+      if (isHighlighted(model)) {
+        return {
+          ...model,
+          highlightIndex: msg.highlightIndex,
+        };
+      }
+      return model;
+    }
+
+    case "set-mode": {
       return {
         ...model,
-        highlightIndex: msg.highlightIndex,
+        selectMode: msg.mode,
       };
     }
-    return model;
+    default: {
+      return model;
+    }
   }
-
-  if (msg.type === "set-mode") {
-    return {
-      ...model,
-      selectMode: msg.mode,
-    };
-  }
-
-  return model;
 };
 
 /**
@@ -1262,7 +1265,7 @@ const updateModel = <T>(
         }
 
         case "pressed-horizontal-arrow-key": {
-          return updateSelectedItemKeyboardNavigation({config, model, msg });
+          return updateSelectedItemKeyboardNavigation({ config, model, msg });
         }
 
         case "pressed-enter-key": {
@@ -1887,7 +1890,10 @@ export const toNextHighlightIndex = <T>(
  *
  * Utility function to determine if any item is selected.
  */
-export const isSelected = <T>(config: Config<T>, model: Model<T>): model is SelectedState<T> => {
+export const isSelected = <T>(
+  config: Config<T>,
+  model: Model<T>
+): model is SelectedState<T> => {
   return isNonEmpty(toSelectedItems(config, model));
 };
 export type SelectedState<T> = Model<T> & { selectedItems: NonEmpty<T> };
@@ -2051,15 +2057,17 @@ export const toSelectedItems = <T>(config: Config<T>, model: Model<T>): T[] => {
   return Array.from(yieldSelectedItems(config, model));
 };
 
-
 const sortSelectedItems = <T>(config: Config<T>, model: Model<T>): T[] => {
-  if(config.sortSelectedItems){ 
-    return [...model.selectedItems].sort(config.sortSelectedItems)
+  if (config.sortSelectedItems) {
+    return [...model.selectedItems].sort(config.sortSelectedItems);
   }
   return model.selectedItems;
-}
+};
 
-export const yieldSelectedItems = function* <T>(config: Config<T>, model: Model<T>): Generator<T> {
+export const yieldSelectedItems = function* <T>(
+  config: Config<T>,
+  model: Model<T>
+): Generator<T> {
   if (
     model.selectMode.type === "multi-select" &&
     model.selectMode.selectedItemListDirection === "right-to-left"
@@ -2078,7 +2086,10 @@ export const yieldSelectedItems = function* <T>(config: Config<T>, model: Model<
  *
  * This function returns the selected item
  */
-export const toSelectedItem = <T>(config: Config<T>, model: Model<T>): T | null => {
+export const toSelectedItem = <T>(
+  config: Config<T>,
+  model: Model<T>
+): T | null => {
   for (const selectedItem of yieldSelectedItems(config, model)) {
     return selectedItem;
   }
@@ -2430,7 +2441,6 @@ export const toRenderItemsMemozied = <T>(
 ): RenderItem<T>[] => {
   return Array.from(yieldRenderItemsMemoized(config, model));
 };
-
 
 export const toRenderItems = <T>(
   config: Config<T>,

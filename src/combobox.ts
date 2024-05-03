@@ -757,7 +757,6 @@ const updateSetters = <T>({
         modelNew.selectedItems.length > 0
       ) {
         return resetInputValue({ config, model: modelNew });
-  
       }
 
       return modelNew;
@@ -918,7 +917,7 @@ const updateModel = <T>(
         }
 
         case "blurred-input": {
-          return focusedToBlurred(model);
+          return focusedToBlurred(config, model);
         }
 
         case "inputted-value": {
@@ -1050,7 +1049,7 @@ const updateModel = <T>(
         }
 
         case "blurred-input": {
-          return focusedToBlurred(model);
+          return focusedToBlurred(config, model);
         }
 
         case "pressed-input": {
@@ -1206,7 +1205,7 @@ const updateModel = <T>(
         }
 
         case "blurred-input": {
-          return focusedToBlurred(model);
+          return focusedToBlurred(config, model);
         }
 
         case "pressed-item": {
@@ -1554,20 +1553,23 @@ const closedToOpened = <T>(model: Model<T>): Model<T> => {
   return { ...model, type: "focused-opened" };
 };
 
-const focusedToBlurred = <T>(model: Model<T>): Model<T> => {
+const focusedToBlurred = <T>(config: Config<T>, model: Model<T>): Model<T> => {
   if (
     model.inputMode.type === "search-mode" &&
     model.selectMode.type === "single-select"
   ) {
-    return setHasSearched(
-      {
-        ...model,
-        type: "blurred",
-      },
-      false
-    );
+    return resetInputValue({
+      config,
+      model: setHasSearched(
+        {
+          ...model,
+          type: "blurred",
+        },
+        false
+      ),
+    });
   }
-  return { ...model, type: "blurred" };
+  return resetInputValue({ config, model: { ...model, type: "blurred" } });
 };
 
 const handlePressedInputWhenOpened = <T>(model: Model<T>): Model<T> => {

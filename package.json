@@ -6,6 +6,7 @@
   "main": "dist/index.js",
   "scripts": {
     "test": "bun test --watch",
+    "tc": "bun x tsc --noEmit",
     "build": "tsc",
     "prepublish": "rm -rf dist && tsc",
     "prepublishOnly": "rm -rf dist && tsc",

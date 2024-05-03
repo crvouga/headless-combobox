@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import * as Combobox from "../src";
 import {
   allItems,
+  blurInput,
   config,
   inputValue,
   pressInput,
@@ -60,4 +61,78 @@ describe("combobox input value", () => {
     expect(actualSearchValue).toEqual(expected);
     expect(actualInputValue).toEqual(expected);
   });
+
+
+  it('should clear input value when nothing is selected and input is blurred', () => {
+    const initial = Combobox.init(config, {
+      allItems,
+    });
+
+    const output = Combobox.chainUpdates(
+      {
+        model: initial,
+        effects: [],
+        events: [],
+      },
+      (model) => pressInput(model),
+      (model) => inputValue(model, 'a'),
+      (model) => blurInput(model),
+      (model) => pressInput(model),
+    );
+
+    const expected = '';
+    const actual = Combobox.toState(config, output.model).inputValue;
+    expect(actual).toEqual(expected);
+  })
+
+  it('should set input value to selected item when input is blurred', () => {
+    const initial = Combobox.init(config, {
+      allItems,
+      selectMode: { type: 'single-select' }
+    });
+
+    const item = allItems[0];
+
+    const output = Combobox.chainUpdates(
+      {
+        model: initial,
+        effects: [],
+        events: [],
+      },
+      (model) => pressInput(model),
+      (model) => pressItem(model, item),
+      (model) => blurInput(model),
+      (model) => pressInput(model),
+    );
+
+    const expected = config.toItemInputValue(item);
+    const actual = Combobox.toState(config, output.model).inputValue;
+    expect(actual).toEqual(expected);
+  })
+
+  it('should set input value to selected item when input is blurred and there is a search value', () => {
+    const initial = Combobox.init(config, {
+      allItems,
+      selectMode: { type: 'single-select' }
+    });
+
+    const selectedItem = allItems[0];
+
+    const output = Combobox.chainUpdates(
+      {
+        model: initial,
+        effects: [],
+        events: [],
+      },
+      (model) => pressInput(model),
+      (model) => pressItem(model, selectedItem),
+      (model) => inputValue(model, 'a'),
+      (model) => blurInput(model),
+      (model) => pressInput(model),
+    );
+
+    const expected = config.toItemInputValue(selectedItem);
+    const actual = Combobox.toState(config, output.model).inputValue;
+    expect(actual).toEqual(expected);
+  })
 });

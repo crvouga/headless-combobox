@@ -515,7 +515,7 @@ type Update<T> = (config: Config<T>, input: Input<T>) => Output<T>;
 
 const updateClearButton =
   <T>(): Update<T> =>
-  (config, input) => {
+  (_config, input) => {
     if (input.msg.type === "pressed-clear-button") {
       return chainUpdates(
         initOutput(input.model),
@@ -537,8 +537,8 @@ const updateMain =
   (config, input) => {
     return chainUpdates(
       { model: input.model, effects: [], events: [] },
+      (model) => updateMainToBeRefactored(config, { model, msg: input.msg }),
       (model) => updateClearButton<T>()(config, { model, msg: input.msg }),
-      (model) => updateMainToBeRefactored(config, { model, msg: input.msg })
     );
   };
 
@@ -756,6 +756,10 @@ const updateSetters = <T>({
         model.selectedItems.length === 0 &&
         modelNew.selectedItems.length > 0
       ) {
+        return resetInputValue({ config, model: modelNew });
+      }
+
+      if(isBlurred(modelNew)) {
         return resetInputValue({ config, model: modelNew });
       }
 

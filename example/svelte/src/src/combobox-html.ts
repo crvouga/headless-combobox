@@ -1,4 +1,4 @@
-import { Config, Effect, Model, Msg, isItemSelected, isSelected } from "./combobox";
+import type { Config, Effect, Model } from "./combobox";
 
 export const handleEffects = <T>(
   config: Config<T>,

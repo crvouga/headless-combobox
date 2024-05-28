@@ -5,6 +5,8 @@ import {
   blurInput,
   config,
   inputValue,
+  pressArrowDown,
+  pressEscape,
   pressInput,
   pressItem,
   setSelectedItems
@@ -113,6 +115,36 @@ describe("combobox input value", () => {
     )
     expect(Combobox.toState(config, before.model).inputValue).toEqual(itemB.label);
     expect(Combobox.toState(config, after.model).inputValue).toEqual(itemB.label);
+  })
+
+  it('BUGFIX should NOT reset input value after navigating dropdown', () => {
+    const initial = Combobox.init(config, {
+      allItems,
+      selectMode: { type: "single-select" },
+    });
+    const itemA = { ...allItems[0] };
+    const itemB = { ...allItems[1] };
+
+    const before = Combobox.chainUpdates(
+      {
+        model: initial,
+        effects: [],
+        events: [],
+      },
+      (model) => pressInput(model),
+      (model) => pressItem(model, itemA),
+      (model) => inputValue(model, itemA.label.substring(0, 1)),
+    );
+    const after = Combobox.chainUpdates(
+      before,
+      (model) => pressArrowDown(model),
+      (model) => pressEscape(model),
+      (model) => pressArrowDown(model)
+    )
+
+    expect(Combobox.toState(config, before.model).inputValue).toEqual(itemA.label.substring(0, 1));
+    expect(Combobox.toState(config, after.model).inputValue).toEqual(itemA.label.substring(0, 1));
+    
   })
 
   it('should reset input value after setting selected items when input is blurred', () => {

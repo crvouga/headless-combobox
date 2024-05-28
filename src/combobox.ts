@@ -952,12 +952,13 @@ const updateModel = <T>(
 
         case "pressed-vertical-arrow-key": {
           if (model.selectMode.type === "single-select") {
-            return resetInputValue({ config, model: closedToOpened(model) });
+            return closedToOpened(model);
           }
 
           const selectedItemIndex = toSelectedItemIndex(config, model);
 
           return {
+            ...model,
             ...closedToOpened(model),
             highlightIndex: selectedItemIndex ? selectedItemIndex : 0,
             type: "focused-opened-highlighted",
@@ -1288,7 +1289,10 @@ const updateModel = <T>(
         }
 
         case "pressed-escape-key": {
-          return { ...model, type: "focused-closed" };
+          return { 
+            ...model,
+             type: "focused-closed" 
+          };
         }
 
         case "pressed-unselect-button": {
@@ -1444,7 +1448,7 @@ const updateModel = <T>(
         }
 
         case "pressed-key":
-        case "pressed-enter-key":
+        case "pressed-enter-key": 
         case "pressed-escape-key": {
           return clearInputValue({ ...model, type: "focused-closed" });
         }
@@ -1562,16 +1566,15 @@ const focusedToBlurred = <T>(config: Config<T>, model: Model<T>): Model<T> => {
     model.inputMode.type === "search-mode" &&
     model.selectMode.type === "single-select"
   ) {
-    return resetInputValue({
-      config,
-      model: setHasSearched(
-        {
-          ...model,
-          type: "blurred",
-        },
-        false
-      ),
-    });
+    const modelNew = setHasSearched(
+      {
+        ...model,
+        type: "blurred",
+      },
+      false
+    )
+    const resetted = resetInputValue({ config, model: modelNew });
+    return resetted
   }
   return resetInputValue({ config, model: { ...model, type: "blurred" } });
 };

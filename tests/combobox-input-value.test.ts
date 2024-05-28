@@ -34,6 +34,59 @@ describe("combobox input value", () => {
     expect(actual).toEqual(expected);
   });
 
+  it("should not reset input value after setting selected items when there is already something selected", () => {
+    const initial = Combobox.init(config, {
+      allItems,
+      selectMode: { type: "single-select" },
+    });
+    const itemA = { ...allItems[0] };
+    const itemB = { ...allItems[1] };
+
+    const output = Combobox.chainUpdates(
+      {
+        model: initial,
+        effects: [],
+        events: [],
+      },
+      (model) => pressInput(model),
+      (model) => pressItem(model, itemA),
+      (model) => inputValue(model, itemA.label.substring(0, 1)),
+      (model) => setSelectedItems(model, [itemB])
+    );
+    const expected = itemA.label.substring(0, 1);
+    const actual = Combobox.toState(config, output.model).inputValue;
+    expect(actual).toEqual(expected);
+  })
+
+  it('should reset input value after setting selected items when input is blurred', () => {
+    const initial = Combobox.init(config, {
+      allItems,
+      selectMode: { type: "single-select" },
+    });
+    const itemA = { ...allItems[0] };
+    const itemB = { ...allItems[1] };
+    
+
+    const before = Combobox.chainUpdates(
+      {
+        model: initial,
+        effects: [],
+        events: [],
+      },
+      (model) => pressInput(model),
+      (model) => pressItem(model, itemA),
+      (model) => inputValue(model, itemA.label.substring(0, 1)),
+    );
+    const after = Combobox.chainUpdates(
+      before,
+      (model) => setSelectedItems(model, [itemB]),
+      (model) => blurInput(model),
+    )
+
+    expect(Combobox.toState(config, before.model).inputValue).toEqual(itemA.label.substring(0, 1));
+    expect(Combobox.toState(config, after.model).inputValue).toEqual(itemB.label);
+  })
+
   it("should set search value to input value when selected item is set when selected items is empty", () => {
     const initial = Combobox.init(config, {
       allItems,

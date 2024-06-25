@@ -173,8 +173,8 @@ export const pressInput = (model: Combobox.Model<Item>, configOverride: Combobox
   });
 };
 
-export const inputValue = (model: Combobox.Model<Item>, inputValue: string) => {
-  return Combobox.update(config, {
+export const inputValue = (model: Combobox.Model<Item>, inputValue: string, configOverride: Combobox.Config<Item> = config) => {
+  return Combobox.update(configOverride, {
     model,
     msg: { type: "inputted-value", inputValue },
   });

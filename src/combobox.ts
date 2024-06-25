@@ -103,6 +103,7 @@ export const initConfig = <T>({
     namespace: namespace ?? "combobox",
     deterministicFilter,
     deterministicFilterCacheKeyFn: deterministicFilterCacheKeyFn,
+    preserveSelected,
   };
 
   return configFull;

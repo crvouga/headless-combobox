@@ -68,10 +68,11 @@ describe("combobox - preseve selected", () => {
   });
 
   it("should not clear input value after preserving selected", () => {
-    const configPreserve: Combobox.Config<Item> = {
+    const configPreserve = Combobox.initConfig<Item>({
       ...config,
       preserveSelected: true,
-    };
+    });
+    
     const initial = init();
 
     const allItemsWithoutFirst = allItems.slice(1);

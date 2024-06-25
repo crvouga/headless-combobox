@@ -73,6 +73,7 @@ export const initConfig = <T>({
   isEmptyItem = () => false,
   sortSelectedItems,
   filteredItemCacheCapacity = 100,
+  preserveSelected = false,
   ...config
 }: {
   toItemId: (item: T) => string | number;
@@ -83,6 +84,7 @@ export const initConfig = <T>({
   sortSelectedItems?: (a: T, b: T) => number;
   namespace?: string;
   filteredItemCacheCapacity?: number;
+  preserveSelected?: boolean;
 }): Config<T> => {
   const deterministicFilter: Config<T>["deterministicFilter"] =
     config.deterministicFilter
@@ -734,7 +736,7 @@ const updateSetters = <T>({
           allItemsHash: toAllItemsHash(config, msg.allItems),
         };
       }
-      
+
       const selectedItemsNew = intersectionLeft(
         config.toItemId,
         model.selectedItems,

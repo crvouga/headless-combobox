@@ -3,7 +3,7 @@ import type { Plugin, SelectedItemListDirection } from "../combobox";
 /**
  * This plugin will preserve the selected items even when not in the all items list.
  */
-export const preseveSelectedItems =
+export const preserveSelectedItems =
   <T>(): Plugin<T> =>
   ({ output, initialModel, input }) => {
     switch (input.msg.type) {

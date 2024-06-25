@@ -442,6 +442,29 @@ describe("combobox", () => {
     ).toBeTruthy();
   });
 
+
+  it("should NOT clear input value when setting all items for different input", () => {
+    const initial = Combobox.init(config, {
+      allItems,
+      inputMode: {
+        type: "search-mode",
+        inputValue: "123",
+      }
+    });
+
+    const output = Combobox.chainUpdates(
+      { model: initial, effects: [], events: [] },
+      (model) => pressInput(model),
+      (model) => inputValue(model, "123"),
+      (model) => setAllItems(model, []),
+      (model) => inputValue(model, "456")
+    );
+
+    expect(
+      Combobox.toCurrentInputValue(config, output.model) === "456"
+    ).toBeTruthy();
+  });
+
   it("should NOT clear input value when setting selected items items", () => {
     const initial = Combobox.init(config, {
       allItems,
@@ -459,4 +482,22 @@ describe("combobox", () => {
       Combobox.toCurrentInputValue(config, output.model) === "123"
     ).toBeTruthy();
   });
+
+  it("should NOT clear input value when setting selected items items", () => {
+    const initial = Combobox.init(config, {
+      allItems,
+    });
+
+    const output = Combobox.chainUpdates(
+      { model: initial, effects: [], events: [] },
+      (model) => pressInput(model),
+      (model) => inputValue(model, "123"),
+      (model) => setSelectedItems(model, []),
+      (model) => inputValue(model, "456")
+    );
+
+    expect(
+      Combobox.toCurrentInputValue(config, output.model) === "456"
+    ).toBeTruthy();
+  });  
 });

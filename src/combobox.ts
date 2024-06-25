@@ -48,6 +48,10 @@ export type Config<T> = {
   namespace: string;
   filteredItemCache: Map<string, T[]>;
   itemStore?: ItemStore<T>;
+  /**
+   * When `preserveSelected` is set to true it will not unselect items that are not in the `allItems` list.
+   */
+  preserveSelected?: boolean;
 };
 
 export const defaultDeterministicFilterCacheKeyFn = <T>(
@@ -723,6 +727,14 @@ const updateSetters = <T>({
 }): Model<T> => {
   switch (msg.type) {
     case "set-all-items": {
+      if(config.preserveSelected)  {
+        return {
+          ...model,
+          allItems: msg.allItems,
+          allItemsHash: toAllItemsHash(config, msg.allItems),
+        };
+      }
+      
       const selectedItemsNew = intersectionLeft(
         config.toItemId,
         model.selectedItems,

@@ -166,8 +166,8 @@ export const focusInput = (model: Combobox.Model<Item>) => {
   });
 };
 
-export const pressInput = (model: Combobox.Model<Item>) => {
-  return Combobox.update(config, {
+export const pressInput = (model: Combobox.Model<Item>, configOverride: Combobox.Config<Item> = config) => {
+  return Combobox.update(configOverride, {
     model,
     msg: { type: "pressed-input" },
   });
@@ -180,8 +180,8 @@ export const inputValue = (model: Combobox.Model<Item>, inputValue: string) => {
   });
 };
 
-export const pressItem = (model: Combobox.Model<Item>, item: Item) => {
-  return Combobox.update(config, {
+export const pressItem = (model: Combobox.Model<Item>, item: Item, configOverride: Combobox.Config<Item> = config) => {
+  return Combobox.update(configOverride, {
     model,
     msg: { type: "pressed-item", item },
   });
@@ -271,8 +271,8 @@ export const pressBackspace = (model: Combobox.Model<Item>) => {
   });
 };
 
-export const setAllItems = (model: Combobox.Model<Item>, allItems: Item[]) => {
-  return Combobox.update(config, {
+export const setAllItems = (model: Combobox.Model<Item>, allItems: Item[], configOverride: Combobox.Config<Item> = config) => {
+  return Combobox.update(configOverride, {
     model,
     msg: { type: "set-all-items", allItems },
   });

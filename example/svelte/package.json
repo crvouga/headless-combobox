@@ -21,6 +21,6 @@
   },
   "dependencies": {
     "esbuild": "^0.18.20",
-    "headless-combobox": "^7.0.14"
+    "headless-combobox": "^7.0.16"
   }
 }

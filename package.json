@@ -12,7 +12,8 @@
     "prepublishOnly": "rm -rf dist && tsc",
     "postpublish": "npm run update-example-deps",
     "update-example-deps": "cd ./example/svelte && npm install headless-combobox@latest",
-    "gen-docs": "typedoc src/index.ts"
+    "gen-docs": "typedoc src/index.ts",
+    "preview-docs": "docker build -t headless-combobox-docs . && docker run -p 80:80 headless-combobox-docs"
   },
   "repository": {
     "type": "git",

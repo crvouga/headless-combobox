@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "check": "svelte-check --tsconfig ./tsconfig.json"
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "docker:preview": "docker build -t headless-combobox-svelte . && docker run -p 80:80 headless-combobox-svelte"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^2.0.3",
@@ -19,6 +20,7 @@
     "vite": "^4.3.0"
   },
   "dependencies": {
+    "esbuild": "^0.18.20",
     "headless-combobox": "^7.0.14"
   }
 }

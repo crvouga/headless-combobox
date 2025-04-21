@@ -5,10 +5,10 @@ WORKDIR /app
 # Copy the entire project first
 COPY .. /app/project
 
-# Copy package files, tsconfig, and .npmrc
+# Copy package files and tsconfig
 WORKDIR /app/project
-COPY package.json package-lock.json tsconfig.json .npmrc ./
-RUN npm ci
+COPY package.json package-lock.json tsconfig.json ./
+RUN npm install
 
 # Generate docs
 RUN npm run gen-docs

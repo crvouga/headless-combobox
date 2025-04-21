@@ -2,7 +2,7 @@
 
 ![demo](https://github.com/crvouga/headless-combobox/raw/main/demo.gif)
 
-## ⚠️ WORK IN PROGRESS
+## ⚠️ WORK IN PROGRESS - Somewhat stable as of April 2025
 
 I'm comfortable using this in my projects but use at your own risk!
 
@@ -45,12 +45,12 @@ Let me know if you find any issues.
 
 ## Demos
 
-- [Svelte Demo](https://headless-combobox-demo-svelte.vercel.app/)
+- [Svelte Demo](https://svelte.headlesscombobox.chrisvouga.dev/)
 
 ## Links
 
 - [bundlephobia](https://bundlephobia.com/package/headless-combobox)
-- [API Reference](https://headless-combobox.vercel.app/)
+- [API Reference](https://headlesscombobox.chrisvouga.dev/)
 - [Github](https://github.com/crvouga/headless-combobox)
 - [NPM](https://www.npmjs.com/package/headless-combobox)
 

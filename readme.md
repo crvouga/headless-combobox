@@ -2,7 +2,7 @@
 
 ![demo](https://github.com/crvouga/headless-combobox/raw/main/demo.gif)
 
-## ⚠️ WORK IN PROGRESS - Somewhat stable as of April 2025
+## ⚠️ WORK IN PROGRESS
 
 I'm comfortable using this in my projects but use at your own risk!
 

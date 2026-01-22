@@ -3,7 +3,7 @@ FROM node:18-alpine AS build
 WORKDIR /app
 
 # Copy the entire project first
-COPY .. /app/project
+COPY . /app/project
 
 # Copy package files and tsconfig
 WORKDIR /app/project

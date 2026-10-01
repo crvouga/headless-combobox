@@ -1,0 +1,41 @@
+# Managed by OpenTofu github_repository_file.
+name: Publish image
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+  pull-requests: read
+
+jobs:
+  headless_combobox_svelte_example:
+    uses: crvouga/workspace/.github/workflows/ci.yml@main
+    secrets:
+      DEPLOY_DISPATCH_TOKEN: ${{ secrets.DEPLOY_DISPATCH_TOKEN }}
+      CALLER_GITHUB_TOKEN: ${{ github.token }}
+    with:
+      service_id: headless-combobox-svelte-example
+      dockerfile: example/svelte/Dockerfile
+      context: example/svelte
+      image_owner: crvouga
+      image_prefix: chrisvouga
+      infra_github_repo: crvouga/workspace
+
+  headless_combobox_docs:
+    uses: crvouga/workspace/.github/workflows/ci.yml@main
+    secrets:
+      DEPLOY_DISPATCH_TOKEN: ${{ secrets.DEPLOY_DISPATCH_TOKEN }}
+      CALLER_GITHUB_TOKEN: ${{ github.token }}
+    with:
+      service_id: headless-combobox-docs
+      dockerfile: ./Dockerfile
+      context: .
+      image_owner: crvouga
+      image_prefix: chrisvouga
+      infra_github_repo: crvouga/workspace
+

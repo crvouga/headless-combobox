@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   headless_combobox_svelte_example:
-    uses: crvouga/workspace/.github/workflows/publish.yml@main
+    uses: crvouga/personal/.github/workflows/publish.yml@main
     secrets:
       DEPLOY_DISPATCH_TOKEN: ${{ secrets.DEPLOY_DISPATCH_TOKEN }}
       CALLER_GITHUB_TOKEN: ${{ github.token }}
@@ -22,10 +22,10 @@ jobs:
       context: example/svelte
       image_owner: crvouga
       image_prefix: chrisvouga
-      infra_github_repo: crvouga/workspace
+      infra_github_repo: crvouga/personal
 
   headless_combobox_docs:
-    uses: crvouga/workspace/.github/workflows/publish.yml@main
+    uses: crvouga/personal/.github/workflows/publish.yml@main
     secrets:
       DEPLOY_DISPATCH_TOKEN: ${{ secrets.DEPLOY_DISPATCH_TOKEN }}
       CALLER_GITHUB_TOKEN: ${{ github.token }}
@@ -35,5 +35,5 @@ jobs:
       context: .
       image_owner: crvouga
       image_prefix: chrisvouga
-      infra_github_repo: crvouga/workspace
+      infra_github_repo: crvouga/personal
 
